@@ -1,0 +1,418 @@
+import React, { useState, useEffect } from 'react';
+import { StoreData, TemplateType, Product, PdpCategoryType } from '@/lib/types';
+import { Upload, LayoutTemplate, Store, Package, Plus, Trash2, Image as ImageIcon, Zap } from 'lucide-react';
+
+interface FormProps {
+  data: StoreData;
+  setData: React.Dispatch<React.SetStateAction<StoreData>>;
+  template: TemplateType;
+  setTemplate: (t: TemplateType) => void;
+  previewMode?: 'store' | 'product';
+  setPreviewMode?: (mode: 'store' | 'product') => void;
+  activeProductId?: string | null;
+  setActiveProductId?: (id: string | null) => void;
+}
+
+export default function BuilderForm({ data, setData, template, setTemplate, previewMode, setPreviewMode, activeProductId, setActiveProductId }: FormProps) {
+  const [activeTab, setActiveTab] = useState<'store' | 'products' | 'pdp'>('store');
+
+  const [allTemplates, setAllTemplates] = useState<{ id: TemplateType; name: string; desc: string }[]>([]);
+  const [pdpTemplatesList, setPdpTemplatesList] = useState<{ id: string; category: PdpCategoryType; name: string; desc: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/templates/stores').then(r => r.json()),
+      fetch('/api/templates/pdp').then(r => r.json())
+    ]).then(([storesRes, pdpsRes]) => {
+      if (storesRes.stores) {
+        setAllTemplates(storesRes.stores.map((s: any) => ({ id: s.id, name: s.name, desc: s.description })));
+      }
+      if (pdpsRes.pdps) {
+        setPdpTemplatesList(pdpsRes.pdps.map((p: any) => ({ id: p.id, category: p.category, name: p.name, desc: p.description })));
+      }
+    }).catch(console.error).finally(() => setIsLoading(false));
+  }, []);
+
+  const handleStoreChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleProductChange = (index: number, field: keyof Product, value: string | number) => {
+    const newProducts = [...data.products];
+    newProducts[index] = { ...newProducts[index], [field]: value };
+    setData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const addProduct = () => {
+    const newProduct: Product = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: 'Nuevo Producto',
+      description: 'Descripción del producto',
+      price: '0',
+      originalPrice: '0',
+      imageUrl: `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000)}`,
+      category: 'General',
+      rating: 5.0,
+      reviews: 0
+    };
+    setData(prev => ({ ...prev, products: [newProduct, ...prev.products] }));
+  };
+
+  const removeProduct = (index: number) => {
+    const newProducts = [...data.products];
+    newProducts.splice(index, 1);
+    setData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const pdpCategories: { id: PdpCategoryType; name: string; desc: string }[] = [
+    { id: 'urgency', name: 'Urgencia Extrema', desc: 'Escasez extrema, contadores, stock bajo. Ideal para compras impulsivas.' },
+    { id: 'trust', name: 'Construcción de Confianza', desc: 'Prueba social, reseñas, insignias. Ideal para productos de alto valor.' },
+    { id: 'bundle', name: 'Maximizador de Ofertas', desc: 'Enfocado en bundles, BOGO, y aumentar el AOV (Ticket Promedio).' },
+    { id: 'story', name: 'Storytelling Emocional', desc: 'Copy largo, problema/solución. Ideal para productos innovadores.' },
+    { id: 'direct', name: 'Cierre Directo', desc: 'Minimalista, sin distracciones, formulario COD pegajoso. Fricción cero.' },
+    { id: 'health', name: 'Salud y Bienestar', desc: 'Diseños clínicos, limpios y enfocados en beneficios y confianza.' },
+    { id: 'electronics', name: 'Electrónica y Tech', desc: 'Estilo moderno, oscuro, enfocado en especificaciones técnicas.' },
+    { id: 'tools', name: 'Herramientas y Bricolaje', desc: 'Diseños robustos, industriales, colores de advertencia.' },
+    { id: 'beauty', name: 'Belleza y Cosmética', desc: 'Estética elegante, tonos suaves, enfoque en resultados visuales.' },
+    { id: 'home', name: 'Hogar y Decoración', desc: 'Ambientes cálidos, espaciosos, enfoque en estilo de vida.' },
+  ];
+
+
+
+  return (
+    <div className="h-full flex flex-col bg-white border-r border-zinc-200">
+      <div className="p-6 pb-4 border-b border-zinc-100 shrink-0">
+        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Store Builder</h2>
+        <p className="text-sm text-zinc-500 mt-1">Configura tu tienda y catálogo de productos.</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-zinc-100 shrink-0">
+        <button 
+          onClick={() => { setActiveTab('store'); setPreviewMode?.('store'); }}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${activeTab === 'store' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-zinc-500 hover:text-zinc-700'}`}
+        >
+          <Store className="w-4 h-4" />
+          <span className="font-medium">Tienda</span>
+        </button>
+        <button 
+          onClick={() => { setActiveTab('pdp'); setPreviewMode?.('product'); if(!activeProductId && data.products.length > 0) setActiveProductId?.(data.products[0].id); }}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${activeTab === 'pdp' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-zinc-500 hover:text-zinc-700'}`}
+        >
+          <Zap className="w-4 h-4" />
+          <span className="font-medium">Producto</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab('products')}
+          className={`flex-1 py-3 text-sm flex items-center justify-center space-x-2 ${activeTab === 'products' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-zinc-500 hover:text-zinc-700'}`}
+        >
+          <Package className="w-4 h-4" />
+          <span className="font-medium">Catálogo ({data.products.length})</span>
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+        {activeTab === 'store' && (
+          <>
+            {/* Template Selection */}
+            <section className="space-y-4">
+              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
+                <LayoutTemplate className="w-5 h-5 text-indigo-500" />
+                <h3>Plantilla de Tienda</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {isLoading ? (
+                  <div className="text-zinc-500 text-sm text-center py-4">Cargando plantillas...</div>
+                ) : (
+                  allTemplates.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTemplate(t.id as TemplateType)}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        template === t.id 
+                          ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' 
+                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <div className="font-medium text-zinc-900">{t.name}</div>
+                      <div className="text-xs text-zinc-500 mt-1">{t.desc}</div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <hr className="border-zinc-100" />
+
+            {/* Store Details */}
+            <section className="space-y-4">
+              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
+                <Store className="w-5 h-5 text-indigo-500" />
+                <h3>Detalles de la Tienda</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">Nombre de la Tienda</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={data.name}
+                    onChange={handleStoreChange}
+                    className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">Texto del Logo</label>
+                  <input
+                    type="text"
+                    name="logoText"
+                    value={data.logoText}
+                    onChange={handleStoreChange}
+                    className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700 flex items-center space-x-2">
+                    <ImageIcon className="w-4 h-4" />
+                    <span>URL del Banner Principal</span>
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      name="bannerImage"
+                      value={data.bannerImage}
+                      onChange={handleStoreChange}
+                      className="flex-1 px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button 
+                      className="px-3 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 border border-zinc-200"
+                      onClick={() => setData(prev => ({ ...prev, bannerImage: `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}` }))}
+                    >
+                      <Upload className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeTab === 'pdp' && (
+          <section className="space-y-8">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
+                <LayoutTemplate className="w-5 h-5 text-indigo-500" />
+                <h3>Categoría de Producto (CRO)</h3>
+              </div>
+              <p className="text-sm text-zinc-500">
+                Selecciona la estrategia psicológica para tu página de producto.
+              </p>
+              
+              {/* Category Selector */}
+              <div className="flex flex-wrap gap-2">
+                {pdpCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setData(prev => ({ ...prev, pdpCategory: cat.id, pdpTemplate: `${cat.id}-1` }));
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      data.pdpCategory === cat.id
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                <p className="text-sm text-indigo-800 font-medium">
+                  {pdpCategories.find(c => c.id === data.pdpCategory)?.desc}
+                </p>
+              </div>
+
+              <hr className="border-zinc-100 my-6" />
+
+              <div className="flex items-center space-x-2 text-zinc-900 font-medium mb-4">
+                <Zap className="w-5 h-5 text-indigo-500" />
+                <h3>Variantes de Diseño ({data.pdpCategory})</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 h-96 overflow-y-auto custom-scrollbar pr-2">
+                {isLoading ? (
+                  <div className="text-zinc-500 text-sm text-center py-4">Cargando hojas de producto...</div>
+                ) : (
+                  pdpTemplatesList.filter(t => t.category === data.pdpCategory).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setData(prev => ({ ...prev, pdpTemplate: t.id }))}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        data.pdpTemplate === t.id 
+                          ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' 
+                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <div className="font-medium text-zinc-900">{t.name}</div>
+                      <div className="text-xs text-zinc-500 mt-1">{t.desc}</div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <hr className="border-zinc-100" />
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
+                <Zap className="w-5 h-5 text-indigo-500" />
+                <h3>Herramientas de Conversión (Opcionales)</h3>
+              </div>
+              <p className="text-sm text-zinc-500">
+                Activa o desactiva módulos psicológicos para aumentar la urgencia y confianza.
+              </p>
+              
+              <div className="space-y-3 bg-zinc-50 p-4 rounded-xl border border-zinc-200">
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div>
+                    <div className="font-medium text-sm text-zinc-900">Espectadores en Vivo</div>
+                    <div className="text-xs text-zinc-500">Muestra cuántas personas están viendo el producto.</div>
+                  </div>
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.pdpFeatures?.liveViewers ? 'bg-indigo-600' : 'bg-zinc-300'}`}>
+                    <input type="checkbox" className="sr-only" checked={data.pdpFeatures?.liveViewers || false} onChange={(e) => setData(prev => ({ ...prev, pdpFeatures: { ...prev.pdpFeatures, liveViewers: e.target.checked } }))} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.pdpFeatures?.liveViewers ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div>
+                    <div className="font-medium text-sm text-zinc-900">Notificaciones de Ventas</div>
+                    <div className="text-xs text-zinc-500">Popups falsos de compras recientes (Prueba Social).</div>
+                  </div>
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.pdpFeatures?.recentSales ? 'bg-indigo-600' : 'bg-zinc-300'}`}>
+                    <input type="checkbox" className="sr-only" checked={data.pdpFeatures?.recentSales || false} onChange={(e) => setData(prev => ({ ...prev, pdpFeatures: { ...prev.pdpFeatures, recentSales: e.target.checked } }))} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.pdpFeatures?.recentSales ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div>
+                    <div className="font-medium text-sm text-zinc-900">Temporizador de Escasez</div>
+                    <div className="text-xs text-zinc-500">Barra de stock bajo y cuenta regresiva.</div>
+                  </div>
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.pdpFeatures?.scarcityTimer ? 'bg-indigo-600' : 'bg-zinc-300'}`}>
+                    <input type="checkbox" className="sr-only" checked={data.pdpFeatures?.scarcityTimer || false} onChange={(e) => setData(prev => ({ ...prev, pdpFeatures: { ...prev.pdpFeatures, scarcityTimer: e.target.checked } }))} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.pdpFeatures?.scarcityTimer ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div>
+                    <div className="font-medium text-sm text-zinc-900">Botón de Compra Flotante</div>
+                    <div className="text-xs text-zinc-500">Botón pegajoso en móvil para checkout rápido.</div>
+                  </div>
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.pdpFeatures?.stickyButton ? 'bg-indigo-600' : 'bg-zinc-300'}`}>
+                    <input type="checkbox" className="sr-only" checked={data.pdpFeatures?.stickyButton || false} onChange={(e) => setData(prev => ({ ...prev, pdpFeatures: { ...prev.pdpFeatures, stickyButton: e.target.checked } }))} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.pdpFeatures?.stickyButton ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
+                </label>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'products' && (
+          <section className="space-y-6">
+            <button 
+              onClick={addProduct}
+              className="w-full py-3 border-2 border-dashed border-zinc-300 rounded-xl text-zinc-600 font-medium hover:border-indigo-500 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Añadir Producto</span>
+            </button>
+
+            <div className="space-y-6">
+              {data.products.map((product, index) => (
+                <div key={product.id} className="p-4 border border-zinc-200 rounded-xl bg-zinc-50 relative group">
+                  <button 
+                    onClick={() => removeProduct(index)}
+                    className="absolute top-2 right-2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="space-y-4">
+                    <div className="flex space-x-4">
+                      <img src={product.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover border border-zinc-200 bg-white" />
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          value={product.title}
+                          onChange={(e) => handleProductChange(index, 'title', e.target.value)}
+                          className="w-full px-2 py-1 bg-white border border-zinc-300 rounded text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Título del producto"
+                        />
+                        <div className="flex space-x-2">
+                          <div className="flex-1 flex items-center bg-white border border-zinc-300 rounded overflow-hidden">
+                            <span className="px-2 text-zinc-500 text-sm bg-zinc-50 border-r border-zinc-300">$</span>
+                            <input
+                              type="text"
+                              value={product.price}
+                              onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                              className="w-full px-2 py-1 text-sm focus:outline-none"
+                              placeholder="Precio"
+                            />
+                          </div>
+                          <div className="flex-1 flex items-center bg-white border border-zinc-300 rounded overflow-hidden">
+                            <span className="px-2 text-zinc-500 text-sm bg-zinc-50 border-r border-zinc-300 line-through">$</span>
+                            <input
+                              type="text"
+                              value={product.originalPrice}
+                              onChange={(e) => handleProductChange(index, 'originalPrice', e.target.value)}
+                              className="w-full px-2 py-1 text-sm focus:outline-none"
+                              placeholder="Precio original"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={product.category}
+                        onChange={(e) => handleProductChange(index, 'category', e.target.value)}
+                        className="flex-1 px-2 py-1 bg-white border border-zinc-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Categoría"
+                      />
+                      <button 
+                        className="px-2 py-1 bg-white text-zinc-700 rounded text-sm font-medium hover:bg-zinc-100 border border-zinc-300 flex items-center space-x-1"
+                        onClick={() => handleProductChange(index, 'imageUrl', `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000)}`)}
+                      >
+                        <Upload className="w-3 h-3" />
+                        <span>Img</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <div className="p-4 border-t border-zinc-200 shrink-0">
+        <button className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+          Generar Tienda
+        </button>
+      </div>
+    </div>
+  );
+}
+
