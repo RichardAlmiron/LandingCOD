@@ -451,15 +451,23 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                         <button
                             className="btn-primary"
                             style={{ padding: '10px 28px', fontSize: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.3)', pointerEvents: 'auto' }}
-                            disabled={flowType === 'pdp' && !pdpCategory}
+                            disabled={flowType === 'pdp' ? !template : !template}
                             onClick={() => {
                                 if (flowType === 'pdp') {
-                                    setStoreData(p => ({ ...p, pdpCategory: pdpCategory as StoreData['pdpCategory'], pdpTemplate: `${pdpCategory}-1` }));
+                                    // Flujo PDP: guardar template seleccionada e ir al paso 4
+                                    const chosen = pdpTemplates.find(t => t.id === template);
+                                    setStoreData(p => ({
+                                        ...p,
+                                        pdpCategory: (chosen?.category || 'direct') as StoreData['pdpCategory'],
+                                        pdpTemplate: chosen?.template_key || template,
+                                    }));
+                                    setStep(4);
+                                } else {
+                                    setStep(3);
                                 }
-                                setStep(3);
                             }}
                         >
-                            Seleccionar Productos de AlmiDrop
+                            {flowType === 'pdp' ? 'Continuar con esta Template' : 'Seleccionar Productos de AlmiDrop'}
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 8 }}><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                         </button>
                     </div>
