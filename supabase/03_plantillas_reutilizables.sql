@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "Tiendas_Reutilizables" (
   description TEXT NOT NULL,
   category TEXT NOT NULL,
   premium BOOLEAN DEFAULT false,
+  image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS "Paginas_de_Productos_Reutilizables" (
   category TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

@@ -28,7 +28,7 @@ export interface StoreData {
   };
 }
 
-export type PdpCategoryType = 'urgency' | 'trust' | 'bundle' | 'story' | 'direct' | 'health' | 'electronics' | 'tools' | 'beauty' | 'home';
+export type PdpCategoryType = 'urgency' | 'trust' | 'bundle' | 'story' | 'direct' | 'health' | 'electronics' | 'tools' | 'beauty' | 'home' | 'premium-bundle' | 'premium-electronics' | 'premium-health' | 'premium-urgency';
 
 export type TemplateType = 
   | 'megamarket' | 'flashdeals' | 'tradevault' | 'mercadocod' | 'trendfast' | 'minimaltech' | 'handcraft' | 'boldathlete' | 'blueretail' | 'bidzone' | 'editorialchic' | 'nordichome' | 'bullseye' | 'beautybox'
@@ -39,6 +39,21 @@ export type TemplateType =
   | 'ecooutdoor' | 'extremeexplorer' | 'fitmodern' | 'hypedrop' | 'streetboutique' | 'avantgarde' | 'petfriend' | 'petworld' | 'sportzone' | 'greenhealth'
   | 'timecraft' | 'maisonelegance' | 'blueclassic' | 'charmboutique' | 'crystalshine' | 'iconshades' | 'sportoptics' | 'modernlens' | 'opticalretail' | 'shadeshub'
   | 'italiancraft' | 'heritagelux' | 'parisianchic' | 'milanomodern' | 'futureauto';
+
+export interface PdpTemplate {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  image_url?: string;
+}
+
+export interface StoreTemplate {
+  id: string;
+  name: string;
+  description: string;
+  image_url?: string;
+}
 
 export const defaultStore: StoreData = {
   name: "MegaStore",

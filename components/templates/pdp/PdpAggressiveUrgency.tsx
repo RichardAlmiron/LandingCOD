@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { StoreData, Product } from '@/lib/types';
 import { Star, ShieldCheck, Truck, Clock, AlertTriangle, Zap, CheckCircle, ArrowRight, Timer } from 'lucide-react';
 import { LiveViewers, ScarcityWarning, TrustBar, BundleOffer, InlineCODForm, StickyBuyButton, RecentSalesPopup, FAQSection, FeatureGrid, HowItWorks, ComparisonTable } from './SharedCRO';
+import ProductCarousel3D from '@/components/store/ProductCarousel3D';
 
 interface PDPProps {
   data: StoreData;
@@ -13,7 +14,6 @@ interface PDPProps {
 
 export default function PdpAggressiveUrgency({ data, product, variant = 1 }: PDPProps) {
   const [timeLeft, setTimeLeft] = useState({ h: 2, m: 14, s: 59 });
-  const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -115,29 +115,25 @@ export default function PdpAggressiveUrgency({ data, product, variant = 1 }: PDP
       <main className={layout.main}>
         <div className={`${variant === 5 || variant === 9 || variant === 10 || variant === 2 || variant === 3 || variant === 7 ? '' : isDark ? 'bg-zinc-950 border-zinc-800 rounded-[2rem] shadow-xl overflow-hidden p-8 border' : 'bg-white border-slate-100 rounded-[2rem] shadow-xl overflow-hidden p-8 border'} ${layout.grid}`}>
           
-          {/* Product Images */}
-          <div className={layout.media}>
-            <div className={`relative overflow-hidden ${layout.imageAspect} ${variant === 5 ? '' : isDark ? 'border-zinc-800 border' : 'border-slate-100 border shadow-sm'}`}>
-              <div className={`absolute top-4 left-4 ${theme.primary} text-white px-4 py-2 rounded-full text-sm font-black uppercase z-10 shadow-lg flex items-center space-x-1.5 animate-bounce`}>
-                <AlertTriangle className="w-4 h-4" />
-                <span>-50% DTO</span>
-              </div>
-              <Image src={selectedImage === 0 ? product.imageUrl : `https://picsum.photos/800/800?random=${product.id}${selectedImage}`} alt={product.title} fill className="object-cover" referrerPolicy="no-referrer" />
-            </div>
-            
-            <div className="grid grid-cols-4 gap-3 mt-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className={`relative w-full aspect-square ${variant === 5 ? 'border-2 border-black' : 'rounded-xl border-2'} overflow-hidden cursor-pointer transition-all ${selectedImage === i ? theme.border : 'border-transparent opacity-60 hover:opacity-100'}`} onClick={() => setSelectedImage(i)}>
-                  <Image 
-                    src={i === 0 ? product.imageUrl : `https://picsum.photos/400/400?random=${product.id}${i}`} 
-                    alt={`${product.title} thumbnail ${i}`}
-                    fill
-                    className="object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              ))}
-            </div>
+          {/* Product Images (3D Carousel) */}
+          <div className={`${layout.media} overflow-hidden`}>
+            {product.imageUrl ? (
+              <ProductCarousel3D 
+                images={[
+                  product.imageUrl,
+                  `https://picsum.photos/800/800?random=${product.id}1`,
+                  `https://picsum.photos/800/800?random=${product.id}2`,
+                  `https://picsum.photos/800/800?random=${product.id}3`,
+                  `https://picsum.photos/800/800?random=${product.id}4`
+                ]}
+                productName={product.title}
+                catColor={isDark ? '#e50010' : theme.text.split('-')[1] ? `var(--${theme.text.split('-')[1]}-500)` : '#ef4444'}
+                brandPrimary={isDark ? '#1a1a2e' : '#ffffff'}
+                brandSecondary={isDark ? '#000000' : '#f5f5f5'}
+              />
+            ) : (
+              <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gray-100 rounded-3xl">Sin imagen</div>
+            )}
           </div>
 
           {/* Product Info & Buy Area */}

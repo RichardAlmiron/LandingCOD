@@ -17,85 +17,92 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Templates without schema-incompatible fields (premium, image_url)
 const storeTemplates = [
-  { id: 'megamarket', name: 'MegaMarket', description: 'Marketplace global. Ideal para catálogos grandes.', category: 'Marketplace', premium: true },
-  { id: 'flashdeals', name: 'FlashDeals', description: 'Ofertas relámpago. Enfocado en descuentos.', category: 'Marketplace', premium: true },
-  { id: 'tradevault', name: 'TradeVault', description: 'Comercio B2B. Para ventas al por mayor.', category: 'Marketplace', premium: true },
-  { id: 'mercadocod', name: 'MercadoCOD', description: 'Comercio LatAm. Envíos rápidos y confianza.', category: 'Marketplace', premium: true },
-  { id: 'trendfast', name: 'TrendFast', description: 'Moda rápida. Ideal para ropa y tendencias.', category: 'Moda', premium: true },
-  { id: 'minimaltech', name: 'MinimalTech', description: 'Tech premium. Minimalista, enfocado en el producto.', category: 'Tech', premium: true },
-  { id: 'handcraft', name: 'HandCraft', description: 'Artesanía. Para productos artesanales y únicos.', category: 'Hogar', premium: true },
-  { id: 'boldathlete', name: 'BoldAthlete', description: 'Atlético audaz. Imágenes grandes y tipografía fuerte.', category: 'Moda', premium: true },
-  { id: 'blueretail', name: 'BlueRetail', description: 'Retail azul. Limpio y enfocado en retail.', category: 'Retail', premium: true },
-  { id: 'bidzone', name: 'BidZone', description: 'Subastas online. Ofertas diarias y descuentos.', category: 'Marketplace', premium: true },
-  { id: 'editorialchic', name: 'EditorialChic', description: 'Editorial chic. Minimalista y elegante.', category: 'Moda', premium: true },
-  { id: 'nordichome', name: 'NordicHome', description: 'Hogar nórdico. Azul y amarillo, tipografía gruesa.', category: 'Hogar', premium: true },
-  { id: 'bullseye', name: 'Bullseye', description: 'Diana roja. Rojo vibrante, limpio y amigable.', category: 'Retail', premium: true },
-  { id: 'beautybox', name: 'BeautyBox', description: 'Belleza premium. Negro y blanco con acentos rojos.', category: 'Belleza', premium: true },
-  { id: 'techretail', name: 'TechRetail', description: 'Retail tech. Azul y amarillo, enfocado en tecnología.', category: 'Tech', premium: true },
-  { id: 'stylepress', name: 'StylePress', description: 'Moda editorial. Blanco y negro, diseño de revista.', category: 'Moda', premium: true },
-  { id: 'homedecor', name: 'HomeDecor', description: 'Decoración. Púrpura, amigable y para el hogar.', category: 'Hogar', premium: true },
-  { id: 'builderzone', name: 'BuilderZone', description: 'Zona constructor. Naranja, robusto y profesional.', category: 'Hogar', premium: true },
-  { id: 'bulkzone', name: 'BulkZone', description: 'Mayoreo. Rojo y azul, enfocado en volumen.', category: 'Retail', premium: true },
-  { id: 'sportstripe', name: 'SportStripe', description: 'Rayas deportivas. Icónico y audaz.', category: 'Moda', premium: true },
-  { id: 'futuretech', name: 'FutureTech', description: 'Tech moderno. Limpio, futurista y premium.', category: 'Tech', premium: true },
-  { id: 'yogapremium', name: 'YogaPremium', description: 'Yoga premium. Atlético, limpio y zen.', category: 'Moda', premium: true },
-  { id: 'redstyle', name: 'RedStyle', description: 'Moda accesible. Moderno y vibrante.', category: 'Moda', premium: true },
-  { id: 'zenbasic', name: 'ZenBasic', description: 'Minimalismo japonés. Funcional y limpio.', category: 'Moda', premium: true },
-  { id: 'classicwear', name: 'ClassicWear', description: 'Clásico americano. Atemporal y familiar.', category: 'Moda', premium: true },
-  { id: 'familyfun', name: 'FamilyFun', description: 'Moda familiar. Alegre, colorido y económico.', category: 'Moda', premium: false },
-  { id: 'starstore', name: 'StarStore', description: 'Tienda estrella. Tradicional y confiable.', category: 'Retail', premium: true },
-  { id: 'luxservice', name: 'LuxService', description: 'Servicio lujoso. Elegante, premium y refinado.', category: 'Retail', premium: true },
-  { id: 'chicstore', name: 'ChicStore', description: 'Tienda chic. Sofisticado, icónico y audaz.', category: 'Retail', premium: true },
-  { id: 'elitestore', name: 'EliteStore', description: 'Lujo exclusivo. Elegante y sobrio.', category: 'Lujo', premium: true },
-  { id: 'designerhub', name: 'DesignerHub', description: 'Hub de diseñadores. Vanguardista y de lujo.', category: 'Lujo', premium: false },
-  { id: 'luxedit', name: 'LuxEdit', description: 'Editorial de lujo. Sofisticado y editorial.', category: 'Lujo', premium: false },
-  { id: 'influencestyle', name: 'InfluenceStyle', description: 'Estilo influencer. Moderno y aspiracional.', category: 'Moda', premium: true },
-  { id: 'boldyouth', name: 'BoldYouth', description: 'Moda juvenil. Atrevido y de tendencia.', category: 'Moda', premium: true },
-  { id: 'pinkglam', name: 'PinkGlam', description: 'Glamour rosa. Femenino y glamuroso.', category: 'Moda', premium: true },
-  { id: 'novatrend', name: 'NovaTrend', description: 'Estética impactante. Audaz y de alto impacto.', category: 'Moda', premium: true },
-  { id: 'softglow', name: 'SoftGlow', description: 'Brillo suave. Minimalista y estético.', category: 'Belleza', premium: true },
-  { id: 'beautyhaven', name: 'BeautyHaven', description: 'Paraíso de belleza. Colorido y profesional.', category: 'Belleza', premium: true },
-  { id: 'freshcraft', name: 'FreshCraft', description: 'Artesanal fresco. Orgánico y audaz.', category: 'Belleza', premium: true },
-  { id: 'progamer', name: 'ProGamer', description: 'Gaming pro. Dinámico y enfocado en juegos.', category: 'Tech', premium: true },
-  { id: 'gamevault', name: 'GameVault', description: 'Biblioteca digital. Oscuro y funcional.', category: 'Tech', premium: true },
-  { id: 'keymarket', name: 'KeyMarket', description: 'Marketplace de keys. Vibrante y de ofertas.', category: 'Tech', premium: false },
-  { id: 'verifymarket', name: 'VerifyMarket', description: 'Reventa verificada. Limpio y basado en datos.', category: 'Tech', premium: true },
-  { id: 'techparts', name: 'TechParts', description: 'Componentes tech. Azul, técnico y detallado.', category: 'Tech', premium: false },
-  { id: 'cashflow', name: 'CashFlow', description: 'Cashback hub. Amigable y enfocado en ahorros.', category: 'Marketplace', premium: true },
-  { id: 'primegoods', name: 'PrimeGoods', description: 'Calidad global. Profesional y de alta calidad.', category: 'Marketplace', premium: false },
-  { id: 'pricedrop', name: 'PriceDrop', description: 'Precios ultra bajos. Divertido y económico.', category: 'Marketplace', premium: true },
-  { id: 'eurostyle', name: 'EuroStyle', description: 'Moda europea. Moderno, limpio y elegante.', category: 'Moda', premium: true },
-  { id: 'sneakerzone', name: 'SneakerZone', description: 'Sneaker head. Deportivo, audaz y urbano.', category: 'Moda', premium: false },
-  { id: 'glamangel', name: 'GlamAngel', description: 'Glamour angelical. Femenino, elegante y rosa.', category: 'Belleza', premium: true },
-  { id: 'ecooutdoor', name: 'EcoOutdoor', description: 'Outdoor ecológico. Natural y limpio.', category: 'Deporte', premium: true },
-  { id: 'extremeexplorer', name: 'ExtremeExplorer', description: 'Explorador extremo. Rojo, negro y audaz.', category: 'Deporte', premium: true },
-  { id: 'fitmodern', name: 'FitModern', description: 'Fitness moderno. Atlético y de alto contraste.', category: 'Moda', premium: true },
-  { id: 'hypedrop', name: 'HypeDrop', description: 'Hype brutal. Minimalista, rojo y brutalista.', category: 'Moda', premium: true },
-  { id: 'streetboutique', name: 'StreetBoutique', description: 'Street boutique. Premium, editorial y limpio.', category: 'Moda', premium: false },
-  { id: 'avantgarde', name: 'AvantGarde', description: 'Avant-garde. Monocromático y vanguardista.', category: 'Moda', premium: true },
-  { id: 'petfriend', name: 'PetFriend', description: 'Amigo de mascotas. Azul, amarillo y accesible.', category: 'Hogar', premium: false },
-  { id: 'petworld', name: 'PetWorld', description: 'Mundo de mascotas. Limpio y estructurado.', category: 'Hogar', premium: true },
-  { id: 'sportzone', name: 'SportZone', description: 'Zona deportiva. Azul, denso y funcional.', category: 'Deporte', premium: true },
-  { id: 'greenhealth', name: 'GreenHealth', description: 'Salud natural. Verde y enfocado en salud.', category: 'Deporte', premium: false },
-  { id: 'timecraft', name: 'TimeCraft', description: 'Relojería de lujo. Verde oscuro y prestigioso.', category: 'Lujo', premium: true },
-  { id: 'maisonelegance', name: 'MaisonElegance', description: 'Elegancia maison. Rojo, itálicas y elegante.', category: 'Lujo', premium: true },
-  { id: 'blueclassic', name: 'BlueClassic', description: 'Clásico azul. Limpio y clásico.', category: 'Lujo', premium: true },
-  { id: 'charmboutique', name: 'CharmBoutique', description: 'Boutique de charms. Rosa suave y amigable.', category: 'Lujo', premium: false },
-  { id: 'crystalshine', name: 'CrystalShine', description: 'Brillo cristalino. Azul oscuro y premium.', category: 'Lujo', premium: true },
-  { id: 'iconshades', name: 'IconShades', description: 'Lentes icónicos. Rojo, negro y audaz.', category: 'Accesorios', premium: true },
-  { id: 'sportoptics', name: 'SportOptics', description: 'Óptica deportiva. Negro, gris y técnico.', category: 'Accesorios', premium: false },
-  { id: 'modernlens', name: 'ModernLens', description: 'Lentes modernos. Azul claro y limpio.', category: 'Accesorios', premium: true },
-  { id: 'opticalretail', name: 'OpticalRetail', description: 'Óptica retail. Azul corporativo y estructurado.', category: 'Accesorios', premium: false },
-  { id: 'shadeshub', name: 'ShadesHub', description: 'Hub de lentes. Blanco y negro, audaz.', category: 'Accesorios', premium: true },
-  { id: 'italiancraft', name: 'ItalianCraft', description: 'Artesanía italiana. Tipografía serif y espacios amplios.', category: 'Lujo', premium: true },
-  { id: 'heritagelux', name: 'HeritageLux', description: 'Herencia premium. Tonos tierra y cuadrícula elegante.', category: 'Lujo', premium: true },
-  { id: 'parisianchic', name: 'ParisianChic', description: 'Chic parisino. Blanco y negro, minimalista y atemporal.', category: 'Lujo', premium: true },
-  { id: 'milanomodern', name: 'MilanoModern', description: 'Milán moderno. Vanguardista y con acentos sutiles.', category: 'Lujo', premium: true },
-  { id: 'futureauto', name: 'FutureAuto', description: 'Auto futurista. Modo oscuro y alto contraste.', category: 'Tech', premium: true }
+  { id: 'megamarket', name: 'MegaMarket', description: 'Marketplace global. Ideal para catálogos grandes.', category: 'Marketplace' },
+  { id: 'flashdeals', name: 'FlashDeals', description: 'Ofertas relámpago. Enfocado en descuentos.', category: 'Marketplace' },
+  { id: 'tradevault', name: 'TradeVault', description: 'Comercio B2B. Para ventas al por mayor.', category: 'Marketplace' },
+  { id: 'mercadocod', name: 'MercadoCOD', description: 'Comercio LatAm. Envíos rápidos y confianza.', category: 'Marketplace' },
+  { id: 'trendfast', name: 'TrendFast', description: 'Moda rápida. Ideal para ropa y tendencias.', category: 'Moda' },
+  { id: 'minimaltech', name: 'MinimalTech', description: 'Tech premium. Minimalista, enfocado en el producto.', category: 'Tech' },
+  { id: 'handcraft', name: 'HandCraft', description: 'Artesanía. Para productos artesanales y únicos.', category: 'Hogar' },
+  { id: 'boldathlete', name: 'BoldAthlete', description: 'Atlético audaz. Imágenes grandes y tipografía fuerte.', category: 'Moda' },
+  { id: 'blueretail', name: 'BlueRetail', description: 'Retail azul. Limpio y enfocado en retail.', category: 'Retail' },
+  { id: 'bidzone', name: 'BidZone', description: 'Subastas online. Ofertas diarias y descuentos.', category: 'Marketplace' },
+  { id: 'editorialchic', name: 'EditorialChic', description: 'Editorial chic. Minimalista y elegante.', category: 'Moda' },
+  { id: 'nordichome', name: 'NordicHome', description: 'Hogar nórdico. Azul y amarillo, tipografía gruesa.', category: 'Hogar' },
+  { id: 'bullseye', name: 'Bullseye', description: 'Diana roja. Rojo vibrante, limpio y amigable.', category: 'Retail' },
+  { id: 'beautybox', name: 'BeautyBox', description: 'Belleza premium. Negro y blanco con acentos rojos.', category: 'Belleza' },
+  { id: 'techretail', name: 'TechRetail', description: 'Retail tech. Azul y amarillo, enfocado en tecnología.', category: 'Tech' },
+  { id: 'stylepress', name: 'StylePress', description: 'Moda editorial. Blanco y negro, diseño de revista.', category: 'Moda' },
+  { id: 'homedecor', name: 'HomeDecor', description: 'Decoración. Púrpura, amigable y para el hogar.', category: 'Hogar' },
+  { id: 'builderzone', name: 'BuilderZone', description: 'Zona constructor. Naranja, robusto y profesional.', category: 'Hogar' },
+  { id: 'bulkzone', name: 'BulkZone', description: 'Mayoreo. Rojo y azul, enfocado en volumen.', category: 'Retail' },
+  { id: 'sportstripe', name: 'SportStripe', description: 'Rayas deportivas. Icónico y audaz.', category: 'Moda' },
+  { id: 'futuretech', name: 'FutureTech', description: 'Tech moderno. Limpio, futurista y premium.', category: 'Tech' },
+  { id: 'yogapremium', name: 'YogaPremium', description: 'Yoga premium. Atlético, limpio y zen.', category: 'Moda' },
+  { id: 'redstyle', name: 'RedStyle', description: 'Moda accesible. Moderno y vibrante.', category: 'Moda' },
+  { id: 'zenbasic', name: 'ZenBasic', description: 'Minimalismo japonés. Funcional y limpio.', category: 'Moda' },
+  { id: 'classicwear', name: 'ClassicWear', description: 'Clásico americano. Atemporal y familiar.', category: 'Moda' },
+  { id: 'familyfun', name: 'FamilyFun', description: 'Moda familiar. Alegre, colorido y económico.', category: 'Moda' },
+  { id: 'starstore', name: 'StarStore', description: 'Tienda estrella. Tradicional y confiable.', category: 'Retail' },
+  { id: 'luxservice', name: 'LuxService', description: 'Servicio lujoso. Elegante, premium y refinado.', category: 'Retail' },
+  { id: 'chicstore', name: 'ChicStore', description: 'Tienda chic. Sofisticado, icónico y audaz.', category: 'Retail' },
+  { id: 'elitestore', name: 'EliteStore', description: 'Lujo exclusivo. Elegante y sobrio.', category: 'Lujo' },
+  { id: 'designerhub', name: 'DesignerHub', description: 'Hub de diseñadores. Vanguardista y de lujo.', category: 'Lujo' },
+  { id: 'luxedit', name: 'LuxEdit', description: 'Editorial de lujo. Sofisticado y editorial.', category: 'Lujo' },
+  { id: 'influencestyle', name: 'InfluenceStyle', description: 'Estilo influencer. Moderno y aspiracional.', category: 'Moda' },
+  { id: 'boldyouth', name: 'BoldYouth', description: 'Moda juvenil. Atrevido y de tendencia.', category: 'Moda' },
+  { id: 'pinkglam', name: 'PinkGlam', description: 'Glamour rosa. Femenino y glamuroso.', category: 'Moda' },
+  { id: 'novatrend', name: 'NovaTrend', description: 'Estética impactante. Audaz y de alto impacto.', category: 'Moda' },
+  { id: 'softglow', name: 'SoftGlow', description: 'Brillo suave. Minimalista y estético.', category: 'Belleza' },
+  { id: 'beautyhaven', name: 'BeautyHaven', description: 'Paraíso de belleza. Colorido y profesional.', category: 'Belleza' },
+  { id: 'freshcraft', name: 'FreshCraft', description: 'Artesanal fresco. Orgánico y audaz.', category: 'Belleza' },
+  { id: 'progamer', name: 'ProGamer', description: 'Gaming pro. Dinámico y enfocado en juegos.', category: 'Tech' },
+  { id: 'gamevault', name: 'GameVault', description: 'Biblioteca digital. Oscuro y funcional.', category: 'Tech' },
+  { id: 'keymarket', name: 'KeyMarket', description: 'Marketplace de keys. Vibrante y de ofertas.', category: 'Tech' },
+  { id: 'verifymarket', name: 'VerifyMarket', description: 'Reventa verificada. Limpio y basado en datos.', category: 'Tech' },
+  { id: 'techparts', name: 'TechParts', description: 'Componentes tech. Azul, técnico y detallado.', category: 'Tech' },
+  { id: 'cashflow', name: 'CashFlow', description: 'Cashback hub. Amigable y enfocado en ahorros.', category: 'Marketplace' },
+  { id: 'primegoods', name: 'PrimeGoods', description: 'Calidad global. Profesional y de alta calidad.', category: 'Marketplace' },
+  { id: 'pricedrop', name: 'PriceDrop', description: 'Precios ultra bajos. Divertido y económico.', category: 'Marketplace' },
+  { id: 'eurostyle', name: 'EuroStyle', description: 'Moda europea. Moderno, limpio y elegante.', category: 'Moda' },
+  { id: 'sneakerzone', name: 'SneakerZone', description: 'Sneaker head. Deportivo, audaz y urbano.', category: 'Moda' },
+  { id: 'glamangel', name: 'GlamAngel', description: 'Glamour angelical. Femenino, elegante y rosa.', category: 'Belleza' },
+  { id: 'ecooutdoor', name: 'EcoOutdoor', description: 'Outdoor ecológico. Natural y limpio.', category: 'Deporte' },
+  { id: 'extremeexplorer', name: 'ExtremeExplorer', description: 'Explorador extremo. Rojo, negro y audaz.', category: 'Deporte' },
+  { id: 'fitmodern', name: 'FitModern', description: 'Fitness moderno. Atlético y de alto contraste.', category: 'Moda' },
+  { id: 'hypedrop', name: 'HypeDrop', description: 'Hype brutal. Minimalista, rojo y brutalista.', category: 'Moda' },
+  { id: 'streetboutique', name: 'StreetBoutique', description: 'Street boutique. Premium, editorial y limpio.', category: 'Moda' },
+  { id: 'avantgarde', name: 'AvantGarde', description: 'Avant-garde. Monocromático y vanguardista.', category: 'Moda' },
+  { id: 'petfriend', name: 'PetFriend', description: 'Amigo de mascotas. Azul, amarillo y accesible.', category: 'Hogar' },
+  { id: 'petworld', name: 'PetWorld', description: 'Mundo de mascotas. Limpio y estructurado.', category: 'Hogar' },
+  { id: 'sportzone', name: 'SportZone', description: 'Zona deportiva. Azul, denso y funcional.', category: 'Deporte' },
+  { id: 'greenhealth', name: 'GreenHealth', description: 'Salud natural. Verde y enfocado en salud.', category: 'Deporte' },
+  { id: 'timecraft', name: 'TimeCraft', description: 'Relojería de lujo. Verde oscuro y prestigioso.', category: 'Lujo' },
+  { id: 'maisonelegance', name: 'MaisonElegance', description: 'Elegancia maison. Rojo, itálicas y elegante.', category: 'Lujo' },
+  { id: 'blueclassic', name: 'BlueClassic', description: 'Clásico azul. Limpio y clásico.', category: 'Lujo' },
+  { id: 'charmboutique', name: 'CharmBoutique', description: 'Boutique de charms. Rosa suave y amigable.', category: 'Lujo' },
+  { id: 'crystalshine', name: 'CrystalShine', description: 'Brillo cristalino. Azul oscuro y premium.', category: 'Lujo' },
+  { id: 'iconshades', name: 'IconShades', description: 'Lentes icónicos. Rojo, negro y audaz.', category: 'Accesorios' },
+  { id: 'sportoptics', name: 'SportOptics', description: 'Óptica deportiva. Negro, gris y técnico.', category: 'Accesorios' },
+  { id: 'modernlens', name: 'ModernLens', description: 'Lentes modernos. Azul claro y limpio.', category: 'Accesorios' },
+  { id: 'opticalretail', name: 'OpticalRetail', description: 'Óptica retail. Azul corporativo y estructurado.', category: 'Accesorios' },
+  { id: 'shadeshub', name: 'ShadesHub', description: 'Hub de lentes. Blanco y negro, audaz.', category: 'Accesorios' },
+  { id: 'italiancraft', name: 'ItalianCraft', description: 'Artesanía italiana. Tipografía serif y espacios amplios.', category: 'Lujo' },
+  { id: 'heritagelux', name: 'HeritageLux', description: 'Herencia premium. Tonos tierra y cuadrícula elegante.', category: 'Lujo' },
+  { id: 'parisianchic', name: 'ParisianChic', description: 'Chic parisino. Blanco y negro, minimalista y atemporal.', category: 'Lujo' },
+  { id: 'milanomodern', name: 'MilanoModern', description: 'Milán moderno. Vanguardista y con acentos sutiles.', category: 'Lujo' },
+  { id: 'futureauto', name: 'FutureAuto', description: 'Auto futurista. Modo oscuro y alto contraste.', category: 'Tech' }
 ];
 
 const pdpTemplatesList = [
+  // Premium First
+  { id: 'premium-bundle', category: 'premium-bundle', name: 'VITALIFE BUNDLE', description: 'Máxima conversión con bundles y upsells.' },
+  { id: 'premium-electronics', category: 'premium-electronics', name: 'NEXUS NOVA X', description: 'Futurista dark mode para tecnología.' },
+  { id: 'premium-health', category: 'premium-health', name: 'NURO-BALANCE', description: 'Limpio y clínico para suplementos.' },
+  { id: 'premium-urgency', category: 'premium-urgency', name: 'AURA AUDIO', description: 'Agresivo con contadores y escasez.' },
+  
   // Urgency
   { id: 'urgency-1', category: 'urgency', name: 'Flash Relámpago', description: 'Rojo intenso, máximo contraste.' },
   { id: 'urgency-2', category: 'urgency', name: 'Black Friday', description: 'Oscuro con acentos neón.' },
@@ -117,6 +124,7 @@ const pdpTemplatesList = [
   { id: 'urgency-18', category: 'urgency', name: 'Oferta Exclusiva VIP', description: 'Dorado y negro con escasez.' },
   { id: 'urgency-19', category: 'urgency', name: 'Cierre de Temporada', description: 'Colores cálidos, urgencia moderada.' },
   { id: 'urgency-20', category: 'urgency', name: 'Stock Crítico', description: 'Barra de inventario parpadeante.' },
+  
   // Trust
   { id: 'trust-1', category: 'trust', name: 'Médico/Clínico', description: 'Azul claro y blanco, máxima pulcritud.' },
   { id: 'trust-2', category: 'trust', name: 'Premium/Lujo', description: 'Negro y plata, sofisticado.' },
@@ -138,6 +146,7 @@ const pdpTemplatesList = [
   { id: 'trust-18', category: 'trust', name: 'Prensa y Medios', description: 'Logos de revistas y TV.' },
   { id: 'trust-19', category: 'trust', name: 'Auditoría Externa', description: 'Reportes de calidad visibles.' },
   { id: 'trust-20', category: 'trust', name: 'Soporte 24/7', description: 'Chat en vivo y atención humana.' },
+  
   // Bundle
   { id: 'bundle-1', category: 'bundle', name: 'BOGO Clásico', description: 'Verde esmeralda, enfoque en ahorro.' },
   { id: 'bundle-2', category: 'bundle', name: 'Escalera de Valor', description: 'Azul y verde.' },
@@ -159,6 +168,7 @@ const pdpTemplatesList = [
   { id: 'bundle-18', category: 'bundle', name: 'Starter Kit', description: 'Todo lo necesario para empezar.' },
   { id: 'bundle-19', category: 'bundle', name: 'Upgrade Automático', description: 'Mejora por poco dinero.' },
   { id: 'bundle-20', category: 'bundle', name: 'Liquidación de Lote', description: 'Llevate todo el stock.' },
+  
   // Story
   { id: 'story-1', category: 'story', name: 'El Viaje del Héroe', description: 'Editorial, tipografía serif.' },
   { id: 'story-2', category: 'story', name: 'Antes y Después', description: 'Contraste alto, visual.' },
@@ -180,6 +190,7 @@ const pdpTemplatesList = [
   { id: 'story-18', category: 'story', name: 'El Ingrediente Mágico', description: 'Enfoque en un componente.' },
   { id: 'story-19', category: 'story', name: 'Superando la Adversidad', description: 'Historia de resiliencia.' },
   { id: 'story-20', category: 'story', name: 'Manifiesto Rebelde', description: 'Contra el status quo.' },
+  
   // Direct
   { id: 'direct-1', category: 'direct', name: 'Fricción Cero', description: 'Blanco absoluto, botón gigante.' },
   { id: 'direct-2', category: 'direct', name: 'Checkout Integrado', description: 'Gris claro, formulario destacado.' },
@@ -201,6 +212,7 @@ const pdpTemplatesList = [
   { id: 'direct-18', category: 'direct', name: 'Foco en el Precio', description: 'El valor es lo más importante.' },
   { id: 'direct-19', category: 'direct', name: 'Checkout a Pantalla Completa', description: 'Inmersión total.' },
   { id: 'direct-20', category: 'direct', name: 'Compra por Chat', description: 'Estilo conversacional.' },
+  
   // Health
   { id: 'health-1', category: 'health', name: 'Clínica Pura', description: 'Blanco y azul médico, máxima confianza.' },
   { id: 'health-2', category: 'health', name: 'Naturaleza Orgánica', description: 'Tonos verdes y tierra, estilo herbolario.' },
@@ -212,6 +224,7 @@ const pdpTemplatesList = [
   { id: 'health-8', category: 'health', name: 'Fórmula Transparente', description: 'Minimalista, foco en ingredientes.' },
   { id: 'health-9', category: 'health', name: 'Vitalidad Diaria', description: 'Naranja y amarillo, vibrante.' },
   { id: 'health-10', category: 'health', name: 'Respaldo Médico', description: 'Diseño institucional, sellos de autoridad.' },
+  
   // Electronics
   { id: 'electronics-1', category: 'electronics', name: 'Modo Oscuro Tech', description: 'Fondo negro, acentos neón azul.' },
   { id: 'electronics-2', category: 'electronics', name: 'Minimalismo Tech', description: 'Blanco absoluto, tipografía fina.' },
@@ -223,6 +236,7 @@ const pdpTemplatesList = [
   { id: 'electronics-8', category: 'electronics', name: 'Audio Hi-Fi', description: 'Tonos cálidos oscuros, elegante.' },
   { id: 'electronics-9', category: 'electronics', name: 'Gadget Viral', description: 'Alto contraste, rojo y blanco.' },
   { id: 'electronics-10', category: 'electronics', name: 'Innovación Pura', description: 'Degradados morados y azules.' },
+  
   // Tools
   { id: 'tools-1', category: 'tools', name: 'Constructor Pro', description: 'Amarillo y negro, estilo Caterpillar.' },
   { id: 'tools-2', category: 'tools', name: 'Taller Industrial', description: 'Gris metálico y naranja.' },
@@ -234,6 +248,7 @@ const pdpTemplatesList = [
   { id: 'tools-8', category: 'tools', name: 'Garantía de por Vida', description: 'Sellos gigantes, máxima confianza.' },
   { id: 'tools-9', category: 'tools', name: 'Trabajo Pesado', description: 'Negro absoluto con acentos amarillos.' },
   { id: 'tools-10', category: 'tools', name: 'Innovación Táctica', description: 'Diseño militar, verde oliva.' },
+  
   // Beauty
   { id: 'beauty-1', category: 'beauty', name: 'Elegancia Pura', description: 'Tonos nude y tipografía serif.' },
   { id: 'beauty-2', category: 'beauty', name: 'Glow Up', description: 'Rosa pastel y acentos dorados.' },
@@ -245,6 +260,7 @@ const pdpTemplatesList = [
   { id: 'beauty-8', category: 'beauty', name: 'Resultados Visibles', description: 'Enfoque en fotos antes/después.' },
   { id: 'beauty-9', category: 'beauty', name: 'Aroma y Textura', description: 'Diseño sensorial, colores cálidos.' },
   { id: 'beauty-10', category: 'beauty', name: 'Secreto de Belleza', description: 'Tonos burdeos y tipografía cursiva.' },
+  
   // Home
   { id: 'home-1', category: 'home', name: 'Hogar Cálido', description: 'Tonos terracota y beige.' },
   { id: 'home-2', category: 'home', name: 'Minimalismo Nórdico', description: 'Blanco, gris claro y madera.' },
@@ -268,7 +284,7 @@ async function seed() {
   console.log('Insertando tiendas reutilizables...');
   const { error: err1 } = await supabase.from('Tiendas_Reutilizables').insert(storeTemplates);
   if (err1) {
-    console.error('Error insertando tiendas:', err1);
+    console.error('Error insertando tiendas:', err1.message);
   } else {
     console.log(`Insertadas ${storeTemplates.length} tiendas exitosamente.`);
   }
@@ -276,7 +292,7 @@ async function seed() {
   console.log('Insertando plantillas PDP...');
   const { error: err2 } = await supabase.from('Paginas_de_Productos_Reutilizables').insert(pdpTemplatesList);
   if (err2) {
-    console.error('Error insertando pdps:', err2);
+    console.error('Error insertando pdps:', err2.message);
   } else {
     console.log(`Insertados ${pdpTemplatesList.length} pdps exitosamente.`);
   }

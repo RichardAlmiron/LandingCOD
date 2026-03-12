@@ -10,9 +10,14 @@ const almidropKey = process.env.ALMIDROP_SUPABASE_SERVICE_ROLE_KEY || 'mock-key'
 const almidropSupabase = createClient(almidropUrl, almidropKey);
 
 export async function GET(request: Request) {
-    if (!almidropUrl || !almidropKey) {
+    // Production Check: Ensure we have real credentials
+    if (!process.env.ALMIDROP_SUPABASE_URL || 
+        !process.env.ALMIDROP_SUPABASE_SERVICE_ROLE_KEY || 
+        process.env.ALMIDROP_SUPABASE_URL.includes('mock.supabase.co')) {
+        
+        console.error('[PRODUCTION ALERT] AlmiDrop credentials missing or using mocks');
         return NextResponse.json(
-            { error: 'Faltan credenciales de AlmiDrop en el servidor.' },
+            { error: 'Servicio de catálogo no disponible (Configuración de producción requerida).' },
             { status: 500 }
         );
     }

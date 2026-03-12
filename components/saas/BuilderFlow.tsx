@@ -47,12 +47,9 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
 
     // Dynamic Templates State
     const [storeTemplates, setStoreTemplates] = useState<any[]>([]);
+    const [pdpTemplates, setPdpTemplates] = useState<any[]>([]);
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
     const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
-
-    // PDP Templates State (cargados desde la BD)
-    const [pdpTemplates, setPdpTemplates] = useState<any[]>([]);
-    const [isLoadingPdpTemplates, setIsLoadingPdpTemplates] = useState(false);
 
     // AlmiDrop Products State
     const [almidropProducts, setAlmidropProducts] = useState<any[]>([]);
@@ -63,46 +60,34 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
     const ITEMS_PER_PAGE = 24; // 6 columnas × 4 filas (Solicitado por el usuario)
 
-    // Cargar templates de tiendas
     useEffect(() => {
-        fetch('/api/templates/stores')
-            .then(res => res.json())
-            .then(data => {
-                if (data.stores) {
-                    const mapped = data.stores.map((s: any) => ({
-                        id: s.id,
-                        name: s.name,
-                        desc: s.description,
-                        category: s.category,
-                        premium: s.premium
-                    }));
-                    setStoreTemplates(mapped);
-                }
-            })
-            .catch(console.error)
-            .finally(() => setIsLoadingTemplates(false));
-    }, []);
-
-    // Cargar templates de PDP desde la BD (Paginas_de_Productos_Reutilizables)
-    useEffect(() => {
-        setIsLoadingPdpTemplates(true);
-        fetch('/api/templates/pdp')
-            .then(res => res.json())
-            .then(data => {
-                if (data.pdps) {
-                    const mapped = data.pdps.map((p: any) => ({
-                        id: p.id,
-                        name: p.name,
-                        desc: p.description || '',
-                        category: p.category || 'PDP',
-                        preview_url: p.preview_url || p.preview_image || p.screenshot_url || null,
-                        template_key: p.template_key || p.id,
-                    }));
-                    setPdpTemplates(mapped);
-                }
-            })
-            .catch(console.error)
-            .finally(() => setIsLoadingPdpTemplates(false));
+        Promise.all([
+            fetch('/api/templates/stores').then(res => res.json()),
+            fetch('/api/templates/pdp').then(res => res.json())
+        ]).then(([storesData, pdpsData]) => {
+            if (storesData.stores) {
+                const mapped = storesData.stores.map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    desc: s.description,
+                    category: s.category,
+                    premium: s.premium,
+                    image_url: s.image_url
+                }));
+                setStoreTemplates(mapped);
+            }
+            if (pdpsData.pdps) {
+                const mapped = pdpsData.pdps.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    desc: p.description,
+                    category: p.category,
+                    premium: p.premium,
+                    image_url: p.image_url
+                }));
+                setPdpTemplates(mapped);
+            }
+        }).catch(console.error).finally(() => setIsLoadingTemplates(false));
     }, []);
 
     const fetchAlmiDropProducts = async (searchStr = '') => {
@@ -165,6 +150,21 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                 setStoreTemplates(prev => prev.filter(t => t.id !== id));
             } else {
                 alert('No se pudo eliminar el template.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error al intentar eliminar');
+        }
+    };
+
+    const handleDeletePdpTemplate = async (id: string) => {
+        if (!confirm('¿Seguro de que deseas mover esta página de producto a la papelera?')) return;
+        try {
+            const res = await fetch(`/api/templates/pdp?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setPdpTemplates(prev => prev.filter(t => t.id !== id));
+            } else {
+                alert('No se pudo eliminar la página de producto.');
             }
         } catch (err) {
             console.error(err);
@@ -398,46 +398,42 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                         </>
                     ) : (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0 }}>
-                                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Páginas de Producto Disponibles</h2>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>Selecciona la página de producto que quieres usar. Arrastra o usa las flechas para explorar.</p>
-                                {isLoadingPdpTemplates && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Cargando...</span>}
-                                {!isLoadingPdpTemplates && <span style={{ fontSize: 12, color: 'var(--accent-primary)', fontWeight: 600 }}>{pdpTemplates.length} disponibles</span>}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', margin: 0 }}>Páginas de Producto</h2>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({pdpTemplates.length} plantillas disponibles)</span>
                             </div>
-                            <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
-                                {pdpTemplates.length > 0 ? (
-                                    // Agrupar PDPs por categoría, igual que las tiendas
-                                    (Array.from(new Set(pdpTemplates.map(t => t.category))).sort()).map(cat => {
-                                        const items = pdpTemplates.filter(t => t.category === cat);
-                                        return (
-                                            <Carousel3D
-                                                key={cat}
-                                                category={cat}
-                                                items={items}
-                                                selectedId={template}
-                                                onSelect={(id) => setTemplate(id)}
-                                                onConfirmSelect={(id) => {
-                                                    setTemplate(id);
-                                                    const chosen = pdpTemplates.find(t => t.id === id);
-                                                    setStoreData(p => ({
-                                                        ...p,
-                                                        pdpCategory: (chosen?.category || 'direct') as StoreData['pdpCategory'],
-                                                        pdpTemplate: chosen?.template_key || id,
-                                                    }));
-                                                    setStep(4); // ← Ir directamente al paso 4 (configurar PDP)
-                                                }}
-                                                isPdp={true}
-                                                pdpScreenshotBase="/pdp-screenshots/"
-                                            />
-                                        );
-                                    })
+                            <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: 8, paddingBottom: 60 }} className="custom-scrollbar">
+                                {isLoadingTemplates ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                                    </div>
                                 ) : (
-                                    !isLoadingPdpTemplates && (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12, color: 'var(--text-muted)' }}>
-                                            <span style={{ fontSize: 40 }}>📄</span>
-                                            <p style={{ margin: 0, fontWeight: 600 }}>No hay páginas de producto disponibles aún.</p>
-                                        </div>
-                                    )
+                                    // Group PDP templates by category, show each as a Carousel3D
+                                    (() => {
+                                        const categories = Array.from(new Set(pdpTemplates.map(t => t.category).filter(Boolean)));
+                                        return categories.map(cat => {
+                                            const items = pdpTemplates.filter(t => t.category === cat);
+                                            if (items.length === 0) return null;
+                                            return (
+                                                <Carousel3D
+                                                    key={cat}
+                                                    category={cat}
+                                                    items={items}
+                                                    selectedId={pdpCategory || ''}
+                                                    onSelect={(id) => { setPdpCategory(id); }}
+                                                    onConfirmSelect={(id) => {
+                                                        setPdpCategory(id);
+                                                        const selected = pdpTemplates.find((t: any) => t.id === id);
+                                                        setStoreData(p => ({ ...p, pdpCategory: (selected?.category || 'urgency') as StoreData['pdpCategory'], pdpTemplate: id }));
+                                                        setStep(3);
+                                                    }}
+                                                    isAdmin={isAdmin}
+                                                    onDeleteTemplate={handleDeletePdpTemplate}
+                                                    templateType="pdp"
+                                                />
+                                            );
+                                        });
+                                    })()
                                 )}
                             </div>
                         </>
@@ -451,23 +447,16 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                         <button
                             className="btn-primary"
                             style={{ padding: '10px 28px', fontSize: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.3)', pointerEvents: 'auto' }}
-                            disabled={flowType === 'pdp' ? !template : !template}
+                            disabled={flowType === 'pdp' && !pdpCategory}
                             onClick={() => {
-                                if (flowType === 'pdp') {
-                                    // Flujo PDP: guardar template seleccionada e ir al paso 4
-                                    const chosen = pdpTemplates.find(t => t.id === template);
-                                    setStoreData(p => ({
-                                        ...p,
-                                        pdpCategory: (chosen?.category || 'direct') as StoreData['pdpCategory'],
-                                        pdpTemplate: chosen?.template_key || template,
-                                    }));
-                                    setStep(4);
-                                } else {
-                                    setStep(3);
+                                if (flowType === 'pdp' && pdpCategory) {
+                                    const selected = pdpTemplates.find((t: any) => t.id === pdpCategory);
+                                    setStoreData(p => ({ ...p, pdpCategory: (selected?.category || 'urgency') as StoreData['pdpCategory'], pdpTemplate: pdpCategory }));
                                 }
+                                setStep(3);
                             }}
                         >
-                            {flowType === 'pdp' ? 'Continuar con esta Template' : 'Seleccionar Productos de AlmiDrop'}
+                            Seleccionar Productos de AlmiDrop
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 8 }}><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                         </button>
                     </div>

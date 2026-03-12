@@ -28,7 +28,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
         }
 
-        const storeName = storeData.header?.storeName || 'Mi Tienda';
+        const storeName = storeData.name || 'Mi Tienda';
 
         // Check if slug is taken (by anyone)
         const { data: existingStore } = await supabase

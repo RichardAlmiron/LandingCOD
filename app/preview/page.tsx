@@ -1,11 +1,24 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { defaultStore, StoreData } from '@/lib/types';
-import MegaMarketTemplate from '@/components/templates/MegaMarket';
-import FlashDealsTemplate from '@/components/templates/FlashDeals';
 import { Loader2, Trash2 } from 'lucide-react';
-// Import other templates as needed or dynamically lazy load them
 import dynamic from 'next/dynamic';
+
+// PDP template components
+import PdpAggressiveUrgency from '@/components/templates/pdp/PdpAggressiveUrgency';
+import PdpSocialTrust from '@/components/templates/pdp/PdpSocialTrust';
+import PdpBundleMaximizer from '@/components/templates/pdp/PdpBundleMaximizer';
+import PdpStorytelling from '@/components/templates/pdp/PdpStorytelling';
+import PdpDirectCheckout from '@/components/templates/pdp/PdpDirectCheckout';
+import PdpHealth from '@/components/templates/pdp/PdpHealth';
+import PdpElectronics from '@/components/templates/pdp/PdpElectronics';
+import PdpTools from '@/components/templates/pdp/PdpTools';
+import PdpBeauty from '@/components/templates/pdp/PdpBeauty';
+import PdpHome from '@/components/templates/pdp/PdpHome';
+import PdpPremiumBundle from '@/components/templates/pdp/PdpPremiumBundle';
+import PdpPremiumElectronics from '@/components/templates/pdp/PdpPremiumElectronics';
+import PdpPremiumHealth from '@/components/templates/pdp/PdpPremiumHealth';
+import PdpPremiumUrgency from '@/components/templates/pdp/PdpPremiumUrgency';
 
 const templateComponents: Record<string, any> = {
     megamarket: dynamic(() => import('@/components/templates/MegaMarket')),
@@ -85,15 +98,58 @@ const templateComponents: Record<string, any> = {
     futureauto: dynamic(() => import('@/components/templates/FutureAuto')),
 };
 
+// Map PDP category -> component
+const pdpCategoryComponents: Record<string, React.ComponentType<any>> = {
+    urgency: PdpAggressiveUrgency,
+    trust: PdpSocialTrust,
+    bundle: PdpBundleMaximizer,
+    story: PdpStorytelling,
+    direct: PdpDirectCheckout,
+    health: PdpHealth,
+    electronics: PdpElectronics,
+    tools: PdpTools,
+    beauty: PdpBeauty,
+    home: PdpHome,
+    'premium-bundle': PdpPremiumBundle,
+    'premium-electronics': PdpPremiumElectronics,
+    'premium-health': PdpPremiumHealth,
+    'premium-urgency': PdpPremiumUrgency,
+};
+
 export default function FullscreenPreview() {
     const [data, setData] = useState<{ store: StoreData, template: string } | null>(null);
+    const [pdpMode, setPdpMode] = useState<{ category: string; templateId: string } | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
-        // Check for ?template= query param (used by carousel 3D previews)
         const params = new URLSearchParams(window.location.search);
         const templateParam = params.get('template');
+        const typeParam = params.get('type');
+
+        // PDP preview: fetch the template from the API to get its category
+        if (templateParam && typeParam === 'pdp') {
+            fetch('/api/templates/pdp')
+                .then(res => res.json())
+                .then(apiData => {
+                    if (apiData.pdps) {
+                        const pdp = apiData.pdps.find((p: any) => p.id === templateParam);
+                        if (pdp) {
+                            setPdpMode({ category: pdp.category, templateId: pdp.id });
+                            setData({ store: defaultStore, template: templateParam });
+                            return;
+                        }
+                    }
+                    // Fallback: if not found, show as store
+                    setData({ store: defaultStore, template: templateParam });
+                })
+                .catch(() => {
+                    setData({ store: defaultStore, template: templateParam });
+                });
+            return;
+        }
+
+        // Store preview
         if (templateParam && templateComponents[templateParam]) {
             setData({ store: defaultStore, template: templateParam });
             return;
@@ -130,7 +186,7 @@ export default function FullscreenPreview() {
         setIsDeleting(true);
         try {
             // Check if it's a store or PDP by trying both APIs starting with the most probable one (Stores)
-            let isPdp = data.template.includes('-'); // Fast heuristic, pdps usually have urgency-1, trust-2
+            let isPdp = !!pdpMode;
 
             const endpoint = isPdp ? '/api/templates/pdp' : '/api/templates/stores';
             const res = await fetch(`${endpoint}?id=${data.template}`, { method: 'DELETE' });
@@ -156,6 +212,38 @@ export default function FullscreenPreview() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            </div>
+        );
+    }
+
+    // Render PDP if pdpMode is set
+    if (pdpMode) {
+        const PdpComponent = pdpCategoryComponents[pdpMode.category] || PdpAggressiveUrgency;
+        const product = data.store.products[0] || {
+            id: 'demo', title: 'Producto Demo', description: 'Descripción del producto',
+            price: '$999', originalPrice: '$1,999', imageUrl: 'https://picsum.photos/seed/demo/800/800',
+            category: 'General', rating: 4.8, reviews: 1245
+        };
+        const variant = parseInt(pdpMode.templateId.split('-')[1] || '1', 10);
+
+        return (
+            <div suppressHydrationWarning className="min-h-screen bg-white relative">
+                <PdpComponent data={data.store} product={product} variant={variant} />
+                {isAdmin && (
+                    <div className="fixed bottom-6 right-6 z-[9999]">
+                        <button 
+                            onClick={handleDeleteTemplate}
+                            disabled={isDeleting}
+                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-full shadow-2xl font-bold transition-transform hover:scale-105"
+                        >
+                            {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                            {isDeleting ? 'Eliminando...' : 'Eliminar Plantilla Globalmente'}
+                        </button>
+                        <div className="text-xs text-red-600 font-bold bg-white px-2 py-1 rounded shadow-md mt-2 text-center absolute -top-8 right-0 whitespace-nowrap">
+                            VISTA ADMIN ACTIVA
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
