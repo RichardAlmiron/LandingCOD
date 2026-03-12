@@ -12,6 +12,7 @@ interface PDPProps {
 }
 
 export default function PdpBeauty({ data, product, variant = 1 }: PDPProps) {
+  console.log("DEBUG: PdpBeauty data features:", data?.pdpFeatures);
   const [timeLeft, setTimeLeft] = useState(3600); // 1 hour
   const [viewers, setViewers] = useState(142);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -64,7 +65,7 @@ export default function PdpBeauty({ data, product, variant = 1 }: PDPProps) {
       {/* 2. Live Viewers (Social Pressure) */}
       <div className="bg-white border-b border-stone-100 py-2 text-center text-xs font-medium text-stone-500 flex justify-center items-center gap-2">
         <Users className={`w-4 h-4 ${theme.text} animate-pulse`} />
-        <span className={`font-bold ${theme.text}`}>{viewers} personas</span> están viendo este producto ahora.
+        <span className={`font-bold ${theme.text}`}>{viewers} COMPRADORES</span> están viendo este producto ahora.
       </div>
 
       {/* 3. Hero Section (Soft & High Converting) */}
@@ -288,7 +289,7 @@ export default function PdpBeauty({ data, product, variant = 1 }: PDPProps) {
       />
 
       <StickyBuyButton price={product.price} theme={theme} />
-      {data.pdpFeatures.recentSales && <RecentSalesPopup theme={theme} />}
+      {(data?.pdpFeatures?.recentSales ?? false) && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }
