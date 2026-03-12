@@ -8,6 +8,7 @@ interface CarouselItem {
   name: string;
   desc: string;
   premium?: boolean;
+  preview_url?: string | null;
 }
 
 interface Carousel3DProps {
@@ -18,6 +19,9 @@ interface Carousel3DProps {
   onConfirmSelect?: (id: any) => void;
   isAdmin?: boolean;
   onDeleteTemplate?: (id: string) => void;
+  isPdp?: boolean;
+  pdpColors?: Record<string, string>;
+  pdpScreenshotBase?: string; // directorio alternativo para screenshots de PDP
 }
 
 const catColors: Record<string, string> = {
@@ -53,11 +57,11 @@ const BRAND: Record<string, [string, string]> = {
   opticalretail: ['#003366', '#fff'], shadeshub: ['#000', '#e31837'], futureauto: ['#000', '#e82127'],
 };
 
-export default function Carousel3D({ category, items, selectedId, onSelect, onConfirmSelect, isAdmin, onDeleteTemplate }: Carousel3DProps) {
+export default function Carousel3D({ category, items, selectedId, onSelect, onConfirmSelect, isAdmin, onDeleteTemplate, isPdp, pdpColors, pdpScreenshotBase }: Carousel3DProps) {
   const count = items.length;
   const angleStep = 360 / count;
   const radius = Math.max(340, count * 52);
-  const catColor = catColors[category] || '#6366f1';
+  const catColor = isPdp ? '#6366f1' : (catColors[category] || '#6366f1');
 
   // All animation state lives in refs — zero re-renders during animation
   const angleRef = useRef(0);
@@ -175,7 +179,8 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
             {items.map((item, i) => {
               const itemAngle = i * angleStep;
               const isSelected = item.id === selectedId;
-              const [brandPrimary, brandSecondary] = BRAND[item.id] || ['#6366f1', '#1a1a2e'];
+              const itemColor = isPdp && pdpColors ? (pdpColors[item.id] || '#6366f1') : '#6366f1';
+              const [brandPrimary, brandSecondary] = isPdp ? [itemColor, '#0f0f14'] : (BRAND[item.id] || ['#6366f1', '#1a1a2e']);
               return (
                 <div
                   key={item.id}
@@ -193,74 +198,109 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                 >
                   <div style={{
                     width: '100%', height: '100%', borderRadius: '1.5rem',
-                    background: isSelected ? catColor : '#27272a', padding: 3,
+                    background: isSelected ? itemColor : '#27272a', padding: 3,
                     boxShadow: isSelected
-                      ? `0 0 24px ${catColor}60, 0 8px 32px rgba(0,0,0,0.4)`
+                      ? `0 0 24px ${itemColor}80, 0 8px 32px rgba(0,0,0,0.5)`
                       : '0 8px 32px rgba(0,0,0,0.3)',
+                    transition: 'box-shadow 0.3s',
                   }}>
                     <div style={{
                       width: '100%', height: '100%', borderRadius: '1.35rem',
                       overflow: 'hidden', background: brandSecondary,
                       position: 'relative', display: 'flex', flexDirection: 'column',
                     }}>
-                      {/* Default: color blocks (always visible as base layer) */}
-                      <div style={{ height: 28, background: brandPrimary, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 6 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
-                        <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
-                      </div>
-                      <div style={{ height: 50, background: `linear-gradient(135deg, ${brandPrimary}, ${brandSecondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', letterSpacing: '0.05em' }}>{item.name}</span>
-                      </div>
-                      <div style={{ flex: 1, padding: 6, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-                        {[0, 1, 2, 3].map(j => (
-                          <div key={j} style={{
-                            borderRadius: 6,
-                            background: `linear-gradient(${135 + j * 45}deg, ${brandPrimary}30, ${brandSecondary}50)`,
-                            border: '1px solid rgba(255,255,255,0.06)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 4,
-                          }}>
-                            <div style={{ width: '80%', aspectRatio: '1', borderRadius: 4, background: `${brandPrimary}40` }} />
-                            <div style={{ width: '70%', height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
-                            <div style={{ width: '40%', height: 3, borderRadius: 2, background: `${brandPrimary}60` }} />
+
+                      {isPdp ? (
+                        /* === TARJETA MODO PDP === */
+                        <>
+                          {/* Cabecera con color de la estrategia */}
+                          <div style={{ height: 90, background: `linear-gradient(145deg, ${brandPrimary}, ${brandPrimary}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                            {/* Orbs decorativos */}
+                            <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -20, right: -20 }} />
+                            <div style={{ position: 'absolute', width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', bottom: -10, left: 10 }} />
+                            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', border: '1.5px solid rgba(255,255,255,0.25)' }}>
+                              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', boxShadow: `0 0 12px ${brandPrimary}` }} />
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                      {/* Screenshot overlay: covers fallback when loaded */}
-                      <img
-                        src={`/screenshots/${item.id}.webp`}
-                        alt={item.name}
-                        loading="lazy"
-                        draggable={false}
-                        style={{
-                          position: 'absolute', inset: 0, width: '100%', height: '100%',
-                          objectFit: 'cover', objectPosition: 'top',
-                          pointerEvents: 'none', borderRadius: '1.35rem',
-                        }}
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
-                      
-                      {/* Hover Overlay for ALL users */}
+                          {/* Cuerpo con nombre y descripción */}
+                          <div style={{ flex: 1, padding: '10px 10px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: brandPrimary, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>{item.name}</span>
+                            <p style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.desc}</p>
+                            {/* Barra decorativa */}
+                            <div style={{ height: 3, borderRadius: 2, background: `linear-gradient(90deg, ${brandPrimary}, transparent)`, marginTop: 4 }} />
+                          </div>
+                        </>
+                      ) : (
+                        /* === TARJETA MODO TIENDA (original) === */
+                        <>
+                          <div style={{ height: 28, background: brandPrimary, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 6 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+                            <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
+                          </div>
+                          <div style={{ height: 50, background: `linear-gradient(135deg, ${brandPrimary}, ${brandSecondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', letterSpacing: '0.05em' }}>{item.name}</span>
+                          </div>
+                          <div style={{ flex: 1, padding: 6, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                            {[0, 1, 2, 3].map(j => (
+                              <div key={j} style={{
+                                borderRadius: 6,
+                                background: `linear-gradient(${135 + j * 45}deg, ${brandPrimary}30, ${brandSecondary}50)`,
+                                border: '1px solid rgba(255,255,255,0.06)',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 4,
+                              }}>
+                                <div style={{ width: '80%', aspectRatio: '1', borderRadius: 4, background: `${brandPrimary}40` }} />
+                                <div style={{ width: '70%', height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
+                                <div style={{ width: '40%', height: 3, borderRadius: 2, background: `${brandPrimary}60` }} />
+                              </div>
+                            ))}
+                          </div>
+                          {/* Screenshot / preview image overlay */}
+                          {(() => {
+                            const screenshotSrc = item.preview_url || 
+                              (pdpScreenshotBase ? `${pdpScreenshotBase}${item.id}.webp` : `/screenshots/${item.id}.webp`);
+                            return (
+                              <img
+                                src={screenshotSrc}
+                                alt={item.name}
+                                loading="lazy"
+                                draggable={false}
+                                style={{
+                                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                                  objectFit: 'cover', objectPosition: 'top',
+                                  pointerEvents: 'none', borderRadius: '1.35rem',
+                                }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            );
+                          })()}
+                        </>
+                      )}
+
+                      {/* Hover Overlay — igual para ambos modos */}
                       <div 
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-[1.35rem] flex flex-col items-center justify-center gap-3 z-50 pointer-events-auto"
                         onPointerDown={(e) => e.stopPropagation()}
                         onPointerUp={(e) => e.stopPropagation()}
                       >
-                        <a 
-                          href={`/preview?template=${item.id}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors w-[148px]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Eye size={16} /> Previsualizar
-                        </a>
+                        {!isPdp && (
+                          <a 
+                            href={`/preview?template=${item.id}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors w-[148px]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Eye size={16} /> Previsualizar
+                          </a>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); onSelect(item.id); onConfirmSelect?.(item.id); }}
-                          className="bg-indigo-500/90 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-bold border border-indigo-400/50 transition-colors w-[148px]"
+                          style={{ background: isPdp ? `${itemColor}cc` : undefined }}
+                          className={isPdp ? 'text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-bold border border-white/20 transition-colors w-[148px] hover:opacity-80' : 'bg-indigo-500/90 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-bold border border-indigo-400/50 transition-colors w-[148px]'}
                         >
                           <CheckCircle2 size={16} /> Seleccionar
                         </button>
-                        {isAdmin && (
+                        {isAdmin && !isPdp && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); onDeleteTemplate?.(item.id); }}
                             className="bg-red-500/80 hover:bg-red-500 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-red-500/50 transition-colors w-[148px]"
@@ -272,7 +312,7 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: 6 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: isSelected ? catColor : 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: isSelected ? itemColor : 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       {item.name}
                       {item.premium && <Sparkles size={10} style={{ color: '#f59e0b' }} />}
                     </div>

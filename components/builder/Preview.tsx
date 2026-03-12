@@ -78,16 +78,7 @@ import FutureAutoTemplate from '@/components/templates/FutureAuto';
 import StoreAppShell from '@/components/store/StoreAppShell';
 import { Smartphone, Monitor, Battery, Wifi, Signal, ArrowLeft, ExternalLink } from 'lucide-react';
 
-import PdpAggressiveUrgency from '@/components/templates/pdp/PdpAggressiveUrgency';
-import PdpSocialTrust from '@/components/templates/pdp/PdpSocialTrust';
-import PdpBundleMaximizer from '@/components/templates/pdp/PdpBundleMaximizer';
-import PdpStorytelling from '@/components/templates/pdp/PdpStorytelling';
-import PdpDirectCheckout from '@/components/templates/pdp/PdpDirectCheckout';
-import PdpHealth from '@/components/templates/pdp/PdpHealth';
-import PdpElectronics from '@/components/templates/pdp/PdpElectronics';
-import PdpTools from '@/components/templates/pdp/PdpTools';
-import PdpBeauty from '@/components/templates/pdp/PdpBeauty';
-import PdpHome from '@/components/templates/pdp/PdpHome';
+
 
 interface PreviewProps {
   data: StoreData;
@@ -107,21 +98,19 @@ export default function Preview({ data, template, device, setDevice, previewMode
       const product = data.products.find(p => p.id === activeProductId) || data.products[0];
       if (!product) return <div>No hay productos para previsualizar.</div>;
 
-      const variant = parseInt(data.pdpTemplate.split('-')[1] || '1', 10);
-
-      switch (data.pdpCategory) {
-        case 'urgency': return <PdpAggressiveUrgency data={data} product={product} variant={variant} />;
-        case 'trust': return <PdpSocialTrust data={data} product={product} variant={variant} />;
-        case 'bundle': return <PdpBundleMaximizer data={data} product={product} variant={variant} />;
-        case 'story': return <PdpStorytelling data={data} product={product} variant={variant} />;
-        case 'direct': return <PdpDirectCheckout data={data} product={product} variant={variant} />;
-        case 'health': return <PdpHealth data={data} product={product} variant={variant} />;
-        case 'electronics': return <PdpElectronics data={data} product={product} variant={variant} />;
-        case 'tools': return <PdpTools data={data} product={product} variant={variant} />;
-        case 'beauty': return <PdpBeauty data={data} product={product} variant={variant} />;
-        case 'home': return <PdpHome data={data} product={product} variant={variant} />;
-        default: return <PdpAggressiveUrgency data={data} product={product} variant={variant} />;
-      }
+      // Los templates PDP viven en la base de datos y se renderizan en la ruta pública
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: 32, background: 'linear-gradient(135deg, #0f0f14 0%, #1a1a2e 100%)', color: '#fff', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>📄</div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{product.title}</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>Página de producto seleccionada</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}>
+              La vista completa estará disponible tras publicar la tienda
+            </div>
+          </div>
+        </div>
+      );
     }
 
     switch (template) {

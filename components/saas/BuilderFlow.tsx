@@ -50,6 +50,10 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
     const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
 
+    // PDP Templates State (cargados desde la BD)
+    const [pdpTemplates, setPdpTemplates] = useState<any[]>([]);
+    const [isLoadingPdpTemplates, setIsLoadingPdpTemplates] = useState(false);
+
     // AlmiDrop Products State
     const [almidropProducts, setAlmidropProducts] = useState<any[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -59,12 +63,12 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
     const ITEMS_PER_PAGE = 24; // 6 columnas × 4 filas (Solicitado por el usuario)
 
+    // Cargar templates de tiendas
     useEffect(() => {
         fetch('/api/templates/stores')
             .then(res => res.json())
             .then(data => {
                 if (data.stores) {
-                    // Map DB snake_case fields to expected camelCase properties
                     const mapped = data.stores.map((s: any) => ({
                         id: s.id,
                         name: s.name,
@@ -77,6 +81,28 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             })
             .catch(console.error)
             .finally(() => setIsLoadingTemplates(false));
+    }, []);
+
+    // Cargar templates de PDP desde la BD (Paginas_de_Productos_Reutilizables)
+    useEffect(() => {
+        setIsLoadingPdpTemplates(true);
+        fetch('/api/templates/pdp')
+            .then(res => res.json())
+            .then(data => {
+                if (data.pdps) {
+                    const mapped = data.pdps.map((p: any) => ({
+                        id: p.id,
+                        name: p.name,
+                        desc: p.description || '',
+                        category: p.category || 'PDP',
+                        preview_url: p.preview_url || p.preview_image || p.screenshot_url || null,
+                        template_key: p.template_key || p.id,
+                    }));
+                    setPdpTemplates(mapped);
+                }
+            })
+            .catch(console.error)
+            .finally(() => setIsLoadingPdpTemplates(false));
     }, []);
 
     const fetchAlmiDropProducts = async (searchStr = '') => {
@@ -372,32 +398,47 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                         </>
                     ) : (
                         <>
-                            <div style={{ marginBottom: 20, flexShrink: 0 }}>
-                                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Estrategia Psicológica de PDP</h2>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Selecciona el enfoque que mejor resuene con tu cliente ideal.</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0 }}>
+                                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Páginas de Producto Disponibles</h2>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>Selecciona la página de producto que quieres usar. Arrastra o usa las flechas para explorar.</p>
+                                {isLoadingPdpTemplates && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Cargando...</span>}
+                                {!isLoadingPdpTemplates && <span style={{ fontSize: 12, color: 'var(--accent-primary)', fontWeight: 600 }}>{pdpTemplates.length} disponibles</span>}
                             </div>
                             <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
-                                    {PDP_CATEGORIES.map(cat => (
-                                        <button
-                                            key={cat.id}
-                                            onClick={() => setPdpCategory(cat.id)}
-                                            style={{
-                                                padding: 20, borderRadius: 'var(--radius-md)', textAlign: 'left', cursor: 'pointer',
-                                                background: pdpCategory === cat.id ? `${cat.color}14` : 'var(--bg-surface)',
-                                                border: `1.5px solid ${pdpCategory === cat.id ? cat.color : 'var(--border-subtle)'}`,
-                                                boxShadow: pdpCategory === cat.id ? `0 0 20px ${cat.color}30` : 'none',
-                                                transition: 'all 0.2s',
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                                                <div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.color, boxShadow: `0 0 8px ${cat.color}` }} />
-                                                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</span>
-                                            </div>
-                                            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>{cat.desc}</p>
-                                        </button>
-                                    ))}
-                                </div>
+                                {pdpTemplates.length > 0 ? (
+                                    // Agrupar PDPs por categoría, igual que las tiendas
+                                    (Array.from(new Set(pdpTemplates.map(t => t.category))).sort()).map(cat => {
+                                        const items = pdpTemplates.filter(t => t.category === cat);
+                                        return (
+                                            <Carousel3D
+                                                key={cat}
+                                                category={cat}
+                                                items={items}
+                                                selectedId={template}
+                                                onSelect={(id) => setTemplate(id)}
+                                                onConfirmSelect={(id) => {
+                                                    setTemplate(id);
+                                                    const chosen = pdpTemplates.find(t => t.id === id);
+                                                    setStoreData(p => ({
+                                                        ...p,
+                                                        pdpCategory: (chosen?.category || 'direct') as StoreData['pdpCategory'],
+                                                        pdpTemplate: chosen?.template_key || id,
+                                                    }));
+                                                    setStep(4); // ← Ir directamente al paso 4 (configurar PDP)
+                                                }}
+                                                isPdp={false} // Usar modo tienda para mostrar screenshots reales
+                                                pdpScreenshotBase="/pdp-screenshots/"
+                                            />
+                                        );
+                                    })
+                                ) : (
+                                    !isLoadingPdpTemplates && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12, color: 'var(--text-muted)' }}>
+                                            <span style={{ fontSize: 40 }}>📄</span>
+                                            <p style={{ margin: 0, fontWeight: 600 }}>No hay páginas de producto disponibles aún.</p>
+                                        </div>
+                                    )
+                                )}
                             </div>
                         </>
                     )}
