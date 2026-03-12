@@ -76,6 +76,12 @@ export default async function PdpPreviewPage({
     name: "Tienda Demo",
     pdpCategory: pdpTemplate.category as any,
     pdpTemplate: id,
+    pdpFeatures: {
+      recentSales: true,
+      scarcityTimer: true,
+      liveViewers: true,
+      stickyButton: true,
+    }
   };
 
   const dummyProduct = {
