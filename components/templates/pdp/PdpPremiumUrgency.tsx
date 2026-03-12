@@ -65,7 +65,7 @@ const PdpPremiumUrgency: React.FC<PdpPremiumUrgencyProps> = ({ data, product }) 
                                 <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <div className="font-black text-white">{i === 1 ? 'Sara J.' : 'Alguien'} acaba de comprar</div>
+                                <div className="font-black text-white">Sara J. acaba de comprar</div>
                                 <div className="text-xs text-red-500 font-bold uppercase tracking-widest">Hace 2 minutos</div>
                             </div>
                         </div>
