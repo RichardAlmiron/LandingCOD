@@ -4,7 +4,9 @@ import { defaultStore, StoreData, TemplateType } from '@/lib/types';
 import Preview from '@/components/builder/Preview';
 import Carousel3D from '@/components/saas/Carousel3D';
 import RecycleBin from '@/components/saas/RecycleBin';
-import { X, Globe, Link as LinkIcon, ExternalLink, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { X, Globe, Link as LinkIcon, ExternalLink, CheckCircle2, Loader2, Trash2, Store, LayoutTemplate, MousePointerClick } from 'lucide-react';
+
+type FlowType = 'store' | 'pdp' | null;
 
 
 const PDP_CATEGORIES = [
@@ -22,13 +24,14 @@ const PDP_CATEGORIES = [
 
 const STORE_CATEGORIES = ['Todos', 'Marketplace', 'Tech', 'Moda', 'Belleza', 'Retail', 'Lujo', 'Hogar', 'Deporte', 'Accesorios'];
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [step, setStep] = useState<Step>(1);
+    const [flowType, setFlowType] = useState<FlowType>(null);
     const [template, setTemplate] = useState<TemplateType>('megamarket');
-    const [pdpCategory, setPdpCategory] = useState('health');
-    const [storeData, setStoreData] = useState<StoreData>({ ...defaultStore });
+    const [pdpCategory, setPdpCategory] = useState<string | null>(null);
+    const [storeData, setStoreData] = useState<StoreData>({ ...defaultStore, products: [] });
     const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [previewMode, setPreviewMode] = useState<'store' | 'product'>('store');
     const [activeProductId, setActiveProductId] = useState<string | null>(null);
@@ -46,6 +49,15 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [storeTemplates, setStoreTemplates] = useState<any[]>([]);
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
     const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+
+    // AlmiDrop Products State
+    const [almidropProducts, setAlmidropProducts] = useState<any[]>([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
+    const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+    const [productPage, setProductPage] = useState(1);
+    const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+    const ITEMS_PER_PAGE = 24; // 6 columnas × 4 filas (Solicitado por el usuario)
 
     useEffect(() => {
         fetch('/api/templates/stores')
@@ -66,6 +78,58 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             .catch(console.error)
             .finally(() => setIsLoadingTemplates(false));
     }, []);
+
+    const fetchAlmiDropProducts = async (searchStr = '') => {
+        setIsLoadingProducts(true);
+        try {
+            const res = await fetch(`/api/almidrop/products?search=${encodeURIComponent(searchStr)}`);
+            const data = await res.json();
+            if (data.success && data.products) {
+                setAlmidropProducts(data.products);
+                return data.products;
+            }
+        } catch (error) {
+            console.error("Error fetching AlmiDrop products", error);
+        } finally {
+            setIsLoadingProducts(false);
+        }
+        return [];
+    };
+
+    // Auto-fetch products when entering the AlmiDrop products step
+    useEffect(() => {
+        if (step === 3 && almidropProducts.length === 0) {
+            fetchAlmiDropProducts();
+        }
+    }, [step]);
+
+    const toggleProductSelection = (prodId: string) => {
+        setSelectedProducts(prev => {
+            const next = new Set(prev);
+            if (flowType === 'pdp') {
+                // PDP: single selection only
+                if (next.has(prodId)) { next.delete(prodId); } else { next.clear(); next.add(prodId); }
+            } else {
+                // Store: multi selection
+                if (next.has(prodId)) { next.delete(prodId); } else { next.add(prodId); }
+            }
+            return next;
+        });
+    };
+
+    const selectAllProducts = () => {
+        if (selectedProducts.size === almidropProducts.length) {
+            setSelectedProducts(new Set());
+        } else {
+            setSelectedProducts(new Set(almidropProducts.map(p => p.id)));
+        }
+    };
+
+    const confirmProductSelection = () => {
+        const chosen = almidropProducts.filter(p => selectedProducts.has(p.id));
+        setStoreData(prev => ({ ...prev, products: chosen }));
+        setStep(4);
+    };
 
     const handleDeleteTemplate = async (id: string) => {
         if (!confirm('¿Seguro de que deseas mover este template a la papelera?')) return;
@@ -130,9 +194,10 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     );
 
     const steps = [
-        { n: 1, label: 'Elige Tienda' },
-        { n: 2, label: 'Tipo de Producto' },
-        { n: 3, label: 'Configura y Publica' },
+        { n: 1, label: 'Tipo de Proyecto' },
+        { n: 2, label: flowType === 'store' ? 'Diseño de Tienda' : 'Estrategia de Venta' },
+        { n: 3, label: 'Catálogo AlmiDrop' },
+        { n: 4, label: 'Configura y Publica' },
     ];
 
     return (
@@ -172,136 +237,401 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                 ))}
             </div>
 
-            {/* ── STEP 1: Choose Store Template ── */}
+            {/* ── STEP 1: Elige el Tipo de Proyecto ── */}
             {step === 1 && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-                    {/* Compact header: title + search + categories all in one row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', margin: 0 }}>Elige tu tienda</h2>
-                        <input
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Buscar..."
-                            className="input-dark"
-                            style={{ width: 150, padding: '6px 12px', fontSize: 12 }}
-                        />
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', flex: 1 }}>
-                            {STORE_CATEGORIES.map(c => (
-                                <button key={c} onClick={() => setCatFilter(c)} style={{
-                                    padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                                    background: catFilter === c ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-                                    color: catFilter === c ? '#fff' : 'var(--text-secondary)',
-                                    border: `1px solid ${catFilter === c ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                                    transition: 'all 0.2s',
-                                }}>{c}</button>
-                            ))}
-                        </div>
-                        {isAdmin && (
-                            <button
-                                onClick={() => setIsRecycleBinOpen(true)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: 6,
-                                    padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-                                    background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    cursor: 'pointer', transition: 'all 0.2s',
-                                    marginLeft: 'auto'
-                                }}
-                                className="hover:bg-red-500 hover:text-white"
-                            >
-                                <Trash2 size={14} />
-                                Papelera
-                            </button>
-                        )}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32, padding: 40 }}>
+                    <div style={{ textAlign: 'center', maxWidth: 600 }}>
+                        <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>¿Qué quieres construir hoy?</h1>
+                        <p style={{ fontSize: 16, color: 'var(--text-secondary)' }}>Selecciona el formato que mejor se adapte a tu objetivo. Nos conectaremos directamente con el catálogo maestro de AlmiDrop de manera automatizada.</p>
                     </div>
-                    {/* 3D Carousels by Category */}
-                    <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: 8, paddingBottom: 60 }} className="custom-scrollbar">
-                        {isLoadingTemplates ? (
-                            <div className="flex items-center justify-center h-full">
-                                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, width: '100%', maxWidth: 800 }}>
+                        {/* Option A: Store */}
+                        <div
+                            onClick={() => {
+                                setFlowType('store');
+                                setStep(2);
+                            }}
+                            style={{
+                                background: 'var(--bg-surface)', border: '2px solid', borderColor: flowType === 'store' ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                                borderRadius: 'var(--radius-xl)', padding: 32, cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16,
+                                boxShadow: flowType === 'store' ? '0 0 0 4px rgba(79, 70, 229, 0.1), 0 20px 40px rgba(0,0,0,0.1)' : '0 10px 30px rgba(0,0,0,0.05)'
+                            }}
+                            className="hover:-translate-y-2 hover:border-indigo-500/50"
+                        >
+                            <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 10px 20px rgba(79, 70, 229, 0.3)' }}>
+                                <Store size={32} />
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Crear Tienda Completa</h3>
+                                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Lanza un e-commerce entero. Importaremos automáticamente todos los productos activos del catálogo maestro para que comiences a vender en segundos.</p>
+                            </div>
+                        </div>
+
+                        {/* Option B: PDP */}
+                        <div
+                            onClick={() => {
+                                setFlowType('pdp');
+                                setStep(2);
+                            }}
+                            style={{
+                                background: 'var(--bg-surface)', border: '2px solid', borderColor: flowType === 'pdp' ? '#10b981' : 'var(--border-subtle)',
+                                borderRadius: 'var(--radius-xl)', padding: 32, cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16,
+                                boxShadow: flowType === 'pdp' ? '0 0 0 4px rgba(16, 185, 129, 0.1), 0 20px 40px rgba(0,0,0,0.1)' : '0 10px 30px rgba(0,0,0,0.05)'
+                            }}
+                            className="hover:-translate-y-2 hover:border-emerald-500/50"
+                        >
+                            <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 10px 20px rgba(16, 185, 129, 0.3)' }}>
+                                <LayoutTemplate size={32} />
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Landing de Producto (PDP)</h3>
+                                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Construye un embudo de conversión enfocado en <strong>un solo producto ganador</strong>. Selecciona el artículo exacto del catálogo y aplica psicología de ventas experta.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── STEP 2: Choose Template or Category ── */}
+            {step === 2 && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+                    {flowType === 'store' ? (
+                        <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', margin: 0 }}>Diseño de Tienda</h2>
+                                <input
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Buscar..."
+                                    className="input-dark"
+                                    style={{ width: 150, padding: '6px 12px', fontSize: 12 }}
+                                />
+                                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', flex: 1 }}>
+                                    {STORE_CATEGORIES.map(c => (
+                                        <button key={c} onClick={() => setCatFilter(c)} style={{
+                                            padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                                            background: catFilter === c ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                                            color: catFilter === c ? '#fff' : 'var(--text-secondary)',
+                                            border: `1px solid ${catFilter === c ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                                            transition: 'all 0.2s',
+                                        }}>{c}</button>
+                                    ))}
+                                </div>
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => setIsRecycleBinOpen(true)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: 6,
+                                            padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                                            background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                                            cursor: 'pointer', transition: 'all 0.2s',
+                                            marginLeft: 'auto'
+                                        }}
+                                        className="hover:bg-red-500 hover:text-white"
+                                    >
+                                        <Trash2 size={14} />
+                                        Papelera
+                                    </button>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: 8, paddingBottom: 60 }} className="custom-scrollbar">
+                                {isLoadingTemplates ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                                    </div>
+                                ) : (
+                                    (catFilter === 'Todos' ? STORE_CATEGORIES.filter(c => c !== 'Todos') : [catFilter])
+                                        .map(cat => {
+                                            const items = storeTemplates.filter(t =>
+                                                t.category === cat &&
+                                                (search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.desc.toLowerCase().includes(search.toLowerCase()))
+                                            );
+                                            if (items.length === 0) return null;
+                                            return (
+                                                <Carousel3D
+                                                    key={cat}
+                                                    category={cat}
+                                                    items={items}
+                                                    selectedId={template}
+                                                    onSelect={(id) => { setTemplate(id); }}
+                                                    onConfirmSelect={(id) => {
+                                                        setTemplate(id);
+                                                        setStep(3); // Both flows go to AlmiDrop product selection
+                                                    }}
+                                                    isAdmin={isAdmin}
+                                                    onDeleteTemplate={handleDeleteTemplate}
+                                                />
+                                            );
+                                        })
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div style={{ marginBottom: 20, flexShrink: 0 }}>
+                                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Estrategia Psicológica de PDP</h2>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Selecciona el enfoque que mejor resuene con tu cliente ideal.</p>
+                            </div>
+                            <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+                                    {PDP_CATEGORIES.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => setPdpCategory(cat.id)}
+                                            style={{
+                                                padding: 20, borderRadius: 'var(--radius-md)', textAlign: 'left', cursor: 'pointer',
+                                                background: pdpCategory === cat.id ? `${cat.color}14` : 'var(--bg-surface)',
+                                                border: `1.5px solid ${pdpCategory === cat.id ? cat.color : 'var(--border-subtle)'}`,
+                                                boxShadow: pdpCategory === cat.id ? `0 0 20px ${cat.color}30` : 'none',
+                                                transition: 'all 0.2s',
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                                                <div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.color, boxShadow: `0 0 8px ${cat.color}` }} />
+                                                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</span>
+                                            </div>
+                                            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>{cat.desc}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Floating continue/back buttons for Step 2 */}
+                    <div style={{ position: 'absolute', bottom: 12, right: 12, left: 12, display: 'flex', justifyContent: 'space-between', zIndex: 20, pointerEvents: 'none' }}>
+                        <button className="btn-secondary" style={{ pointerEvents: 'auto', padding: '10px 24px', boxShadow: '0 8px 30px rgba(0,0,0,0.2)', background: 'var(--bg-base)' }} onClick={() => setStep(1)}>
+                             Atrás
+                        </button>
+                        <button
+                            className="btn-primary"
+                            style={{ padding: '10px 28px', fontSize: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.3)', pointerEvents: 'auto' }}
+                            disabled={flowType === 'pdp' && !pdpCategory}
+                            onClick={() => {
+                                if (flowType === 'pdp') {
+                                    setStoreData(p => ({ ...p, pdpCategory: pdpCategory as StoreData['pdpCategory'], pdpTemplate: `${pdpCategory}-1` }));
+                                }
+                                setStep(3);
+                            }}
+                        >
+                            Seleccionar Productos de AlmiDrop
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 8 }}><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── STEP 3: Selección de Productos de AlmiDrop ── */}
+            {step === 3 && (() => {
+                const totalProducts = almidropProducts.length;
+                const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE));
+                const paginatedProducts = almidropProducts.slice((productPage - 1) * ITEMS_PER_PAGE, productPage * ITEMS_PER_PAGE);
+                return (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)' }}>
+                    {/* Header */}
+                    <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <MousePointerClick className="w-5 h-5 text-indigo-500" />
+                                {flowType === 'pdp' ? 'Selecciona Tu Producto Estrella' : 'Catálogo Maestro AlmiDrop'}
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginLeft: 4 }}>
+                                    ({totalProducts} producto{totalProducts !== 1 ? 's' : ''} disponible{totalProducts !== 1 ? 's' : ''})
+                                </span>
+                            </h2>
+                            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+                                {flowType === 'pdp'
+                                    ? 'Elige exactamente UN producto del catálogo para tu Landing Page.'
+                                    : 'Selecciona uno, varios o todos los productos para tu tienda.'}
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    value={productSearch}
+                                    onChange={e => setProductSearch(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') { fetchAlmiDropProducts(productSearch); setProductPage(1); } }}
+                                    placeholder="Buscar productos..."
+                                    className="input-dark"
+                                    style={{ width: 200, padding: '7px 12px 7px 32px', fontSize: 13 }}
+                                />
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            </div>
+                            <button onClick={() => { fetchAlmiDropProducts(productSearch); setProductPage(1); }} className="btn-secondary" style={{ padding: '7px 14px', fontSize: 13 }}>Buscar</button>
+                            {flowType === 'store' && (
+                                <button
+                                    onClick={selectAllProducts}
+                                    className="btn-secondary"
+                                    style={{ padding: '7px 14px', fontSize: 13, fontWeight: 700 }}
+                                >
+                                    {selectedProducts.size === almidropProducts.length && almidropProducts.length > 0 ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Products Grid — AlmiDrop-style cards */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }} className="custom-scrollbar">
+                        {isLoadingProducts ? (
+                            <div className="flex flex-col items-center justify-center h-full gap-4 text-zinc-400">
+                                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                                <p className="font-medium">Conectando con el catálogo maestro de AlmiDrop...</p>
+                            </div>
+                        ) : almidropProducts.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-3">
+                                <Store className="w-14 h-14 opacity-40" />
+                                <p className="text-base">No se encontraron productos activos en AlmiDrop.</p>
+                                <button onClick={() => fetchAlmiDropProducts()} className="btn-secondary" style={{ padding: '8px 16px' }}>Reintentar</button>
                             </div>
                         ) : (
-                            (catFilter === 'Todos' ? STORE_CATEGORIES.filter(c => c !== 'Todos') : [catFilter])
-                                .map(cat => {
-                                    const items = storeTemplates.filter(t =>
-                                        t.category === cat &&
-                                        (search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.desc.toLowerCase().includes(search.toLowerCase()))
-                                    );
-                                    if (items.length === 0) return null;
-                                    return (
-                                        <Carousel3D
-                                            key={cat}
-                                            category={cat}
-                                            items={items}
-                                            selectedId={template}
-                                            onSelect={(id) => { setTemplate(id); setStoreData(p => ({ ...p })); }}
-                                            isAdmin={isAdmin}
-                                            onDeleteTemplate={handleDeleteTemplate}
-                                        />
-                                    );
-                                })
+                            <>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.75rem', width: '100%' }}>
+                                    {paginatedProducts.map(prod => {
+                                        const isSelected = selectedProducts.has(prod.id);
+                                        const isHovered = hoveredProductId === prod.id;
+                                        return (
+                                            <div
+                                                key={prod.id}
+                                                onClick={() => toggleProductSelection(prod.id)}
+                                                onMouseEnter={() => setHoveredProductId(prod.id)}
+                                                onMouseLeave={() => setHoveredProductId(null)}
+                                                style={{
+                                                    overflow: 'hidden',
+                                                    border: isSelected ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
+                                                    padding: 0,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    height: '100%',
+                                                    position: 'relative',
+                                                    cursor: 'pointer',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    background: 'var(--bg-base)',
+                                                    transition: 'all 0.2s ease',
+                                                    boxShadow: isSelected ? '0 0 20px rgba(99, 102, 241, 0.25)' : isHovered ? '0 4px 16px rgba(0,0,0,0.15)' : 'none',
+                                                    transform: isSelected ? 'scale(1.02)' : isHovered ? 'translateY(-2px)' : 'none',
+                                                }}
+                                            >
+                                                {/* Selection badge */}
+                                                {isSelected && (
+                                                    <div style={{
+                                                        position: 'absolute', top: '0.4rem', left: '0.4rem', zIndex: 3,
+                                                        width: 26, height: 26, borderRadius: '50%',
+                                                        background: '#6366f1',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)',
+                                                    }}>
+                                                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                                    </div>
+                                                )}
+
+                                                {/* Imagen — 130px AlmiDrop style */}
+                                                <div style={{ height: 130, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+                                                    {prod.imageUrl ? (
+                                                        <img src={prod.imageUrl} alt={prod.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.3s ease' }} />
+                                                    ) : (
+                                                        <Store className="w-8 h-8 text-zinc-600 opacity-30" />
+                                                    )}
+                                                </div>
+
+                                                {/* Contenido — AlmiDrop style */}
+                                                <div style={{ padding: '0.65rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                    {/* Categoría */}
+                                                    <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.15rem' }}>
+                                                        {prod.category || 'General'}
+                                                    </div>
+
+                                                    {/* Nombre — 2 líneas con clamp */}
+                                                    <h3 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem', lineHeight: 1.25, height: '2rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', color: 'var(--text-primary)', margin: '0 0 0.35rem' }}>
+                                                        {prod.title}
+                                                    </h3>
+
+                                                    {/* Precios — AlmiDrop dual style */}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.5rem', gap: '0.4rem' }}>
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.2 }}>Precio</div>
+                                                            <div style={{ fontSize: '0.75rem', fontWeight: 800, lineHeight: 1.3, whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>{prod.price}</div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'right', minWidth: 0 }}>
+                                                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.2 }}>P. Público</div>
+                                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10b981', lineHeight: 1.3, whiteSpace: 'nowrap' }}>{prod.originalPrice}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Botón de selección */}
+                                                    <div style={{ marginTop: 'auto' }}>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); toggleProductSelection(prod.id); }}
+                                                            style={{
+                                                                width: '100%', padding: '0.4rem', borderRadius: 8,
+                                                                border: isSelected ? 'none' : '1px solid #6366f1',
+                                                                background: isSelected ? '#6366f1' : 'transparent',
+                                                                color: isSelected ? '#fff' : '#6366f1',
+                                                                fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            <CheckCircle2 size={13} />
+                                                            {isSelected ? 'Seleccionado' : 'Seleccionar'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Paginación — AlmiDrop style */}
+                                {totalPages > 1 && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', paddingBottom: 4 }}>
+                                        <button
+                                            onClick={() => setProductPage(p => Math.max(1, p - 1))}
+                                            disabled={productPage === 1}
+                                            style={{ padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid var(--border-subtle)', background: 'var(--bg-base)', color: 'var(--text-primary)', cursor: productPage === 1 ? 'default' : 'pointer', opacity: productPage === 1 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem' }}
+                                        >
+                                            ← Anterior
+                                        </button>
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Página {productPage} de {totalPages}</span>
+                                        <button
+                                            onClick={() => setProductPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={productPage === totalPages}
+                                            style={{ padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid var(--border-subtle)', background: 'var(--bg-base)', color: 'var(--text-primary)', cursor: productPage === totalPages ? 'default' : 'pointer', opacity: productPage === totalPages ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem' }}
+                                        >
+                                            Siguiente →
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
-                    {/* Floating continue button */}
-                    <button
-                        className="btn-primary"
-                        style={{ position: 'absolute', bottom: 12, right: 12, padding: '10px 28px', fontSize: 14, zIndex: 20, boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}
-                        onClick={() => setStep(2)}
-                    >
-                        Continuar
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                    </button>
-                </div>
-            )}
 
-            {/* ── STEP 2: Choose PDP Category ── */}
-            {step === 2 && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div style={{ marginBottom: 20, flexShrink: 0 }}>
-                        <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Elige el tipo de página de producto</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Selecciona la estrategia psicológica que mejor convierte para tu tienda.</p>
-                    </div>
-                    <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
-                            {PDP_CATEGORIES.map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setPdpCategory(cat.id)}
-                                    style={{
-                                        padding: 20, borderRadius: 'var(--radius-md)', textAlign: 'left', cursor: 'pointer',
-                                        background: pdpCategory === cat.id ? `${cat.color}14` : 'var(--bg-surface)',
-                                        border: `1.5px solid ${pdpCategory === cat.id ? cat.color : 'var(--border-subtle)'}`,
-                                        boxShadow: pdpCategory === cat.id ? `0 0 20px ${cat.color}30` : 'none',
-                                        transition: 'all 0.2s',
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.color, boxShadow: `0 0 8px ${cat.color}` }} />
-                                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</span>
-                                    </div>
-                                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>{cat.desc}</p>
-                                </button>
-                            ))}
+                    {/* Footer with actions */}
+                    <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'var(--bg-surface)' }}>
+                        <button className="btn-secondary" onClick={() => setStep(2)} style={{ padding: '10px 24px' }}>← Atrás</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                {selectedProducts.size} de {totalProducts} producto{selectedProducts.size !== 1 ? 's' : ''} seleccionado{selectedProducts.size !== 1 ? 's' : ''}
+                            </span>
+                            <button
+                                className="btn-primary"
+                                disabled={selectedProducts.size === 0}
+                                style={{ padding: '10px 28px', fontSize: 14, opacity: selectedProducts.size === 0 ? 0.5 : 1 }}
+                                onClick={confirmProductSelection}
+                            >
+                                Continuar con {selectedProducts.size} producto{selectedProducts.size !== 1 ? 's' : ''}
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 8 }}><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                            </button>
                         </div>
                     </div>
-                    <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
-                        <button className="btn-secondary" onClick={() => setStep(1)}>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4 L6 8 L10 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                            Atrás
-                        </button>
-                        <button className="btn-primary" style={{ padding: '12px 32px', fontSize: 15 }} onClick={() => {
-                            setStoreData(p => ({ ...p, pdpCategory: pdpCategory as StoreData['pdpCategory'], pdpTemplate: `${pdpCategory}-1` }));
-                            setStep(3);
-                        }}>
-                            Continuar
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4 L10 8 L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                        </button>
-                    </div>
                 </div>
-            )}
+                );
+            })()}
 
-            {/* ── STEP 3: Configure & Preview ── */}
-            {step === 3 && (
+            {/* ── STEP 4: Configure & Preview ── */}
+            {step === 4 && (
                 <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20, overflow: 'hidden' }}>
                     {/* Config Panel */}
                     <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -369,7 +699,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                         </div>
                         {/* Actions */}
                         <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 10, flexShrink: 0 }}>
-                            <button className="btn-secondary" onClick={() => setStep(2)} style={{ flex: 1 }}>Atrás</button>
+                            <button className="btn-secondary" onClick={() => setStep(3)} style={{ flex: 1 }}>Atrás</button>
                             <button
                                 className="btn-primary"
                                 style={{ flex: 2 }}

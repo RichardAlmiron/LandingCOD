@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Eye, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Eye, Trash2, CheckCircle2 } from 'lucide-react';
 import { TemplateType } from '@/lib/types';
 
 interface CarouselItem {
@@ -15,6 +15,7 @@ interface Carousel3DProps {
   items: CarouselItem[];
   selectedId: TemplateType | string;
   onSelect: (id: any) => void;
+  onConfirmSelect?: (id: any) => void;
   isAdmin?: boolean;
   onDeleteTemplate?: (id: string) => void;
 }
@@ -52,7 +53,7 @@ const BRAND: Record<string, [string, string]> = {
   opticalretail: ['#003366', '#fff'], shadeshub: ['#000', '#e31837'], futureauto: ['#000', '#e82127'],
 };
 
-export default function Carousel3D({ category, items, selectedId, onSelect, isAdmin, onDeleteTemplate }: Carousel3DProps) {
+export default function Carousel3D({ category, items, selectedId, onSelect, onConfirmSelect, isAdmin, onDeleteTemplate }: Carousel3DProps) {
   const count = items.length;
   const angleStep = 360 / count;
   const radius = Math.max(340, count * 52);
@@ -238,30 +239,36 @@ export default function Carousel3D({ category, items, selectedId, onSelect, isAd
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
                       
-                      {/* Admin Overlay */}
-                      {isAdmin && (
-                        <div 
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-[1.35rem] flex flex-col items-center justify-center gap-3 z-50 pointer-events-auto"
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onPointerUp={(e) => e.stopPropagation()}
+                      {/* Hover Overlay for ALL users */}
+                      <div 
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-[1.35rem] flex flex-col items-center justify-center gap-3 z-50 pointer-events-auto"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
+                      >
+                        <a 
+                          href={`/preview?template=${item.id}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors w-[148px]"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <a 
-                            href={`/preview?template=${item.id}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Eye size={16} /> Previsualizar
-                          </a>
+                          <Eye size={16} /> Previsualizar
+                        </a>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onSelect(item.id); onConfirmSelect?.(item.id); }}
+                          className="bg-indigo-500/90 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-bold border border-indigo-400/50 transition-colors w-[148px]"
+                        >
+                          <CheckCircle2 size={16} /> Seleccionar
+                        </button>
+                        {isAdmin && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); onDeleteTemplate?.(item.id); }}
-                            className="bg-red-500/80 hover:bg-red-500 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-red-500/50 transition-colors w-[138px]"
+                            className="bg-red-500/80 hover:bg-red-500 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-red-500/50 transition-colors w-[148px]"
                           >
                             <Trash2 size={16} /> Eliminar
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: 6 }}>
