@@ -254,7 +254,7 @@ export default function PdpHealth({ data, product, variant = 1 }: PDPProps) {
       />
 
       <StickyBuyButton price={product.price} theme={theme} />
-      {data.pdpFeatures.recentSales && <RecentSalesPopup theme={theme} />}
+      {data.pdpFeatures?.recentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }

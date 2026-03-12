@@ -138,7 +138,7 @@ export default function ProductCarousel3D({
           <div
             ref={ringRef}
             style={{
-              position: 'relative', width: 220, height: 320,
+              position: 'relative', width: 400, height: 'auto',
               transformStyle: 'preserve-3d',
               transform: `translateZ(-${radius}px) rotateY(0deg)`,
             }}
@@ -151,7 +151,7 @@ export default function ProductCarousel3D({
                   ref={el => { cardRefs.current[i] = el; }}
                   className="group"
                   style={{
-                    position: 'absolute', width: 220, height: 320,
+                    position: 'absolute', width: 400, height: 'auto',
                     transform: `rotateY(${itemAngle}deg) translateZ(${radius}px)`,
                     opacity: 0,
                     willChange: 'opacity, transform',
@@ -160,37 +160,30 @@ export default function ProductCarousel3D({
                   onMouseLeave={() => { isPaused.current = false; }}
                 >
                   <div style={{
-                    width: '100%', height: '100%', borderRadius: '1.5rem',
+                    width: '100%', height: 'auto', minHeight: 500, borderRadius: '1.5rem',
                     background: catColor, padding: 3,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
                   }}>
                     <div style={{
-                      width: '100%', height: '100%', borderRadius: '1.35rem',
-                      overflow: 'hidden', background: brandSecondary,
+                      width: '100%', height: 'auto', borderRadius: '1.35rem',
+                      overflow: 'hidden', background: '#fff',
                       position: 'relative', display: 'flex', flexDirection: 'column',
                     }}>
-                      {/* Default: color blocks (always visible as base layer before image loads) */}
-                      <div style={{ height: 28, background: brandPrimary, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 6 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
-                        <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
+                      {/* Product Image - altura completa */}
+                      <div style={{ width: '100%', background: '#fff' }}>
+                        <img
+                          src={src}
+                          alt={`${productName} view ${i + 1}`}
+                          loading="lazy"
+                          draggable={false}
+                          style={{
+                            width: '100%', height: 'auto',
+                            objectFit: 'contain',
+                            pointerEvents: 'none',
+                            display: 'block',
+                          }}
+                        />
                       </div>
-                      <div style={{ height: 50, background: `linear-gradient(135deg, ${brandPrimary}, ${brandSecondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', letterSpacing: '0.05em' }} className="truncate px-2">{productName} - {i + 1}</span>
-                      </div>
-                      
-                      {/* Product Image */}
-                      <img
-                        src={src}
-                        alt={`${productName} view ${i + 1}`}
-                        loading="lazy"
-                        draggable={false}
-                        style={{
-                          position: 'absolute', inset: 0, width: '100%', height: '100%',
-                          objectFit: 'cover', objectPosition: 'center',
-                          pointerEvents: 'none', borderRadius: '1.35rem',
-                          background: '#fff' // Fallback behind transparent PNGs
-                        }}
-                      />
                     </div>
                   </div>
                 </div>

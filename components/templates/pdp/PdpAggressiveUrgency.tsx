@@ -259,7 +259,7 @@ export default function PdpAggressiveUrgency({ data, product, variant = 1 }: PDP
       </main>
 
       {data.pdpFeatures?.stickyButton && <StickyBuyButton buttonColor={theme.primary} />}
-      {data.pdpFeatures?.recentSales && <RecentSalesPopup />}
+      {data.pdpFeatures?.recentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }

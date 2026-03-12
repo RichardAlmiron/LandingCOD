@@ -46,6 +46,7 @@ export interface PdpTemplate {
   name: string;
   description: string;
   image_url?: string;
+  premium?: boolean;
 }
 
 export interface StoreTemplate {

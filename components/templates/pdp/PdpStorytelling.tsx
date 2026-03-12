@@ -263,7 +263,7 @@ export default function PdpStorytelling({ data, product, variant = 1 }: PDPProps
       </main>
 
       {data.pdpFeatures?.stickyButton && <StickyBuyButton buttonColor={theme.primary} />}
-      {data.pdpFeatures?.recentSales && <RecentSalesPopup />}
+      {data.pdpFeatures?.recentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }

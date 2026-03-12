@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { defaultStore, StoreData, TemplateType } from '@/lib/types';
+import { defaultStore, StoreData, TemplateType, PdpTemplate } from '@/lib/types';
 import Preview from '@/components/builder/Preview';
-import Carousel3D from '@/components/saas/Carousel3D';
 import RecycleBin from '@/components/saas/RecycleBin';
+import AutoCaptureButton from '@/components/admin/AutoCaptureButton';
+import DisplayModeSelector, { DisplayMode } from '@/components/admin/DisplayModeSelector';
+import DynamicPDPDisplay from '@/components/admin/DynamicPDPDisplay';
 import { X, Globe, Link as LinkIcon, ExternalLink, CheckCircle2, Loader2, Trash2, Store, LayoutTemplate, MousePointerClick } from 'lucide-react';
 
 type FlowType = 'store' | 'pdp' | null;
@@ -58,7 +60,34 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
     const [productPage, setProductPage] = useState(1);
     const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
-    const ITEMS_PER_PAGE = 24; // 6 columnas × 4 filas (Solicitado por el usuario)
+    const ITEMS_PER_PAGE = 24;
+    const [useLivePreview, setUseLivePreview] = useState(false);
+    const [displayMode, setDisplayMode] = useState<DisplayMode>('fullscreenslider');
+    const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
+
+    // Load display mode preference from API
+    useEffect(() => {
+        const loadDisplayMode = async () => {
+            try {
+                const response = await fetch('/api/ui-preferences?entity_type=pdp_display_mode');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.selected_mode) {
+                        setDisplayMode(data.selected_mode);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading display mode:', error);
+            }
+        };
+        loadDisplayMode();
+    }, []);
+
+    const toggleLivePreview = () => {
+        const newVal = !useLivePreview;
+        setUseLivePreview(newVal);
+        localStorage.setItem('useLivePreview', String(newVal));
+    };
 
     useEffect(() => {
         Promise.all([
@@ -69,7 +98,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                 const mapped = storesData.stores.map((s: any) => ({
                     id: s.id,
                     name: s.name,
-                    desc: s.description,
+                    description: s.description,
                     category: s.category,
                     premium: s.premium,
                     image_url: s.image_url
@@ -80,7 +109,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                 const mapped = pdpsData.pdps.map((p: any) => ({
                     id: p.id,
                     name: p.name,
-                    desc: p.description,
+                    description: p.description,
                     category: p.category,
                     premium: p.premium,
                     image_url: p.image_url
@@ -378,18 +407,19 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                             );
                                             if (items.length === 0) return null;
                                             return (
-                                                <Carousel3D
+                                                <DynamicPDPDisplay
                                                     key={cat}
-                                                    category={cat}
+                                                    mode={displayMode}
                                                     items={items}
                                                     selectedId={template}
                                                     onSelect={(id) => { setTemplate(id); }}
                                                     onConfirmSelect={(id) => {
                                                         setTemplate(id);
-                                                        setStep(3); // Both flows go to AlmiDrop product selection
+                                                        setStep(3);
                                                     }}
                                                     isAdmin={isAdmin}
                                                     onDeleteTemplate={handleDeleteTemplate}
+                                                    templateType="store"
                                                 />
                                             );
                                         })
@@ -401,38 +431,94 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0, flexWrap: 'wrap' }}>
                                 <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', margin: 0 }}>Páginas de Producto</h2>
                                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({pdpTemplates.length} plantillas disponibles)</span>
+                                {isAdmin && (
+                                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <button
+                                            onClick={() => setShowDisplayModeSelector(!showDisplayModeSelector)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: 6,
+                                                padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                                                background: showDisplayModeSelector ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-elevated)',
+                                                color: showDisplayModeSelector ? '#6366f1' : 'var(--text-secondary)',
+                                                border: `1px solid ${showDisplayModeSelector ? 'rgba(99, 102, 241, 0.3)' : 'var(--border-subtle)'}`,
+                                                cursor: 'pointer', transition: 'all 0.2s',
+                                            }}
+                                            className="hover:bg-indigo-500/10"
+                                        >
+                                            <LayoutTemplate size={14} />
+                                            Modo Visualización
+                                        </button>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={useLivePreview} 
+                                                onChange={toggleLivePreview}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <span>Live Preview</span>
+                                        </label>
+                                        <AutoCaptureButton />
+                                    </div>
+                                )}
                             </div>
+                            
+                            {/* Display Mode Selector Panel */}
+                            {isAdmin && showDisplayModeSelector && (
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    top: 50, 
+                                    right: 20, 
+                                    width: 320, 
+                                    zIndex: 50,
+                                    maxHeight: 'calc(100vh - 200px)',
+                                    overflowY: 'auto'
+                                }} className="custom-scrollbar">
+                                    <DisplayModeSelector 
+                                        currentMode={displayMode}
+                                        onModeChange={(mode) => {
+                                            setDisplayMode(mode);
+                                        }}
+                                    />
+                                </div>
+                            )}
+
                             <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: 8, paddingBottom: 60 }} className="custom-scrollbar">
                                 {isLoadingTemplates ? (
                                     <div className="flex items-center justify-center h-full">
                                         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                                     </div>
                                 ) : (
-                                    // Group PDP templates by category, show each as a Carousel3D
+                                    // Render PDP templates using the selected display mode
                                     (() => {
-                                        const categories = Array.from(new Set(pdpTemplates.map(t => t.category).filter(Boolean)));
-                                        return categories.map(cat => {
-                                            const items = pdpTemplates.filter(t => t.category === cat);
-                                            if (items.length === 0) return null;
-                                            return (
-                                                <Carousel3D
-                                                    key={cat}
-                                                    category={cat}
-                                                    items={items}
-                                                    selectedId={pdpCategory || ''}
-                                                    onSelect={(id) => { setPdpCategory(id); }}
-                                                    onConfirmSelect={(id) => {
-                                                        setPdpCategory(id);
-                                                        const selected = pdpTemplates.find((t: any) => t.id === id);
-                                                        setStoreData(p => ({ ...p, pdpCategory: (selected?.category || 'urgency') as StoreData['pdpCategory'], pdpTemplate: id }));
-                                                        setStep(3);
-                                                    }}
-                                                    isAdmin={isAdmin}
-                                                    onDeleteTemplate={handleDeletePdpTemplate}
-                                                    templateType="pdp"
-                                                />
-                                            );
-                                        });
+                                        // Flatten all PDP templates into a single array for non-carousel modes
+                                        const allItems = pdpTemplates.map(t => ({
+                                            id: t.id,
+                                            name: t.name,
+                                            description: t.description,
+                                            category: t.category,
+                                            image_url: t.image_url || `/screenshots/megamarket.webp`
+                                        }));
+                                        
+                                        if (allItems.length === 0) return null;
+
+                                        return (
+                                            <DynamicPDPDisplay
+                                                mode={displayMode}
+                                                items={allItems}
+                                                selectedId={pdpCategory || ''}
+                                                onSelect={(id) => { setPdpCategory(id); }}
+                                                onConfirmSelect={(id) => {
+                                                    setPdpCategory(id);
+                                                    const selected = pdpTemplates.find((t: any) => t.id === id);
+                                                    setStoreData(p => ({ ...p, pdpCategory: (selected?.category || 'urgency') as StoreData['pdpCategory'], pdpTemplate: id }));
+                                                    setStep(3);
+                                                }}
+                                                isAdmin={isAdmin}
+                                                onDeleteTemplate={handleDeletePdpTemplate}
+                                                templateType="pdp"
+                                                useLivePreview={useLivePreview}
+                                            />
+                                        );
                                     })()
                                 )}
                             </div>

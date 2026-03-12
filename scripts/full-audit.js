@@ -4,18 +4,17 @@
  * 1. Template files (75 .tsx files)
  * 2. lib/catalog.ts IDs (75)
  * 3. lib/types.ts TemplateType union (75)
- * 4. Carousel3D BRAND map (75)
- * 5. Store page dynamic imports (75)
- * 6. Preview page dynamic imports (75)
- * 7. Builder Preview.tsx switch cases (75)
- * 8. BuilderFlow default template
- * 9. Settings page options
- * 10. Supabase schema defaults
- * 11. Migration mappings (75)
- * 12. Screenshots (75 .webp files)
- * 13. Brand residue check (0 trademarked names)
- * 14. Lucide-react import validation
- * 15. Database logic consistency
+ * 4. Store page dynamic imports (75)
+ * 5. Preview page dynamic imports (75)
+ * 6. Builder Preview.tsx switch cases (75)
+ * 7. BuilderFlow default template
+ * 8. Settings page options
+ * 9. Supabase schema defaults
+ * 10. Migration mappings (75)
+ * 11. Screenshots (75 .webp files)
+ * 12. Brand residue check (0 trademarked names)
+ * 13. Lucide-react import validation
+ * 14. Database logic consistency
  */
 
 const fs = require('fs');
@@ -53,18 +52,8 @@ if (missingInTypes.length) fail(`Missing in TemplateType: ${missingInTypes.join(
 if (extraInTypes.length) fail(`Extra in TemplateType: ${extraInTypes.join(', ')}`);
 if (!missingInTypes.length && !extraInTypes.length) pass('catalog ↔ types: perfect match');
 
-// 3. BRAND map
-console.log('📦 3. Carousel3D BRAND map');
-const carousel = fs.readFileSync('components/saas/Carousel3D.tsx', 'utf8');
-const brandSection = carousel.match(/const BRAND[\s\S]*?= \{([\s\S]*?)\};/);
-const brandIds = brandSection ? [...brandSection[1].matchAll(/(\w+):\s*\[/g)].map(m => m[1]).sort() : [];
-brandIds.length === 75 ? pass(`${brandIds.length} keys`) : fail(`Expected 75, got ${brandIds.length}`);
-const missingInBrand = catalogIds.filter(id => !brandIds.includes(id));
-if (missingInBrand.length) fail(`Missing in BRAND: ${missingInBrand.join(', ')}`);
-else pass('catalog ↔ BRAND: perfect match');
-
-// 4. Store page imports
-console.log('📦 4. app/t/[identificador_url]/page.tsx');
+// 3. Store page imports
+console.log('📦 3. app/t/[identificador_url]/page.tsx');
 const storePage = fs.readFileSync('app/t/[identificador_url]/page.tsx', 'utf8');
 const storeIds = [...storePage.matchAll(/^\s+(\w+): dynamic/gm)].map(m => m[1]).sort();
 storeIds.length === 75 ? pass(`${storeIds.length} dynamic imports`) : fail(`Expected 75, got ${storeIds.length}`);
@@ -72,8 +61,8 @@ const missingInStore = catalogIds.filter(id => !storeIds.includes(id));
 if (missingInStore.length) fail(`Missing in store page: ${missingInStore.join(', ')}`);
 else pass('catalog ↔ store page: perfect match');
 
-// 5. Preview page imports
-console.log('📦 5. app/preview/page.tsx');
+// 4. Preview page imports
+console.log('📦 4. app/preview/page.tsx');
 const previewPage = fs.readFileSync('app/preview/page.tsx', 'utf8');
 const previewIds = [...previewPage.matchAll(/^\s+(\w+): dynamic/gm)].map(m => m[1]).sort();
 previewIds.length === 75 ? pass(`${previewIds.length} dynamic imports`) : fail(`Expected 75, got ${previewIds.length}`);
@@ -81,8 +70,8 @@ const missingInPreview = catalogIds.filter(id => !previewIds.includes(id));
 if (missingInPreview.length) fail(`Missing in preview page: ${missingInPreview.join(', ')}`);
 else pass('catalog ↔ preview page: perfect match');
 
-// 6. Builder Preview.tsx switch cases
-console.log('📦 6. components/builder/Preview.tsx');
+// 5. Builder Preview.tsx switch cases
+console.log('📦 5. components/builder/Preview.tsx');
 const builderPreview = fs.readFileSync('components/builder/Preview.tsx', 'utf8');
 const switchIds = [...builderPreview.matchAll(/case '(\w+)':/g)].map(m => m[1]);
 const templateSwitchIds = switchIds.filter(id => catalogIds.includes(id)).sort();
@@ -93,8 +82,8 @@ const missingInSwitch = catalogIds.filter(id => !templateSwitchIds.includes(id))
 if (missingInSwitch.length) fail(`Missing in switch: ${missingInSwitch.join(', ')}`);
 else pass('catalog ↔ switch cases: perfect match');
 
-// 7. Template files
-console.log('📦 7. components/templates/ files');
+// 6. Template files
+console.log('📦 6. components/templates/ files');
 const templateDir = 'components/templates';
 const templateFiles = fs.readdirSync(templateDir).filter(f => f.endsWith('.tsx') && !f.startsWith('pdp') && f !== 'pdp').sort();
 const nonPdpFiles = templateFiles.filter(f => !fs.statSync(path.join(templateDir, f)).isDirectory());
@@ -107,22 +96,22 @@ const missingFiles = catalogLower.filter(id => !fileNamesLower.includes(id));
 if (missingFiles.length) fail(`Missing template files: ${missingFiles.join(', ')}`);
 else pass('All 75 template files present');
 
-// 8. BuilderFlow default
-console.log('📦 8. BuilderFlow default template');
+// 7. BuilderFlow default
+console.log('📦 7. BuilderFlow default template');
 const builderFlow = fs.readFileSync('components/saas/BuilderFlow.tsx', 'utf8');
 const defaultMatch = builderFlow.match(/useState<TemplateType>\('(\w+)'\)/);
 const defaultTemplate = defaultMatch ? defaultMatch[1] : null;
 defaultTemplate === 'megamarket' ? pass(`Default: '${defaultTemplate}'`) : fail(`Default should be 'megamarket', got '${defaultTemplate}'`);
 
-// 9. Settings page
-console.log('📦 9. Settings page template options');
+// 8. Settings page
+console.log('📦 8. Settings page template options');
 const settingsPage = fs.readFileSync('app/(dashboard)/settings/page.tsx', 'utf8');
 const settingsOptions = [...settingsPage.matchAll(/value="(\w+)"/g)].map(m => m[1]);
 const validOptions = settingsOptions.filter(id => catalogIds.includes(id));
 validOptions.length > 0 ? pass(`${validOptions.length} valid template options`) : warn('No template options found');
 
-// 10. Supabase schema
-console.log('📦 10. Supabase schema');
+// 9. Supabase schema
+console.log('📦 9. Supabase schema');
 const schema = fs.readFileSync('supabase/schema.sql', 'utf8');
 const schemaDefault = schema.match(/template\s+TEXT\s+NOT NULL\s+DEFAULT\s+'(\w+)'/);
 if (schemaDefault && schemaDefault[1] === 'megamarket') pass(`Schema default: '${schemaDefault[1]}'`);
@@ -136,8 +125,8 @@ schema.includes('store_data') ? pass('Column store_data (JSONB) exists') : fail(
 schema.includes('pdp_category') ? pass('Column pdp_category exists') : fail('Missing pdp_category column');
 schema.includes('pdp_template') ? pass('Column pdp_template exists') : fail('Missing pdp_template column');
 
-// 11. Migration
-console.log('📦 11. Migration 02_rebrand_templates.sql');
+// 10. Migration
+console.log('📦 10. Migration 02_rebrand_templates.sql');
 const migration = fs.readFileSync('supabase/02_rebrand_templates.sql', 'utf8');
 const migrationMappings = [...migration.matchAll(/WHEN '(\w+)' THEN '(\w+)'/g)];
 migrationMappings.length === 75 ? pass(`${migrationMappings.length} mappings`) : fail(`Expected 75, got ${migrationMappings.length}`);
@@ -148,8 +137,8 @@ if (missingInMigration.length) fail(`Missing new IDs in migration: ${missingInMi
 else pass('Migration new IDs ↔ catalog: perfect match');
 migration.includes('ELSE template') ? pass('ELSE template fallback present') : warn('No ELSE fallback in migration');
 
-// 12. Screenshots
-console.log('📦 12. Screenshots');
+// 11. Screenshots
+console.log('📦 11. Screenshots');
 const screenshotDir = 'public/screenshots';
 if (fs.existsSync(screenshotDir)) {
   const screenshots = fs.readdirSync(screenshotDir).filter(f => f.endsWith('.webp'));
@@ -168,8 +157,8 @@ if (fs.existsSync(screenshotDir)) {
   fail('public/screenshots directory not found');
 }
 
-// 13. Brand residue check
-console.log('📦 13. Brand residue check');
+// 12. Brand residue check
+console.log('📦 12. Brand residue check');
 const BRANDS_TO_CHECK = [
   'AMAZON', 'NIKE', 'ADIDAS', 'APPLE', 'SAMSUNG', 'GUCCI', 'VUITTON', 'CHANEL', 'PRADA', 'ROLEX',
   'WALMART', 'COSTCO', 'IKEA', 'SEPHORA', 'TESLA', 'EBAY', 'TEMU', 'SHEIN', 'ZARA',
@@ -208,8 +197,8 @@ for (const file of templateFilesForBrand) {
 }
 if (brandResidues === 0) pass('Zero brand residues in all 75 templates');
 
-// 14. Lucide-react import validation
-console.log('📦 14. Lucide-react import validation');
+// 13. Lucide-react import validation
+console.log('📦 13. Lucide-react import validation');
 let lucideErrors = 0;
 for (const file of templateFilesForBrand) {
   const content = fs.readFileSync(path.join(templateDir, file), 'utf8');
@@ -227,8 +216,8 @@ for (const file of templateFilesForBrand) {
 }
 if (lucideErrors === 0) pass('All lucide-react imports are valid');
 
-// 15. Database logic consistency
-console.log('📦 15. Database ↔ App logic consistency');
+// 14. Database logic consistency
+console.log('📦 14. Database ↔ App logic consistency');
 
 // Check API route for tiendas
 const apiRoute = fs.readFileSync('app/api/tiendas/route.ts', 'utf8');
@@ -258,8 +247,8 @@ if (fs.existsSync(productPagePath)) {
 const middleware = fs.readFileSync('middleware.ts', 'utf8');
 pass('Middleware exists');
 
-// 16. PDP templates
-console.log('📦 16. PDP templates');
+// 15. PDP templates
+console.log('📦 15. PDP templates');
 const pdpDir = path.join(templateDir, 'pdp');
 if (fs.existsSync(pdpDir)) {
   const pdpFiles = fs.readdirSync(pdpDir).filter(f => f.endsWith('.tsx'));
@@ -274,12 +263,6 @@ if (fs.existsSync(pdpDir)) {
 } else {
   fail('PDP templates directory not found');
 }
-
-// 17. Carousel3D screenshot integration
-console.log('📦 17. Carousel3D screenshot integration');
-carousel.includes('/screenshots/') ? pass('Carousel3D references /screenshots/ path') : fail('Carousel3D missing screenshot references');
-carousel.includes('onError') ? pass('Carousel3D has fallback onError handler') : fail('Carousel3D missing fallback handler');
-carousel.includes('.webp') ? pass('Carousel3D uses .webp format') : fail('Carousel3D not using .webp');
 
 // ─── FINAL REPORT ───
 console.log('\n═══════════════════════════════════════════');

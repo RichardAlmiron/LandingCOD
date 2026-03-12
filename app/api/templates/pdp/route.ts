@@ -21,7 +21,18 @@ export async function GET(request: Request) {
     const { data: pdps, error } = await query;
 
     if (error) throw error;
-    return NextResponse.json({ pdps });
+    
+    // Map database columns to PdpTemplate format
+    const mappedPdps = pdps?.map((pdp: any) => ({
+      id: pdp.id,
+      name: pdp.name || 'Sin nombre',
+      description: pdp.description || '',
+      category: pdp.category || 'urgency',
+      image_url: pdp.image_url || null,
+      premium: pdp.premium || false
+    })) || [];
+    
+    return NextResponse.json({ pdps: mappedPdps });
   } catch (err) {
     console.error('GET /api/templates/pdp error:', err);
     return NextResponse.json({ error: 'Error al obtener páginas de producto reutilizables' }, { status: 500 });
