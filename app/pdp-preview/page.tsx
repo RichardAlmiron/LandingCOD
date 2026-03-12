@@ -51,7 +51,7 @@ export default async function PdpPreviewPage({
   const { data: pdpTemplate, error } = await supabase
     .from('Paginas_de_Productos_Reutilizables')
     .select('category, name, description')
-    .or(`id.eq.${id},template_key.eq.${id}`)
+    .eq('id', id)
     .is('deleted_at', null)
     .single();
 
