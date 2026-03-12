@@ -268,8 +268,19 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                                   position: 'absolute', inset: 0, width: '100%', height: '100%',
                                   objectFit: 'cover', objectPosition: 'top',
                                   pointerEvents: 'none', borderRadius: '1.35rem',
+                                  backgroundColor: `rgba(0,0,0,0.2)` // Fondo de reserva
                                 }}
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                onError={(e) => {
+                                  // En lugar de ocultar, cargamos el screenshot de fallback si no existe el real
+                                  const target = e.currentTarget;
+                                  if (!target.dataset.failed) {
+                                    target.dataset.failed = 'true';
+                                    target.src = isPdp || pdpScreenshotBase ? '/screenshots/placeholder-pdp.webp' : '/screenshots/placeholder.webp';
+                                    // Si fallback falla también, entonces oculta
+                                  } else {
+                                    target.style.display = 'none';
+                                  }
+                                }}
                               />
                             );
                           })()}
