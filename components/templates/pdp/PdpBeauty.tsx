@@ -53,6 +53,9 @@ export default function PdpBeauty({ data, product, variant = 1 }: PDPProps) {
 
   const theme = getTheme();
 
+  // SEGURIDAD EXTREMA: Verificar si existen las propiedades antes de renderizar
+  const hasRecentSales = data?.pdpFeatures?.recentSales || false;
+
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-stone-800 font-sans pb-24 selection:bg-rose-200">
       
@@ -289,7 +292,7 @@ export default function PdpBeauty({ data, product, variant = 1 }: PDPProps) {
       />
 
       <StickyBuyButton price={product.price} theme={theme} />
-      {(data?.pdpFeatures?.recentSales ?? false) && <RecentSalesPopup theme={theme} />}
+      {hasRecentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }

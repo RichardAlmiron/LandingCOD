@@ -298,7 +298,7 @@ export default function PdpTools({ data, product, variant = 1 }: PDPProps) {
       />
 
       <StickyBuyButton price={product.price} theme={theme} />
-      {data.pdpFeatures?.recentSales && <RecentSalesPopup theme={theme} />}
+      {hasRecentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }

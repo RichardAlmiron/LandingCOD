@@ -46,6 +46,7 @@ export default function PdpElectronics({ data, product, variant = 1 }: PDPProps)
   };
 
   const theme = getTheme();
+  const hasRecentSales = data?.pdpFeatures?.recentSales || false;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 selection:bg-indigo-200">
@@ -291,7 +292,7 @@ export default function PdpElectronics({ data, product, variant = 1 }: PDPProps)
       />
 
       <StickyBuyButton price={product.price} theme={theme} />
-      {data.pdpFeatures?.recentSales && <RecentSalesPopup theme={theme} />}
+      {hasRecentSales && <RecentSalesPopup theme={theme} />}
     </div>
   );
 }
