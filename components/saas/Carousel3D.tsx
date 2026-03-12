@@ -210,28 +210,7 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                       position: 'relative', display: 'flex', flexDirection: 'column',
                     }}>
 
-                      {isPdp ? (
-                        /* === TARJETA MODO PDP === */
-                        <>
-                          {/* Cabecera con color de la estrategia */}
-                          <div style={{ height: 90, background: `linear-gradient(145deg, ${brandPrimary}, ${brandPrimary}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-                            {/* Orbs decorativos */}
-                            <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: -20, right: -20 }} />
-                            <div style={{ position: 'absolute', width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', bottom: -10, left: 10 }} />
-                            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', border: '1.5px solid rgba(255,255,255,0.25)' }}>
-                              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', boxShadow: `0 0 12px ${brandPrimary}` }} />
-                            </div>
-                          </div>
-                          {/* Cuerpo con nombre y descripción */}
-                          <div style={{ flex: 1, padding: '10px 10px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ fontSize: 10, fontWeight: 800, color: brandPrimary, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.2 }}>{item.name}</span>
-                            <p style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45, margin: 0, flex: 1, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.desc}</p>
-                            {/* Barra decorativa */}
-                            <div style={{ height: 3, borderRadius: 2, background: `linear-gradient(90deg, ${brandPrimary}, transparent)`, marginTop: 4 }} />
-                          </div>
-                        </>
-                      ) : (
-                        /* === TARJETA MODO TIENDA (original) === */
+                        /* === TARJETA UNIFICADA (IMAGEN) === */
                         <>
                           <div style={{ height: 28, background: brandPrimary, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 6 }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
@@ -285,7 +264,6 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                             );
                           })()}
                         </>
-                      )}
 
                       {/* Hover Overlay — igual para ambos modos */}
                       <div 
@@ -293,17 +271,15 @@ export default function Carousel3D({ category, items, selectedId, onSelect, onCo
                         onPointerDown={(e) => e.stopPropagation()}
                         onPointerUp={(e) => e.stopPropagation()}
                       >
-                        {!isPdp && (
-                          <a 
-                            href={`/preview?template=${item.id}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors w-[148px]"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Eye size={16} /> Previsualizar
-                          </a>
-                        )}
+                        <a 
+                          href={isPdp ? `/pdp-preview?id=${item.id}` : `/preview?template=${item.id}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm font-medium border border-white/20 transition-colors w-[148px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Eye size={16} /> Previsualizar
+                        </a>
                         <button 
                           onClick={(e) => { e.stopPropagation(); onSelect(item.id); onConfirmSelect?.(item.id); }}
                           style={{ background: isPdp ? `${itemColor}cc` : undefined }}

@@ -426,7 +426,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                                     }));
                                                     setStep(4); // ← Ir directamente al paso 4 (configurar PDP)
                                                 }}
-                                                isPdp={false} // Usar modo tienda para mostrar screenshots reales
+                                                isPdp={true}
                                                 pdpScreenshotBase="/pdp-screenshots/"
                                             />
                                         );
