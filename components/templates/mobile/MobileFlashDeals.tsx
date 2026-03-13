@@ -16,8 +16,8 @@ import {
   TrendingUp
 } from "lucide-react";
 import { StoreData } from "@/lib/types";
-import { MobileProductCard } from "../MobileProductCard";
-import { MobileCartDrawer } from "../MobileCartDrawer";
+import { MobileProductCard } from "@/components/mobile/MobileProductCard";
+import { MobileCartDrawer } from "@/components/mobile/MobileCartDrawer";
 
 interface MobileFlashDealsProps {
   data: StoreData;

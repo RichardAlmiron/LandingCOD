@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, 
   ShoppingCart, 
@@ -13,10 +13,11 @@ import {
   Store
 } from "lucide-react";
 import { StoreData } from "@/lib/types";
-import { MobileProductCard } from "../MobileProductCard";
-import { MobileCartDrawer } from "../MobileCartDrawer";
-import { MobileSideMenu } from "../MobileSideMenu";
-import { usePagination } from "@/hooks/usePagination";
+import { MobileProductCard } from "@/components/mobile/MobileProductCard";
+import { MobileCartDrawer } from "@/components/mobile/MobileCartDrawer";
+import { MobileSideMenu } from "@/components/mobile/MobileSideMenu";
+import Image from "next/image";
+import Link from "next/link";
 
 interface GenericMobileTemplateProps {
   data: StoreData;
@@ -65,8 +66,11 @@ export function GenericMobileTemplate({
     return matchesSearch && matchesCategory;
   });
 
-  const { paginatedItems, currentPage, totalPages, handlePageChange } =
-    usePagination(filteredProducts, 12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedItems = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

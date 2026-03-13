@@ -19,10 +19,9 @@ import {
   ArrowRight
 } from "lucide-react";
 import { StoreData } from "@/lib/types";
-import { MobileProductCard } from "../MobileProductCard";
-import { MobileCartDrawer } from "../MobileCartDrawer";
-import { MobileSideMenu } from "../MobileSideMenu";
-import { usePagination } from "@/hooks/usePagination";
+import { MobileProductCard } from "@/components/mobile/MobileProductCard";
+import { MobileCartDrawer } from "@/components/mobile/MobileCartDrawer";
+import { MobileSideMenu } from "@/components/mobile/MobileSideMenu";
 
 interface MobileMegaMarketProps {
   data: StoreData;
@@ -94,8 +93,11 @@ export function MobileMegaMarket({ data }: MobileMegaMarketProps) {
     return matchesSearch && matchesCategory;
   });
 
-  const { paginatedItems, currentPage, totalPages, handlePageChange } =
-    usePagination(filteredProducts, 10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedItems = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
