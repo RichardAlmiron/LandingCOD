@@ -19,7 +19,7 @@ const NAV_ITEMS = [
                 )
             },
             {
-                href: '/builder', label: 'Builder', icon: (
+                href: '/builder', label: 'Generador', icon: (
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                         <path d="M2 5 C2 3.34 3.34 2 5 2 H13 C14.66 2 16 3.34 16 5 V13 C16 14.66 14.66 16 13 16 H5 C3.34 16 2 14.66 2 13 Z" stroke="currentColor" strokeWidth="1.5" />
                         <path d="M6 9 H12 M9 6 V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -40,7 +40,7 @@ const NAV_ITEMS = [
         label: 'Administración',
         items: [
             {
-                href: '/admin', label: 'Admin Panel', icon: (
+                href: '/admin', label: 'Generador Master', icon: (
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                         <circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5" />
                         <path d="M3 16 C3 13.24 5.24 11 8 11 H10 C12.76 11 15 13.24 15 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

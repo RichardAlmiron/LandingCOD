@@ -38,6 +38,28 @@ export default function BuilderForm({ data, setData, template, setTemplate, prev
     }).catch(console.error).finally(() => setIsLoading(false));
   }, []);
 
+  // Load display mode preference from API (sincronizado con admin)
+  useEffect(() => {
+    const loadDisplayMode = async () => {
+      try {
+        const response = await fetch('/api/ui-preferences?entity_type=pdp_display_mode');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.selected_mode) {
+            setDisplayMode(data.selected_mode);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading display mode:', error);
+      }
+    };
+    loadDisplayMode();
+    
+    // Refrescar cada 5 segundos para mantener sincronizado con admin
+    const interval = setInterval(loadDisplayMode, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleStoreChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setData(prev => ({ ...prev, [name]: value }));
@@ -88,7 +110,7 @@ export default function BuilderForm({ data, setData, template, setTemplate, prev
   return (
     <div className="h-full flex flex-col bg-white border-r border-zinc-200">
       <div className="p-6 pb-4 border-b border-zinc-100 shrink-0">
-        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Store Builder</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Generador de Landing</h2>
         <p className="text-sm text-zinc-500 mt-1">Configura tu tienda y catálogo de productos.</p>
       </div>
 
@@ -124,8 +146,9 @@ export default function BuilderForm({ data, setData, template, setTemplate, prev
             <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-white shrink-0">
               <div className="flex items-center gap-2">
                 <LayoutTemplate className="w-5 h-5 text-indigo-500" />
-                <h3 className="font-medium text-zinc-900">Diseño de Tienda</h3>
+                <h3 className="font-medium text-zinc-900">Generador de Landing</h3>
                 <span className="text-xs text-zinc-500">({allTemplates.length} plantillas)</span>
+                <span className="text-xs text-indigo-500 font-medium">Modo: {displayMode === 'filmstrip' ? 'Film Strip' : 'Cover Flow'}</span>
               </div>
               <button
                 onClick={() => setShowDisplayModeSelector(!showDisplayModeSelector)}
