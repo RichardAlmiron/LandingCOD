@@ -68,41 +68,53 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [displayMode, setDisplayMode] = useState<DisplayMode>('filmstrip');
     const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
 
-    // Save step to localStorage whenever it changes
+    // Save step to localStorage whenever it changes (but not on initial mount)
+    const [hasMounted, setHasMounted] = useState(false);
     useEffect(() => {
-        localStorage.setItem('builderFlow_step', String(step));
-    }, [step]);
+        if (hasMounted) {
+            localStorage.setItem('builderFlow_step', String(step));
+        }
+    }, [step, hasMounted]);
+
+    // Mark as mounted after initial render
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
 
     // Save flowType to localStorage whenever it changes
     useEffect(() => {
-        if (flowType) {
+        if (hasMounted && flowType) {
             localStorage.setItem('builderFlow_flowType', flowType);
         }
-    }, [flowType]);
+    }, [flowType, hasMounted]);
 
     // Save template to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('builderFlow_template', template);
-    }, [template]);
+        if (hasMounted) {
+            localStorage.setItem('builderFlow_template', template);
+        }
+    }, [template, hasMounted]);
 
     // Save pdpCategory to localStorage whenever it changes
     useEffect(() => {
-        if (pdpCategory) {
+        if (hasMounted && pdpCategory) {
             localStorage.setItem('builderFlow_pdpCategory', pdpCategory);
         }
-    }, [pdpCategory]);
+    }, [pdpCategory, hasMounted]);
 
     // Save selectedProducts to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('builderFlow_selectedProducts', JSON.stringify(Array.from(selectedProducts)));
-    }, [selectedProducts]);
+        if (hasMounted) {
+            localStorage.setItem('builderFlow_selectedProducts', JSON.stringify(Array.from(selectedProducts)));
+        }
+    }, [selectedProducts, hasMounted]);
 
     // Save storeData to localStorage whenever it changes (except empty initial state)
     useEffect(() => {
-        if (storeData.products.length > 0 || storeData.name !== defaultStore.name) {
+        if (hasMounted && (storeData.products.length > 0 || storeData.name !== defaultStore.name)) {
             localStorage.setItem('builderFlow_storeData', JSON.stringify(storeData));
         }
-    }, [storeData]);
+    }, [storeData, hasMounted]);
 
     // Hydration effect: load all saved state from localStorage on mount
     useEffect(() => {
