@@ -4,8 +4,6 @@ import { DisplayMode } from '@/components/admin/DisplayModeSelector';
 import { Loader2 } from 'lucide-react';
 
 // Lazy load store visualization components
-const StoreFullscreenSlider = lazy(() => import('@/components/visualization/StoreFullscreenSlider'));
-const StoreCardStack = lazy(() => import('@/components/visualization/StoreCardStack'));
 const StoreFilmStrip = lazy(() => import('@/components/visualization/StoreFilmStrip'));
 const StoreCoverFlow = lazy(() => import('@/components/visualization/StoreCoverFlow'));
 
@@ -27,24 +25,6 @@ export default function StoreDynamicDisplay({
   
   const renderComponent = () => {
     switch (mode) {
-      case 'fullscreenslider':
-        return (
-          <StoreFullscreenSlider
-            items={items}
-            selectedId={selectedId}
-            onSelect={onSelect}
-            onConfirmSelect={onConfirmSelect}
-          />
-        );
-      case 'cardstack':
-        return (
-          <StoreCardStack
-            items={items}
-            selectedId={selectedId}
-            onSelect={onSelect}
-            onConfirmSelect={onConfirmSelect}
-          />
-        );
       case 'filmstrip':
         return (
           <StoreFilmStrip
@@ -65,7 +45,7 @@ export default function StoreDynamicDisplay({
         );
       default:
         return (
-          <StoreFullscreenSlider
+          <StoreFilmStrip
             items={items}
             selectedId={selectedId}
             onSelect={onSelect}

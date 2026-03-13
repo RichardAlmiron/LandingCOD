@@ -63,7 +63,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
     const ITEMS_PER_PAGE = 24;
     const [useLivePreview, setUseLivePreview] = useState(false);
-    const [displayMode, setDisplayMode] = useState<DisplayMode>('fullscreenslider');
+    const [displayMode, setDisplayMode] = useState<DisplayMode>('filmstrip');
     const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
 
     // Load display mode preference from API

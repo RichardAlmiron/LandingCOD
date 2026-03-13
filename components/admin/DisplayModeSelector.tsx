@@ -1,15 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { 
-  Maximize2, 
-  Layers, 
-  Film, 
-  View 
-} from 'lucide-react';
+import { Film, View } from 'lucide-react';
 
 export type DisplayMode = 
-  | 'fullscreenslider' 
-  | 'cardstack' 
   | 'filmstrip' 
   | 'coverflow';
 
@@ -21,18 +14,6 @@ interface DisplayModeOption {
 }
 
 const displayModes: DisplayModeOption[] = [
-  {
-    id: 'fullscreenslider',
-    label: 'Fullscreen Slider',
-    description: 'Slider horizontal tipo Netflix',
-    icon: <Maximize2 className="w-5 h-5" />
-  },
-  {
-    id: 'cardstack',
-    label: 'Card Stack',
-    description: 'Pila de cartas 3D',
-    icon: <Layers className="w-5 h-5" />
-  },
   {
     id: 'filmstrip',
     label: 'Film Strip',

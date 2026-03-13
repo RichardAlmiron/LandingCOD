@@ -4,8 +4,6 @@ import { PdpTemplate } from '@/lib/types';
 import { DisplayMode } from './DisplayModeSelector';
 
 // Lazy load visualization components
-const FullscreenSlider = lazy(() => import('@/components/visualization/FullscreenSlider'));
-const CardStack = lazy(() => import('@/components/visualization/CardStack'));
 const FilmStrip = lazy(() => import('@/components/visualization/FilmStrip'));
 const CoverFlow = lazy(() => import('@/components/visualization/CoverFlow'));
 
@@ -37,16 +35,12 @@ export default function DynamicPDPDisplay({
 
   const renderComponent = () => {
     switch (mode) {
-      case 'fullscreenslider':
-        return <FullscreenSlider {...commonProps} />;
-      case 'cardstack':
-        return <CardStack {...commonProps} />;
       case 'filmstrip':
         return <FilmStrip {...commonProps} />;
       case 'coverflow':
         return <CoverFlow {...commonProps} />;
       default:
-        return <FullscreenSlider {...commonProps} />;
+        return <FilmStrip {...commonProps} />;
     }
   };
 
