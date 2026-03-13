@@ -41,6 +41,8 @@ export default function DisplayModeSelector({ currentMode, onModeChange }: Displ
     
     setSaving(true);
     try {
+      console.log('[DisplayModeSelector] Saving mode:', mode);
+      
       // Save to database
       const response = await fetch('/api/ui-preferences', {
         method: 'POST',
@@ -51,11 +53,20 @@ export default function DisplayModeSelector({ currentMode, onModeChange }: Displ
         })
       });
       
+      console.log('[DisplayModeSelector] Response status:', response.status);
+      
       if (response.ok) {
+        const data = await response.json();
+        console.log('[DisplayModeSelector] Saved successfully:', data);
         onModeChange(mode);
+      } else {
+        const errorData = await response.json();
+        console.error('[DisplayModeSelector] API error:', errorData);
+        alert('Error al guardar: ' + (errorData.error || 'Error desconocido'));
       }
     } catch (error) {
-      console.error('Error saving preference:', error);
+      console.error('[DisplayModeSelector] Network error:', error);
+      alert('Error de conexión al guardar el modo');
     } finally {
       setSaving(false);
     }
