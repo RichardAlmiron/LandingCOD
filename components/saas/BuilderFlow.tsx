@@ -30,21 +30,10 @@ const STORE_CATEGORIES = ['Todos', 'Marketplace', 'Tech', 'Moda', 'Belleza', 'Re
 type Step = 1 | 2 | 3 | 4;
 
 export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
-    // Load saved step from localStorage on mount
-    const [step, setStep] = useState<Step>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('builderFlow_step');
-            return saved ? (parseInt(saved, 10) as Step) : 1;
-        }
-        return 1;
-    });
-    
-    const [flowType, setFlowType] = useState<FlowType>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('builderFlow_flowType') as FlowType || null;
-        }
-        return null;
-    });
+    // Estados inicializados con valores por defecto (no leer localStorage aquí)
+    const [step, setStep] = useState<Step>(1);
+    const [flowType, setFlowType] = useState<FlowType>(null);
+    const [isHydrated, setIsHydrated] = useState(false);
     const [template, setTemplate] = useState<TemplateType>('megamarket');
     const [pdpCategory, setPdpCategory] = useState<string | null>(null);
     const [storeData, setStoreData] = useState<StoreData>({ ...defaultStore, products: [] });
@@ -90,6 +79,74 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             localStorage.setItem('builderFlow_flowType', flowType);
         }
     }, [flowType]);
+
+    // Save template to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('builderFlow_template', template);
+    }, [template]);
+
+    // Save pdpCategory to localStorage whenever it changes
+    useEffect(() => {
+        if (pdpCategory) {
+            localStorage.setItem('builderFlow_pdpCategory', pdpCategory);
+        }
+    }, [pdpCategory]);
+
+    // Save selectedProducts to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('builderFlow_selectedProducts', JSON.stringify(Array.from(selectedProducts)));
+    }, [selectedProducts]);
+
+    // Save storeData to localStorage whenever it changes (except empty initial state)
+    useEffect(() => {
+        if (storeData.products.length > 0 || storeData.name !== defaultStore.name) {
+            localStorage.setItem('builderFlow_storeData', JSON.stringify(storeData));
+        }
+    }, [storeData]);
+
+    // Hydration effect: load all saved state from localStorage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedStep = localStorage.getItem('builderFlow_step');
+            const savedFlowType = localStorage.getItem('builderFlow_flowType');
+            const savedTemplate = localStorage.getItem('builderFlow_template');
+            const savedPdpCategory = localStorage.getItem('builderFlow_pdpCategory');
+            const savedSelectedProducts = localStorage.getItem('builderFlow_selectedProducts');
+            const savedStoreData = localStorage.getItem('builderFlow_storeData');
+            
+            if (savedStep) {
+                setStep(parseInt(savedStep, 10) as Step);
+            }
+            if (savedFlowType) {
+                setFlowType(savedFlowType as FlowType);
+            }
+            if (savedTemplate) {
+                setTemplate(savedTemplate as TemplateType);
+            }
+            if (savedPdpCategory) {
+                setPdpCategory(savedPdpCategory);
+            }
+            if (savedSelectedProducts) {
+                try {
+                    const parsed = JSON.parse(savedSelectedProducts);
+                    setSelectedProducts(new Set(parsed));
+                } catch (e) {
+                    console.error('Error parsing selectedProducts:', e);
+                }
+            }
+            if (savedStoreData) {
+                try {
+                    const parsed = JSON.parse(savedStoreData);
+                    setStoreData(parsed);
+                } catch (e) {
+                    console.error('Error parsing storeData:', e);
+                }
+            }
+            
+            // Mark as hydrated after loading
+            setIsHydrated(true);
+        }
+    }, []);
 
     // Load display mode preference from API
     useEffect(() => {
@@ -284,8 +341,15 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     return (
         <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 0, height: 'calc(100vh - var(--topbar-height) - 56px)', minHeight: 600 }}>
 
+            {/* Loading state while hydrating from localStorage */}
+            {!isHydrated && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                </div>
+            )}
+
             {/* ── STEP 1: Elige el Tipo de Proyecto ── */}
-            {step === 1 && (
+            {isHydrated && step === 1 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32, padding: 40 }}>
                     <div style={{ textAlign: 'center', maxWidth: 600 }}>
                         <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>¿Qué quieres construir hoy?</h1>
@@ -343,7 +407,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             )}
 
             {/* ── STEP 2: Choose Template or Category ── */}
-            {step === 2 && (
+            {isHydrated && step === 2 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                     {flowType === 'store' ? (
                         <>
@@ -618,7 +682,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             )}
 
             {/* ── STEP 3: Selección de Productos de AlmiDrop ── */}
-            {step === 3 && (() => {
+            {isHydrated && step === 3 && (() => {
                 const totalProducts = almidropProducts.length;
                 const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE));
                 const paginatedProducts = almidropProducts.slice((productPage - 1) * ITEMS_PER_PAGE, productPage * ITEMS_PER_PAGE);
@@ -823,7 +887,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
             })()}
 
             {/* ── STEP 4: Configure & Preview ── */}
-            {step === 4 && (
+            {isHydrated && step === 4 && (
                 <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20, overflow: 'hidden' }}>
                     {/* Config Panel */}
                     <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
