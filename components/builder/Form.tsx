@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StoreData, TemplateType, Product, PdpCategoryType } from '@/lib/types';
 import { Upload, LayoutTemplate, Store, Package, Plus, Trash2, Image as ImageIcon, Zap } from 'lucide-react';
+import DisplayModeSelector, { DisplayMode } from '@/components/admin/DisplayModeSelector';
+import StoreDynamicDisplay from '@/components/visualization/StoreDynamicDisplay';
 
 interface FormProps {
   data: StoreData;
@@ -16,9 +18,11 @@ interface FormProps {
 export default function BuilderForm({ data, setData, template, setTemplate, previewMode, setPreviewMode, activeProductId, setActiveProductId }: FormProps) {
   const [activeTab, setActiveTab] = useState<'store' | 'products' | 'pdp'>('store');
 
-  const [allTemplates, setAllTemplates] = useState<{ id: TemplateType; name: string; desc: string }[]>([]);
+  const [allTemplates, setAllTemplates] = useState<{ id: TemplateType; name: string; desc: string; category?: string; premium?: boolean }[]>([]);
   const [pdpTemplatesList, setPdpTemplatesList] = useState<{ id: string; category: PdpCategoryType; name: string; desc: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('filmstrip');
+  const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -113,93 +117,58 @@ export default function BuilderForm({ data, setData, template, setTemplate, prev
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'store' && (
-          <>
-            {/* Template Selection */}
-            <section className="space-y-4">
-              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Header con selector de modo */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-white shrink-0">
+              <div className="flex items-center gap-2">
                 <LayoutTemplate className="w-5 h-5 text-indigo-500" />
-                <h3>Plantilla de Tienda</h3>
+                <h3 className="font-medium text-zinc-900">Diseño de Tienda</h3>
+                <span className="text-xs text-zinc-500">({allTemplates.length} plantillas)</span>
               </div>
-              <div className="grid grid-cols-1 gap-3">
-                {isLoading ? (
-                  <div className="text-zinc-500 text-sm text-center py-4">Cargando plantillas...</div>
-                ) : (
-                  allTemplates.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTemplate(t.id as TemplateType)}
-                      className={`p-4 rounded-xl border text-left transition-all ${
-                        template === t.id 
-                          ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' 
-                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
-                      }`}
-                    >
-                      <div className="font-medium text-zinc-900">{t.name}</div>
-                      <div className="text-xs text-zinc-500 mt-1">{t.desc}</div>
-                    </button>
-                  ))
-                )}
+              <button
+                onClick={() => setShowDisplayModeSelector(!showDisplayModeSelector)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  showDisplayModeSelector
+                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <LayoutTemplate className="w-4 h-4" />
+                Modo Visualización
+              </button>
+            </div>
+
+            {/* Panel de selector de modo */}
+            {showDisplayModeSelector && (
+              <div className="absolute top-20 right-4 w-80 z-50 bg-white rounded-xl shadow-xl border border-zinc-200 p-4">
+                <DisplayModeSelector
+                  currentMode={displayMode}
+                  onModeChange={(mode) => {
+                    setDisplayMode(mode);
+                  }}
+                />
               </div>
-            </section>
+            )}
 
-            <hr className="border-zinc-100" />
-
-            {/* Store Details */}
-            <section className="space-y-4">
-              <div className="flex items-center space-x-2 text-zinc-900 font-medium">
-                <Store className="w-5 h-5 text-indigo-500" />
-                <h3>Detalles de la Tienda</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-700">Nombre de la Tienda</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={data.name}
-                    onChange={handleStoreChange}
-                    className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+            {/* Área de visualización dinámica */}
+            <div className="flex-1 bg-zinc-950 relative min-h-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                 </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-700">Texto del Logo</label>
-                  <input
-                    type="text"
-                    name="logoText"
-                    value={data.logoText}
-                    onChange={handleStoreChange}
-                    className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-700 flex items-center space-x-2">
-                    <ImageIcon className="w-4 h-4" />
-                    <span>URL del Banner Principal</span>
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      name="bannerImage"
-                      value={data.bannerImage}
-                      onChange={handleStoreChange}
-                      className="flex-1 px-3 py-2 bg-white border border-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <button 
-                      className="px-3 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 border border-zinc-200"
-                      onClick={() => setData(prev => ({ ...prev, bannerImage: `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}` }))}
-                    >
-                      <Upload className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </>
+              ) : (
+                <StoreDynamicDisplay
+                  mode={displayMode}
+                  items={allTemplates}
+                  selectedId={template}
+                  onSelect={(id) => setTemplate(id as TemplateType)}
+                  onConfirmSelect={(id) => setTemplate(id as TemplateType)}
+                />
+              )}
+            </div>
+          </div>
         )}
 
         {activeTab === 'pdp' && (
