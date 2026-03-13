@@ -6,20 +6,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// GLOBAL key for admin-controlled display mode
-const GLOBAL_DISPLAY_MODE_KEY = 'global_display_mode';
-
-// GET - Retrieve display mode (global for all users)
+// GET - Retrieve global display mode (for all users)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get('entity_type') || 'pdp_display_mode';
 
-    // Buscar el modo global guardado por el admin
+    // Buscar el modo global (is_global = TRUE)
     const { data, error } = await supabase
       .from('ui_preferences')
       .select('selected_mode')
-      .eq('user_id', GLOBAL_DISPLAY_MODE_KEY)
+      .eq('is_global', true)
       .eq('entity_type', entityType)
       .single();
 
@@ -42,7 +39,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Save display mode (admin only, global for all users)
+// POST - Save global display mode (admin only, affects all users)
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -54,15 +51,16 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Guardar como global (usando key especial en user_id)
+    // Guardar como global (is_global = TRUE, user_id = NULL)
     const { data, error } = await supabase
       .from('ui_preferences')
       .upsert({
-        user_id: GLOBAL_DISPLAY_MODE_KEY,
+        user_id: null,
+        is_global: true,
         entity_type,
         selected_mode
       }, {
-        onConflict: 'user_id,entity_type'
+        onConflict: 'is_global,entity_type'
       })
       .select()
       .single();
