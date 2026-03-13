@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { defaultStore, StoreData } from '@/lib/types';
 import { Loader2, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useDeviceType } from '@/hooks/useDeviceType';
 
 // PDP template components
 import PdpAggressiveUrgency from '@/components/templates/pdp/PdpAggressiveUrgency';
@@ -19,6 +20,11 @@ import PdpPremiumBundle from '@/components/templates/pdp/PdpPremiumBundle';
 import PdpPremiumElectronics from '@/components/templates/pdp/PdpPremiumElectronics';
 import PdpPremiumHealth from '@/components/templates/pdp/PdpPremiumHealth';
 import PdpPremiumUrgency from '@/components/templates/pdp/PdpPremiumUrgency';
+
+// Mobile templates
+const MobileMegaMarket = dynamic(() => import('@/components/templates/mobile/MobileMegaMarket'), { ssr: false });
+const MobileFlashDeals = dynamic(() => import('@/components/templates/mobile/MobileFlashDeals'), { ssr: false });
+const GenericMobileTemplate = dynamic(() => import('@/components/templates/mobile/GenericMobileTemplate'), { ssr: false });
 
 const templateComponents: Record<string, any> = {
     megamarket: dynamic(() => import('@/components/templates/MegaMarket')),
@@ -98,6 +104,13 @@ const templateComponents: Record<string, any> = {
     futureauto: dynamic(() => import('@/components/templates/FutureAuto')),
 };
 
+// Mobile template components mapping - add specific mobile versions here
+const mobileTemplateComponents: Record<string, any> = {
+    megamarket: MobileMegaMarket,
+    flashdeals: MobileFlashDeals,
+    // All other templates will use GenericMobileTemplate as fallback
+};
+
 // Map PDP category -> component
 const pdpCategoryComponents: Record<string, React.ComponentType<any>> = {
     urgency: PdpAggressiveUrgency,
@@ -121,6 +134,7 @@ export default function FullscreenPreview() {
     const [pdpMode, setPdpMode] = useState<{ category: string; templateId: string } | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const { isMobile, isClient } = useDeviceType();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -248,7 +262,23 @@ export default function FullscreenPreview() {
         );
     }
 
-    const TemplateComponent = templateComponents[data.template] || templateComponents.megamarket;
+    // Select template component based on device type
+    // If on mobile and has specific mobile version, use it
+    // Otherwise use generic mobile template for mobile, or desktop version
+    let TemplateComponent;
+    
+    if (isClient && isMobile) {
+        // Check if there's a specific mobile version
+        if (mobileTemplateComponents[data.template]) {
+            TemplateComponent = mobileTemplateComponents[data.template];
+        } else {
+            // Use generic mobile template for all other templates
+            TemplateComponent = () => <GenericMobileTemplate data={data.store} />;
+        }
+    } else {
+        // Desktop: use original template
+        TemplateComponent = templateComponents[data.template] || templateComponents.megamarket;
+    }
 
     return (
         <div suppressHydrationWarning className="min-h-screen bg-white relative">
