@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, Zap, ArrowRight, Smartphone, Instagram, Facebook, Twitter, Youtube, CheckCircle, ChevronRight, Tag } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, Zap, ArrowRight, Smartphone, Instagram, Facebook, Twitter, Youtube, CheckCircle, ChevronRight, Tag, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BoldYouthTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-[#F20078] selection:text-white pb-0 overflow-x-hidden">
@@ -28,7 +54,12 @@ export default function BoldYouthTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-7 h-7 lg:hidden mr-4 cursor-pointer hover:text-[#F20078] transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden mr-4 cursor-pointer hover:text-[#F20078] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
 
             <div className="flex items-center cursor-pointer mr-8 lg:mr-12">
               <span className="font-black text-[36px] md:text-[42px] tracking-tighter italic lowercase leading-none text-black">
@@ -53,10 +84,23 @@ export default function BoldYouthTemplate({ data }: { data: StoreData }) {
             </div>
             <Search className="w-6 h-6 xl:hidden cursor-pointer hover:text-[#F20078] transition-colors" />
             <User className="hidden md:block w-7 h-7 cursor-pointer hover:text-[#F20078] transition-colors" />
-            <Heart className="hidden md:block w-7 h-7 cursor-pointer hover:text-[#F20078] transition-colors" />
-            <div className="relative cursor-pointer hover:text-[#F20078] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block relative cursor-pointer hover:text-[#F20078] transition-colors"
+            >
+              <Heart className={`w-7 h-7 ${favorites.length > 0 ? 'fill-[#F20078] text-[#F20078]' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#F20078] text-white text-[10px] font-black px-1.5 rounded-full min-w-[18px] text-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#F20078] transition-colors"
+            >
               <ShoppingBag className="w-7 h-7" />
-              <span className="absolute -top-1.5 -right-2 bg-[#F20078] text-white text-[11px] font-black px-1.5 rounded-full min-w-[20px] text-center shadow-sm">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#F20078] text-white text-[10px] font-black px-1.5 rounded-full min-w-[18px] text-center">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -118,21 +162,21 @@ export default function BoldYouthTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── NEW IN GRID ─── */}
+        {/* ─── NEW IN GRID (Paginated) ─── */}
         <section className="px-4 md:px-8 max-w-[1600px] mx-auto mb-20 md:mb-24">
           <div className="flex items-end justify-between mb-8 border-b-4 border-black pb-4">
             <h2 className="text-[36px] md:text-[48px] font-black uppercase italic tracking-tighter text-black leading-none flex items-center">
-              New In This Week
+              All Products ({totalItems})
             </h2>
             <a href="#" className="hidden md:flex text-[16px] font-black uppercase italic tracking-widest text-[#F20078] hover:text-black hover:underline underline-offset-4 transition-colors items-center">
               View All <ChevronRight className="w-5 h-5 ml-1" />
             </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {products.slice(0, 5).map((product, idx) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {paginatedItems.map((product, idx) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white">
-                <div className="relative aspect-[3/4] mb-3 bg-[#f0f0f0] overflow-hidden border-2 border-transparent group-hover:border-black transition-colors">
+                <div className="relative aspect-[3/4] mb-2 bg-[#f0f0f0] overflow-hidden border-2 border-transparent group-hover:border-black transition-colors">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
@@ -140,32 +184,39 @@ export default function BoldYouthTemplate({ data }: { data: StoreData }) {
                     className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-2 left-2 bg-black text-white text-[10px] md:text-[12px] font-black italic px-2 py-1 uppercase tracking-widest">
+                  <div className="absolute top-2 left-2 bg-black text-white text-[9px] font-black italic px-2 py-1 uppercase tracking-widest">
                     New In
                   </div>
                   {idx % 2 === 0 && (
-                    <div className="absolute top-2 right-2 bg-[#F20078] text-white text-[10px] md:text-[12px] font-black italic px-2 py-1 uppercase tracking-widest">
+                    <div className="absolute top-2 right-2 bg-[#F20078] text-white text-[9px] font-black italic px-2 py-1 uppercase tracking-widest">
                       60% OFF
                     </div>
                   )}
-                  {/* Quick View Button */}
-                  <button className="absolute bottom-4 left-4 right-4 bg-white border-2 border-black py-2.5 text-center text-[12px] font-black uppercase italic tracking-widest translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white shadow-[2px_2px_0_0_#F20078]">
-                    Quick Look
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute bottom-2 right-2 bg-white border-2 border-black rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-[2px_2px_0_0_#000]"
+                  >
+                    <Heart className={`w-3 h-3 ${favorites.includes(product.id) ? 'fill-[#F20078] text-[#F20078]' : ''}`} strokeWidth={2.5} />
                   </button>
-                  <div className="absolute bottom-4 left-4 bg-white border-2 border-black rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-[2px_2px_0_0_#000] hover:text-[#F20078] hidden group-hover:block md:group-hover:hidden"> {/* Only show heart on larger screens instead of button if we want, or adjust based on layout. For now hiding. */}
-                    <Heart className="w-4 h-4" strokeWidth={2.5} />
-                  </div>
+                  {/* Add to Cart */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-black text-white py-2 text-[10px] font-black uppercase italic tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#F20078]"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div className="flex flex-col flex-1">
-                  <h3 className="text-[13px] md:text-[14px] font-bold uppercase text-gray-800 line-clamp-2 leading-tight mb-2 group-hover:text-black">
+                  <h3 className="text-[11px] md:text-[12px] font-bold uppercase text-gray-800 line-clamp-2 leading-tight mb-1 group-hover:text-black">
                     {product.title}
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-[18px] md:text-[22px] font-black text-[#F20078] italic">
+                    <span className="text-[14px] md:text-[16px] font-black text-[#F20078] italic">
                       ${product.price}
                     </span>
                     {product.originalPrice && (
-                      <span className="text-[12px] md:text-[14px] font-bold text-gray-400 line-through italic">
+                      <span className="text-[10px] md:text-[11px] font-bold text-gray-400 line-through italic">
                         ${product.originalPrice}
                       </span>
                     )}
@@ -174,11 +225,19 @@ export default function BoldYouthTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
-          <div className="mt-8 flex justify-center md:hidden">
-            <button className="border-2 border-black bg-white text-black px-10 py-3.5 font-black uppercase italic tracking-widest text-[14px] w-full shadow-[4px_4px_0_0_#000]">
-              View All
-            </button>
-          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── TRENDING NOW MASSIVE BLOCKS ─── */}

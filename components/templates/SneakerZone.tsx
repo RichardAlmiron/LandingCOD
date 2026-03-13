@@ -1,10 +1,36 @@
 'use client';
+
 import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, Zap, Trophy, Flame, Calendar, Star, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, Clock, ShieldCheck, MapPin, ChevronDown } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, Zap, Trophy, Flame, Calendar, Star, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, Clock, ShieldCheck, MapPin, ChevronDown, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function SneakerZoneTemplate({ data }: { data: StoreData }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-stone-950 selection:bg-stone-950 selection:text-white">
@@ -61,22 +87,38 @@ export default function SneakerZoneTemplate({ data }: { data: StoreData }) {
                 <span className="text-[11px] font-black uppercase tracking-widest">Find a Store</span>
               </div>
               <div className="flex items-center gap-5">
+                <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="lg:hidden p-2 hover:bg-stone-100 rounded-full transition-colors"
+                >
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
                 <User className="w-5 h-5 cursor-pointer hover:text-red-600 transition-colors" />
-                <div className="relative group cursor-pointer">
-                  <Heart className="w-5 h-5 group-hover:text-red-600 transition-colors" />
-                  <span className="absolute -top-1.5 -right-1.5 bg-stone-950 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full group-hover:bg-red-600">0</span>
+                <div 
+                  onClick={() => toggleFavorite('header')}
+                  className="relative group cursor-pointer"
+                >
+                  <Heart className={`w-5 h-5 group-hover:text-red-600 transition-colors ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                  {favorites.length > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">{favorites.length}</span>
+                  )}
                 </div>
-                <div className="relative group cursor-pointer">
+                <div 
+                  onClick={addToCart}
+                  className="relative group cursor-pointer"
+                >
                   <ShoppingBag className="w-5 h-5 group-hover:text-red-600 transition-colors" />
-                  <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full animate-bounce">0</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full animate-bounce">{cartCount}</span>
+                  )}
                 </div>
-                <Menu className="w-5 h-5 lg:hidden cursor-pointer" />
               </div>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Rest of the code remains the same */}
       <main className="max-w-[1440px] mx-auto px-6 py-8">
         {/* Cinematic Hero */}
         <section className="relative h-[700px] mb-20 overflow-hidden rounded-3xl group">
@@ -130,8 +172,8 @@ export default function SneakerZoneTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-stone-50 rounded-2xl overflow-hidden border border-stone-100 hover:border-red-600/20 hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)] transition-all duration-500">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-stone-50 rounded-2xl overflow-hidden border border-stone-100 hover:border-red-600/20 hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)] transition-all duration-500">
                 <div className="relative aspect-square overflow-hidden bg-white group-hover:bg-stone-50 transition-colors p-8">
                   <img
                     src={product.imageUrl}
@@ -147,8 +189,17 @@ export default function SneakerZoneTemplate({ data }: { data: StoreData }) {
                     )}
                   </div>
 
-                  <button className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 bg-stone-950 text-white py-4 rounded-xl font-black uppercase italic text-xs tracking-widest transition-all duration-300 shadow-2xl hover:bg-red-600">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 bg-stone-950 text-white py-4 rounded-xl font-black uppercase italic text-xs tracking-widest transition-all duration-300 shadow-2xl hover:bg-red-600"
+                  >
                     Quick Add to Bag
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-4 right-4 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                   </button>
                 </div>
 
@@ -172,6 +223,19 @@ export default function SneakerZoneTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* FLX Rewards - Enterprise Grade Branding */}

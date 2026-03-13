@@ -1,9 +1,37 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Zap, Flame, Sparkles, Percent, Package, Truck, ShieldCheck, ChevronDown, Bell, Star } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Zap, Flame, Sparkles, Percent, Package, Truck, ShieldCheck, ChevronDown, Bell, Star, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function PriceDropTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
   const categories = ['Best Sellers', '5-Star Rated', 'New Arrivals', 'Home & Kitchen', 'Women\'s Clothing', 'Men\'s Clothing', 'Shoes', 'Electronics', 'Beauty & Health', 'Toys & Games', 'Automotive', 'Tools'];
 
   return (
@@ -40,7 +68,12 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1500px] mx-auto px-4 md:px-6 h-[72px] flex items-center justify-between">
 
           <div className="flex items-center shrink-0 mr-4 md:mr-8">
-            <Menu className="w-7 h-7 lg:hidden mr-3 cursor-pointer text-gray-800" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden mr-3 p-1 hover:text-[#ff6000] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
             <div className="flex items-center cursor-pointer">
               <span className="font-black text-[32px] md:text-[42px] tracking-tighter uppercase leading-none text-black flex items-center">
                 Te<span className="text-[#ff6000]">mu</span>
@@ -82,18 +115,29 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
               <span className="text-[11px] font-bold mt-1">Messages</span>
             </a>
 
-            <a href="#" className="hidden md:flex flex-col items-center justify-center cursor-pointer hover:text-[#ff6000] transition-colors w-[60px] border-l border-gray-200 pl-4 ml-2">
-              <Heart className="w-[24px] h-[24px]" strokeWidth={1.5} />
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative hidden md:flex flex-col items-center justify-center cursor-pointer hover:text-[#ff6000] transition-colors w-[60px] border-l border-gray-200 pl-4 ml-2"
+            >
+              <Heart className={`w-[24px] h-[24px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
               <span className="text-[11px] font-bold mt-1">Wishlist</span>
-            </a>
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full min-w-[16px] text-center border-2 border-white">{favorites.length}</span>
+              )}
+            </div>
 
-            <a href="#" className="flex flex-col items-center justify-center cursor-pointer hover:text-[#ff6000] transition-colors px-2">
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center justify-center cursor-pointer hover:text-[#ff6000] transition-colors px-2"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[28px] h-[28px]" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#ff6000] text-white text-[11px] font-bold px-1.5 rounded-full min-w-[20px] text-center border-2 border-white shadow-sm">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#ff6000] text-white text-[11px] font-bold px-1.5 rounded-full min-w-[20px] text-center border-2 border-white shadow-sm">{cartCount}</span>
+                )}
               </div>
               <span className="text-[11px] font-bold mt-1 hidden md:block">Cart</span>
-            </a>
+            </div>
           </div>
         </div>
 
@@ -224,12 +268,12 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
         <div className="mb-16">
           <div className="flex items-center justify-between mb-4 md:mb-6 px-1">
             <h2 className="text-[22px] md:text-[28px] font-black tracking-tight text-gray-900 flex items-center">
-              Recommended for you
+              Recommended for you ({totalItems})
             </h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
-            {data.products.map((product, idx) => {
+            {paginatedItems.map((product: any, idx: number) => {
               const discount = Math.floor(Math.random() * 50) + 40;
               const original = parseFloat(product.price) / (1 - (discount / 100));
               const sold = Math.floor(Math.random() * 100) + 5;
@@ -250,8 +294,17 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
                       </div>
                     )}
                     {/* Cart Overlay Button */}
-                    <button className="absolute bottom-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-[0_4px_10px_rgba(0,0,0,0.15)] hover:bg-[#ff6000] hover:text-white transition-all translate-y-2 group-hover:translate-y-0 text-black">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="absolute bottom-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-[0_4px_10px_rgba(0,0,0,0.15)] hover:bg-[#ff6000] hover:text-white transition-all translate-y-2 group-hover:translate-y-0 text-black"
+                    >
                       <ShoppingCart className="w-5 h-5" strokeWidth={2} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-2 left-2 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
                   </div>
 
@@ -288,6 +341,19 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
               )
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
       </main>
 

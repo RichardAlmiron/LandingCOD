@@ -1,12 +1,30 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, ChevronRight, Laptop, CreditCard, Box, HeadphonesIcon, PlayCircle, Menu } from 'lucide-react';
+import { Search, ShoppingBag, ChevronRight, Laptop, CreditCard, Box, HeadphonesIcon, PlayCircle, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function MinimalTechTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const allProducts = data.products;
   const newProducts = allProducts.slice(0, 3);
   const accessories = allProducts.slice(3, 7);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-[#f5f5f7] font-sans text-[#1d1d1f] selection:bg-[#0071e3] selection:text-white pb-0 overflow-x-hidden">
@@ -34,8 +52,21 @@ export default function MinimalTechTemplate({ data }: { data: StoreData }) {
 
           <div className="flex items-center space-x-4 lg:space-x-8">
             <Search className="w-[15px] h-[15px] opacity-80 hover:opacity-100 cursor-pointer transition-opacity" />
-            <ShoppingBag className="w-[15px] h-[15px] opacity-80 hover:opacity-100 cursor-pointer transition-opacity" />
-            <Menu className="w-[18px] h-[18px] md:hidden opacity-80 cursor-pointer transition-opacity" />
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer"
+            >
+              <ShoppingBag className="w-[15px] h-[15px] opacity-80 hover:opacity-100 transition-opacity" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#0071e3] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
+            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden"
+            >
+              {mobileMenuOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
+            </button>
           </div>
         </div>
       </header>
@@ -156,22 +187,48 @@ export default function MinimalTechTemplate({ data }: { data: StoreData }) {
 
         </div>
 
-        {/* ─── CAROUSEL SECTION (Entertainment / Services) ─── */}
-        <div className="w-full mt-4 mb-4 overflow-hidden">
-          <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <div key={item} className="shrink-0 w-[300px] md:w-[980px] h-[400px] md:h-[500px] bg-black text-white relative flex-col justify-end p-10 mr-2 md:mr-4 snap-center cursor-pointer flex">
-                <Image src={`https://picsum.photos/1920/1080?random=${310 + item}`} alt="" fill className="object-cover opacity-60 z-0" />
-                <div className="z-10 flex items-center gap-4">
-                  <button className="bg-white text-black px-6 py-2.5 rounded-full font-bold text-[14px] flex items-center gap-2 hover:opacity-90 transition-opacity">
-                    Stream now <PlayCircle className="w-4 h-4 fill-black text-white" />
+        {/* ─── PRODUCT GRID WITH PAGINATION (3x5 = 15 products) ─── */}
+        <section className="py-8 px-4 max-w-[1024px] mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[24px] md:text-[32px] font-semibold tracking-tight">All Products</h3>
+            <span className="text-sm text-gray-500">{totalItems} items</span>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={`minimaltech-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer">
+                <div className="relative aspect-square bg-white rounded-2xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-shadow">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.title}
+                    fill
+                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 right-2 bg-[#0071e3] text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
                   </button>
-                  <p className="font-semibold text-[16px] md:text-[20px]">Comedy • A new kind of workplace.</p>
                 </div>
+                <h4 className="text-[14px] font-medium text-[#1d1d1f] truncate">{product.title}</h4>
+                <p className="text-[14px] text-gray-500">${product.price}</p>
               </div>
             ))}
           </div>
-        </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+        </section>
 
       </main>
 

@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, MapPin } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, MapPin, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function GlamAngelTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-pink-200 selection:text-black overflow-x-hidden">
@@ -34,7 +60,12 @@ export default function GlamAngelTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex items-center justify-between">
 
           <div className="flex items-center space-x-6">
-            <Menu className="w-6 h-6 lg:hidden cursor-pointer hover:text-[#f7cddb] transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#f7cddb] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="hidden lg:flex items-center border-b border-gray-300 pb-1 w-48 group">
               <Search className="w-4 h-4 mr-2 text-gray-400 group-hover:text-black transition-colors" />
               <input type="text" placeholder="Search" className="bg-transparent outline-none text-[12px] font-medium tracking-widest w-full placeholder-gray-400" />
@@ -51,10 +82,23 @@ export default function GlamAngelTemplate({ data }: { data: StoreData }) {
             <Search className="lg:hidden w-5 h-5 cursor-pointer hover:text-gray-500" />
             <MapPin className="hidden md:block w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
             <User className="hidden md:block w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
-            <Heart className="hidden sm:block w-5 h-5 cursor-pointer hover:text-[#f7cddb] transition-colors" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-gray-500 group">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden sm:block relative cursor-pointer hover:text-[#f7cddb] transition-colors"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-gray-500 group"
+            >
               <ShoppingBag className="w-5 h-5 lg:w-6 lg:h-6 group-hover:fill-current" strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[9px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[9px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -173,7 +217,7 @@ export default function GlamAngelTemplate({ data }: { data: StoreData }) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-x-6 gap-y-12 md:gap-y-16">
-              {products.map((product, idx) => (
+              {paginatedItems.map((product, idx) => (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
 
                   <div className="relative w-full aspect-[3/4] mb-4 overflow-hidden bg-white">
@@ -187,13 +231,19 @@ export default function GlamAngelTemplate({ data }: { data: StoreData }) {
 
                     {/* Add to Bag Hover */}
                     <div className="absolute bottom-0 inset-x-0 p-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hidden lg:block bg-gradient-to-t from-black/50 to-transparent">
-                      <button className="w-full bg-white text-black py-3 font-bold text-[11px] uppercase tracking-widest hover:bg-black hover:text-white transition-colors">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                        className="w-full bg-white text-black py-3 font-bold text-[11px] uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                      >
                         Quick View
                       </button>
                     </div>
 
-                    <button className="absolute top-3 right-3 p-2 bg-white/70 backdrop-blur rounded-full text-black hover:text-pink-600 hover:bg-white transition-all opacity-0 group-hover:opacity-100">
-                      <Heart className="w-4 h-4" />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-3 right-3 p-2 bg-white/70 backdrop-blur rounded-full text-black hover:text-pink-600 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
 
                     {/* Labels */}
@@ -234,6 +284,19 @@ export default function GlamAngelTemplate({ data }: { data: StoreData }) {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
         </section>
 

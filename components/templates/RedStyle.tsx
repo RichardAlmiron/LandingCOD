@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
 import { Search, ShoppingBag, Heart, User, Menu, MoreHorizontal, ArrowRight, Leaf, Star, Facebook, Twitter, Instagram, Youtube, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function RedStyleTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#222] overflow-x-hidden" style={{ fontFamily: "'RedStyle Sans Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
@@ -28,8 +55,11 @@ export default function RedStyleTemplate({ data }: { data: StoreData }) {
 
           {/* Top Actions (Mobile Menu + Right Icons) */}
           <div className="w-full flex justify-between items-center md:items-start absolute top-4 px-4 md:px-6 z-10">
-            <button className="md:hidden p-1 hover:bg-gray-100 rounded-sm">
-              <Menu className="w-6 h-6" strokeWidth={1.5} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-1 hover:bg-gray-100 rounded-sm"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" strokeWidth={1.5} /> : <Menu className="w-6 h-6" strokeWidth={1.5} />}
             </button>
 
             {/* Invisible spacer for flex balance on desktop */}
@@ -40,14 +70,23 @@ export default function RedStyleTemplate({ data }: { data: StoreData }) {
                 <User className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
                 <span className="font-normal text-[11px]">Sign in</span>
               </div>
-              <div className="hidden md:flex flex-col items-center cursor-pointer hover:text-[#e50010] group">
-                <Heart className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="relative hidden md:flex flex-col items-center cursor-pointer hover:text-[#e50010] group"
+              >
+                <Heart className={`w-5 h-5 mb-1 group-hover:scale-110 transition-transform ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
                 <span className="font-normal text-[11px]">Favorites</span>
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 right-0 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+                )}
               </div>
-              <div className="flex flex-col items-center cursor-pointer hover:text-[#e50010] group relative">
+              <div 
+                onClick={addToCart}
+                className="flex flex-col items-center cursor-pointer hover:text-[#e50010] group relative"
+              >
                 <ShoppingBag className="w-5 h-5 mb-1 md:mb-1 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-                <span className="hidden md:block font-normal text-[11px]">Shopping bag (0)</span>
-                <span className="md:hidden absolute top-[-4px] right-[-4px] bg-[#e50010] text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">0</span>
+                <span className="hidden md:block font-normal text-[11px]">Shopping bag ({cartCount})</span>
+                <span className="md:hidden absolute top-[-4px] right-[-4px] bg-[#e50010] text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{cartCount}</span>
               </div>
             </div>
           </div>
@@ -112,12 +151,12 @@ export default function RedStyleTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── NEW ARRIVALS GRID (Classic RedStyle block grid) ─── */}
+        {/* ─── NEW ARRIVALS GRID (Classic RedStyle block grid - Paginated) ─── */}
         <div className="w-full max-w-[1440px] mx-auto mb-20 md:mb-28 px-0 md:px-6">
-          <h2 className="text-[20px] md:text-[26px] font-bold text-center mb-10 tracking-tight">New Arrivals</h2>
+          <h2 className="text-[20px] md:text-[26px] font-bold text-center mb-10 tracking-tight">New Arrivals ({totalItems})</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 md:gap-x-4 gap-y-10 md:gap-y-12">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col relative data-product">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative data-product">
                 <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-[#f4f4f4]">
                   <Image
                     src={product.imageUrl}
@@ -131,8 +170,11 @@ export default function RedStyleTemplate({ data }: { data: StoreData }) {
                       Sale
                     </div>
                   )}
-                  <button className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110">
-                    <Heart className="w-[18px] h-[18px] text-[#222]" strokeWidth={2} />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                  >
+                    <Heart className={`w-[18px] h-[18px] ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-[#222]'}`} strokeWidth={2} />
                   </button>
                 </div>
 
@@ -157,6 +199,19 @@ export default function RedStyleTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── SHOP BY CONCEPT (Square grid with text below) ─── */}

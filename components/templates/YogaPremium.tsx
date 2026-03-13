@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, MapPin, ArrowRight, PlayCircle, Smartphone, Facebook, Twitter, Instagram, Youtube, HelpCircle } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, MapPin, ArrowRight, PlayCircle, Smartphone, Facebook, Twitter, Instagram, Youtube, HelpCircle, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function YogaPremiumTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#000] selection:bg-[#d31334] selection:text-white pb-0 overflow-x-hidden">
@@ -29,7 +55,11 @@ export default function YogaPremiumTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-6 h-6 lg:hidden mr-4 cursor-pointer hover:opacity-70 transition-opacity" />
+            <Menu 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-6 h-6 lg:hidden mr-4 cursor-pointer hover:opacity-70 transition-opacity" 
+            />
+            {mobileMenuOpen && <X className="w-6 h-6 lg:hidden mr-4 cursor-pointer hover:opacity-70 transition-opacity absolute left-12" />}
 
             <div className="flex items-center cursor-pointer mr-6 lg:mr-10">
               {/* YogaPremium Logo icon */}
@@ -57,9 +87,23 @@ export default function YogaPremiumTemplate({ data }: { data: StoreData }) {
             </div>
             <Search className="w-6 h-6 xl:hidden cursor-pointer hover:text-[#d31334] transition-colors" />
             <User className="hidden md:block w-6 h-6 cursor-pointer hover:text-[#d31334] transition-colors" />
-            <Heart className="hidden md:block w-6 h-6 cursor-pointer hover:text-[#d31334] transition-colors" />
-            <div className="relative cursor-pointer hover:text-[#d31334] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block relative cursor-pointer hover:text-[#d31334] transition-colors"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#d31334] transition-colors"
+            >
               <ShoppingBag className="w-6 h-6" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#d31334] text-white text-[9px] font-black px-1.5 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -104,42 +148,39 @@ export default function YogaPremiumTemplate({ data }: { data: StoreData }) {
             </a>
           </div>
 
-          <div className="flex overflow-x-auto space-x-4 md:space-x-6 pb-8 snap-x snap-mandatory hide-scrollbar">
-            {products.map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="shrink-0 w-[260px] md:w-[320px] group cursor-pointer flex flex-col snap-center">
-                <div className="relative aspect-[4/5] mb-4 bg-gray-100 overflow-hidden rounded-[4px] shadow-sm">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-8 mb-16">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
+                <div className="relative aspect-[3/4] mb-5 overflow-hidden">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-300"
                     referrerPolicy="no-referrer"
                   />
-                  {idx % 2 === 0 && (
-                    <div className="absolute top-3 left-3 bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-widest shadow-sm rounded-[2px]">
-                      New
-                    </div>
-                  )}
-                  {idx % 3 === 0 && (
-                    <div className="absolute top-3 left-3 bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-widest shadow-sm rounded-[2px]" style={{ marginTop: idx % 2 === 0 ? '24px' : '0' }}>
-                      Online Only
-                    </div>
-                  )}
-                  {/* Quick Shop Overlay */}
-                  <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm py-2.5 text-center text-[12px] font-bold uppercase tracking-widest translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white rounded-[2px] shadow-md">
-                    Quick Shop
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 bg-white/80 p-1.5 rounded-full hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Heart className={`w-5 h-5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
-                <div className="flex flex-col flex-1">
-                  <h3 className="text-[16px] font-bold text-[#000] line-clamp-2 leading-tight mb-1 group-hover:underline underline-offset-2">
-                    {product.title}
-                  </h3>
-                  <div className="text-[14px] font-normal text-gray-600 mb-2">
-                    {product.category}
+                <div className="flex flex-col">
+                  <span className="text-[11px] uppercase text-[#767676] mb-1">{product.category}</span>
+                  <h3 className="text-[14px] font-normal text-[#000] line-clamp-2 hover:underline mb-2">{product.title}</h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[14px] font-bold text-[#000]">${product.price}</span>
+                    {product.originalPrice && (
+                      <span className="text-[12px] text-[#767676] line-through">${product.originalPrice}</span>
+                    )}
                   </div>
-                  <div className="text-[16px] font-black text-black">
-                    ${product.price}
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="mt-3 bg-[#d31334] text-white py-2 px-4 rounded-[4px] text-[13px] font-bold hover:bg-[#b91c1c] transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    Add to Bag
+                  </button>
                 </div>
               </div>
             ))}

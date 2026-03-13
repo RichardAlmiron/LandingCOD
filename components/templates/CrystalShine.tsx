@@ -1,7 +1,10 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin, ChevronRight, Menu } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, ChevronRight, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 const CrystalShineSwan = ({ className, color = "#111" }: { className?: string, color?: string }) => (
   // Highly simplified swan abstraction representing the CrystalShine logo
@@ -23,7 +26,30 @@ const OctagonWrapper = ({ children, className }: { children: React.ReactNode, cl
 );
 
 export default function CrystalShineTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111111] selection:bg-[#f5d5e5] selection:text-[#111] pb-0 overflow-x-hidden">
@@ -38,7 +64,12 @@ export default function CrystalShineTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-6 h-[72px] lg:h-[88px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6">
-            <Menu className="w-6 h-6 lg:hidden cursor-pointer" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-gray-500 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <nav className="hidden lg:flex space-x-6 font-sans text-[12px] font-bold uppercase tracking-[0.1em] text-[#111]">
               <div className="group relative py-8">
                 <a href="#" className="hover:text-gray-500 transition-colors">Jewelry</a>
@@ -79,10 +110,23 @@ export default function CrystalShineTemplate({ data }: { data: StoreData }) {
             <Search className="w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
             <MapPin className="hidden md:block w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
             <User className="hidden md:block w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
-            <Heart className="w-5 h-5 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-gray-500 transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-gray-500 transition-colors"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-gray-500 transition-colors"
+            >
               <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-2 bg-[#f5d5e5] text-[#111] text-[9px] font-bold px-1 rounded-full">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#f5d5e5] text-[#111] text-[9px] font-bold px-1 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -150,56 +194,78 @@ export default function CrystalShineTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── TENDING PRODUCTS GRID ─── */}
+        {/* ─── TENDING PRODUCTS GRID (Paginated) ─── */}
         <section className="bg-[#fcfcfc] py-24 border-y border-gray-100">
           <div className="max-w-[1600px] mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16">
               <h2 className="text-[32px] lg:text-[48px] font-serif text-[#111] leading-none mb-4 md:mb-0">
-                Mesmerizing Pieces
+                Mesmerizing Pieces ({totalItems})
               </h2>
               <a href="#" className="font-sans font-bold text-[12px] uppercase tracking-[0.1em] text-[#111] border-b border-[#111] pb-1 hover:text-gray-500 transition-colors">
                 View the Collection
               </a>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-16">
-              {products.map((product, idx) => (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-8">
+              {paginatedItems.map((product, idx) => (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
-                  <div className="relative aspect-square mb-6 overflow-hidden w-full bg-white border border-gray-100 p-8 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                  <div className="relative aspect-square mb-4 overflow-hidden w-full bg-white border border-gray-100 p-4 shadow-sm group-hover:shadow-xl transition-all duration-500">
                     <Image
                       src={product.imageUrl}
                       alt={product.title}
                       fill
-                      className="object-contain p-8 group-hover:scale-110 transition-transform duration-[2000ms] ease-out"
+                      className="object-contain p-4 group-hover:scale-110 transition-transform duration-[2000ms] ease-out"
                       referrerPolicy="no-referrer"
                     />
-                    <button className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#111] text-white px-8 py-3 text-[10px] uppercase font-bold tracking-widest translate-y-[20px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 w-[calc(100%-32px)]">
-                      Quick Shop
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#111] text-white px-4 py-2 text-[9px] uppercase font-bold tracking-widest translate-y-[20px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 w-[calc(100%-24px)]"
+                    >
+                      Add
                     </button>
                     {(idx === 0 || idx === 3) && (
-                      <div className="absolute top-4 left-4 text-[10px] font-bold uppercase tracking-widest text-[#111] bg-[#f5d5e5] px-2 py-1">
+                      <div className="absolute top-3 left-3 text-[9px] font-bold uppercase tracking-widest text-[#111] bg-[#f5d5e5] px-2 py-0.5">
                         New
                       </div>
                     )}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-3 right-3 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                    </button>
                   </div>
 
-                  <div className="flex flex-col space-y-2 w-full px-2">
-                    <div className="text-[10px] font-sans uppercase tracking-[0.15em] text-gray-400">
+                  <div className="flex flex-col space-y-1 w-full px-1">
+                    <div className="text-[9px] font-sans uppercase tracking-[0.15em] text-gray-400">
                       {product.category || 'Collection'}
                     </div>
-                    <h3 className="text-[16px] font-serif text-[#111] leading-tight line-clamp-2 min-h-[40px]">
+                    <h3 className="text-[13px] font-serif text-[#111] leading-tight line-clamp-2 min-h-[36px]">
                       {product.title}
                     </h3>
-                    <div className="pt-2 flex justify-center items-center space-x-3">
-                      <span className="font-sans font-bold text-[14px] text-[#111]">${product.price}</span>
+                    <div className="pt-1 flex justify-center items-center space-x-2">
+                      <span className="font-sans font-bold text-[13px] text-[#111]">${product.price}</span>
                       {product.originalPrice && (
-                        <span className="font-sans font-medium text-[12px] text-gray-400 line-through">${product.originalPrice}</span>
+                        <span className="font-sans font-medium text-[11px] text-gray-400 line-through">${product.originalPrice}</span>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
         </section>
 

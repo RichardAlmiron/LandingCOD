@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, MapPin, Menu, ChevronDown, Phone, ArrowRight, Wrench, Hammer, Smartphone, Facebook, Twitter, Instagram, Youtube, CreditCard, Star, FileText, CheckCircle2, Paintbrush } from 'lucide-react';
+import { Search, ShoppingCart, User, MapPin, Menu, ChevronDown, Phone, ArrowRight, Wrench, Hammer, Smartphone, Facebook, Twitter, Instagram, Youtube, CreditCard, Star, FileText, CheckCircle2, Paintbrush, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BuilderZoneTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#333] overflow-x-hidden">
 
@@ -63,14 +90,35 @@ export default function BuilderZoneTemplate({ data }: { data: StoreData }) {
 
           {/* Right Acc/Cart */}
           <div className="flex items-center gap-6 lg:gap-8 shrink-0">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#f96302] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
             <div className="flex flex-col items-center cursor-pointer hover:text-[#f96302] font-bold text-[#333] group">
               <User className="w-[28px] h-[28px] mb-1 group-hover:fill-[#fff5f0]" strokeWidth={1.5} />
               <span className="text-[12px] hidden sm:block">My Account</span>
             </div>
-            <div className="flex flex-col items-center cursor-pointer hover:text-[#f96302] font-bold text-[#333] relative group">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:flex flex-col items-center cursor-pointer hover:text-[#f96302] font-bold text-[#333] group relative"
+            >
+              <Heart className={`w-[28px] h-[28px] mb-1 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 right-0 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">{favorites.length}</span>
+              )}
+              <span className="text-[12px] hidden sm:block">Lists</span>
+            </div>
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center cursor-pointer hover:text-[#f96302] font-bold text-[#333] relative group"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[28px] h-[28px] mb-1 group-hover:fill-[#fff5f0]" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2.5 bg-[#f96302] text-white text-[11px] font-black w-[18px] h-[18px] flex items-center justify-center rounded-full border border-white">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 bg-[#f96302] text-white text-[11px] font-black w-[18px] h-[18px] flex items-center justify-center rounded-full border border-white">{cartCount}</span>
+                )}
               </div>
               <span className="text-[12px] hidden sm:block">Cart</span>
             </div>
@@ -158,13 +206,13 @@ export default function BuilderZoneTemplate({ data }: { data: StoreData }) {
               </a>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-0 border-t border-l border-gray-200">
-              {data.products.map(product => {
-                const price = product.price;
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 border-t border-l border-gray-200">
+              {paginatedItems.map((product, idx) => {
+                const price = product.price.toString();
                 const [dollars, cents] = price.includes('.') ? price.split('.') : [price, '00'];
 
                 return (
-                  <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col p-5 bg-white border-r border-b border-gray-200 hover:shadow-[0_0_15px_rgba(0,0,0,0.1)] hover:z-10 relative transition-none">
+                  <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col p-4 bg-white border-r border-b border-gray-200 hover:shadow-[0_0_15px_rgba(0,0,0,0.1)] hover:z-10 relative transition-none">
 
                     {/* Badges */}
                     <div className="absolute top-4 left-4 z-10 flex flex-col gap-1">
@@ -211,7 +259,10 @@ export default function BuilderZoneTemplate({ data }: { data: StoreData }) {
                           <CheckCircle2 className="w-4 h-4 mr-1.5" /> 16 in stock at Sacramento
                         </div>
 
-                        <button className="w-full bg-white border-2 border-[#f96302] text-[#f96302] py-2.5 px-4 font-bold rounded-[3px] text-[14px] hover:bg-[#fff5f0] hover:shadow-sm transition-colors mt-auto group-hover:bg-[#f96302] group-hover:text-white">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                          className="w-full bg-white border-2 border-[#f96302] text-[#f96302] py-2 px-3 font-bold rounded-[3px] text-[13px] hover:bg-[#fff5f0] hover:shadow-sm transition-colors mt-auto group-hover:bg-[#f96302] group-hover:text-white"
+                        >
                           Add to Cart
                         </button>
                       </div>
@@ -220,6 +271,19 @@ export default function BuilderZoneTemplate({ data }: { data: StoreData }) {
                 )
               })}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
 
           {/* Banner Trio Promo */}

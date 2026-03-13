@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
+import { Menu, X, ShoppingBag, Heart } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function AvantGardeTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-black selection:text-white pb-0 overflow-x-hidden">
@@ -13,13 +40,18 @@ export default function AvantGardeTemplate({ data }: { data: StoreData }) {
         <div className="w-full px-4 md:px-6 flex items-center justify-between text-[11px] md:text-[13px] uppercase tracking-normal font-medium">
 
           <div className="flex items-center space-x-6 w-1/3">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden cursor-pointer hover:underline underline-offset-4"
+            >
+              {mobileMenuOpen ? 'Close' : 'Menu'}
+            </button>
             <nav className="hidden lg:flex space-x-6">
               <a href="#" className="hover:underline underline-offset-4">Menswear</a>
               <a href="#" className="hover:underline underline-offset-4">Womenswear</a>
               <a href="#" className="hover:underline underline-offset-4">Everything Else</a>
               <a href="#" className="hover:underline underline-offset-4">Sale</a>
             </nav>
-            <div className="lg:hidden cursor-pointer hover:underline underline-offset-4">Menu</div>
           </div>
 
           <div className="flex items-center justify-center cursor-pointer w-1/3 text-center">
@@ -34,7 +66,12 @@ export default function AvantGardeTemplate({ data }: { data: StoreData }) {
               <a href="#" className="hover:underline underline-offset-4">Login</a>
             </div>
             <a href="#" className="hover:underline underline-offset-4">Search</a>
-            <a href="#" className="hover:underline underline-offset-4">Shopping Bag (0)</a>
+            <div 
+              onClick={addToCart}
+              className="cursor-pointer hover:underline underline-offset-4 relative"
+            >
+              Shopping Bag ({cartCount})
+            </div>
           </div>
 
         </div>
@@ -77,19 +114,19 @@ export default function AvantGardeTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── LATEST ARRIVALS GRID ─── */}
+        {/* ─── LATEST ARRIVALS GRID WITH PAGINATION ─── */}
         <section className="px-4 md:px-6">
           <div className="flex items-center justify-between mb-8 border-b border-black pb-2 text-[11px] md:text-[13px] uppercase font-bold">
-            <h2>Latest Arrivals</h2>
+            <h2>Latest Arrivals ({totalItems})</h2>
             <div className="flex space-x-4 font-normal">
               <a href="#" className="hover:underline underline-offset-4">View All</a>
               <a href="#" className="hover:underline underline-offset-4 hidden sm:block">Filter</a>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 md:gap-x-6 gap-y-12 md:gap-y-16">
-            {products.map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col group">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 md:gap-x-6 gap-y-10">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-[#e5e5e5]">
                   <Image
                     src={product.imageUrl}
@@ -103,6 +140,20 @@ export default function AvantGardeTemplate({ data }: { data: StoreData }) {
                       New
                     </div>
                   )}
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-black text-black' : 'text-black'}`} />
+                  </button>
+                  {/* Add to Cart Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-black text-white text-[10px] uppercase py-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Bag
+                  </button>
                 </div>
 
                 <div className="flex flex-col text-[11px] md:text-[12px] uppercase leading-tight font-medium space-y-0.5">
@@ -123,11 +174,18 @@ export default function AvantGardeTemplate({ data }: { data: StoreData }) {
             ))}
           </div>
 
-          <div className="mt-16 flex justify-center border-t border-black pt-8">
-            <button className="text-[11px] md:text-[13px] uppercase hover:underline underline-offset-4 font-medium">
-              Load More
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── EDITORIAL SECTION ─── */}

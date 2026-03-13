@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, Flame, ArrowRight, Instagram, Facebook, Twitter, Youtube, Smartphone, Star, Zap } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, Flame, ArrowRight, Instagram, Facebook, Twitter, Youtube, Smartphone, Star, Zap, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function NovaTrendTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#000] selection:bg-pink-500 selection:text-white pb-0 overflow-x-hidden">
@@ -25,7 +51,12 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-6 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-7 h-7 lg:hidden mr-4 cursor-pointer hover:text-pink-500 transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-pink-500 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
 
             <div className="flex items-center cursor-pointer mr-6 lg:mr-10">
               <span className="font-black text-[28px] md:text-[36px] tracking-tighter uppercase leading-none text-black mt-1">
@@ -51,10 +82,23 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
             </div>
             <Search className="w-6 h-6 xl:hidden cursor-pointer hover:text-pink-500 transition-colors" />
             <User className="hidden md:block w-7 h-7 cursor-pointer hover:text-pink-500 transition-colors" />
-            <Heart className="hidden md:block w-7 h-7 cursor-pointer hover:text-pink-500 transition-colors" />
-            <div className="relative cursor-pointer hover:text-pink-500 transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-pink-500 transition-colors hidden md:block"
+            >
+              <Heart className={`w-7 h-7 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full min-w-[18px] text-center border-2 border-white shadow-sm">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-pink-500 transition-colors"
+            >
               <ShoppingBag className="w-7 h-7" />
-              <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[11px] font-black px-1.5 rounded-full min-w-[20px] text-center border-2 border-white shadow-sm">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[11px] font-black px-1.5 rounded-full min-w-[20px] text-center border-2 border-white shadow-sm">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -97,7 +141,7 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
         <section className="px-4 md:px-6 max-w-[1800px] mx-auto mb-16">
           <div className="flex items-end justify-between mb-8 border-b-2 border-gray-100 pb-4">
             <h2 className="text-[32px] md:text-[44px] font-black uppercase italic tracking-tighter text-black leading-none flex items-center">
-              <span className="w-2 h-8 bg-pink-500 mr-4 rounded-full"></span> New Arrivals
+              <span className="w-2 h-8 bg-pink-500 mr-4 rounded-full"></span> New Arrivals ({totalItems})
             </h2>
             <a href="#" className="hidden md:flex text-[14px] font-black uppercase border-b-2 border-black pb-0.5 tracking-widest text-black hover:text-pink-500 hover:border-pink-500 transition-all items-center">
               View All
@@ -105,7 +149,7 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
-            {products.map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white">
                 <div className="relative aspect-[3/4] mb-3 bg-[#f5f5f5] overflow-hidden rounded-[16px] md:rounded-[24px]">
                   <Image
@@ -126,12 +170,18 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
                     </div>
                   )}
                   {/* Quick Add Overlay */}
-                  <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md py-3 text-center text-[13px] font-black uppercase italic tracking-widest translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white rounded-xl shadow-xl border border-gray-100">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md py-3 text-center text-[13px] font-black uppercase italic tracking-widest translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white rounded-xl shadow-xl border border-gray-100"
+                  >
                     Quick Add
-                  </div>
-                  <div className="absolute top-3 left-3 bg-white/90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:text-pink-500">
-                    <Heart className="w-5 h-5" strokeWidth={2.5} />
-                  </div>
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 left-3 bg-white/90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:text-pink-500"
+                  >
+                    <Heart className={`w-5 h-5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2.5} />
+                  </button>
                 </div>
                 <div className="flex flex-col flex-1 px-1">
                   <h3 className="text-[14px] md:text-[15px] font-bold uppercase text-black line-clamp-1 leading-tight mb-1 group-hover:text-pink-500 transition-colors">
@@ -151,8 +201,25 @@ export default function NovaTrendTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+
           <div className="mt-8 flex justify-center md:hidden">
-            <button className="bg-black text-white px-10 py-4 font-black uppercase italic tracking-widest text-[14px] w-full rounded-full shadow-lg">
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="bg-black text-white px-10 py-4 font-black uppercase italic tracking-widest text-[14px] w-full rounded-full shadow-lg"
+            >
               View All
             </button>
           </div>

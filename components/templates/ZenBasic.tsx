@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, ChevronDown, ChevronRight, Star, Instagram, Facebook, Twitter, Youtube } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, ChevronDown, ChevronRight, Star, Instagram, Facebook, Twitter, Youtube, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ZenBasicTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#1b1b1b] selection:bg-[#ff0000] selection:text-white pb-0 overflow-x-hidden">
@@ -29,7 +55,12 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 h-[72px] flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-6 h-6 lg:hidden mr-4 cursor-pointer hover:text-[#ff0000] transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden mr-4 cursor-pointer hover:text-[#ff0000] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
 
             {/* Iconic ZenBasic Logo */}
             <div className="bg-[#ff0000] text-white p-2 flex flex-col items-center justify-center leading-[0.85] font-black text-[14px] md:text-[16px] shrink-0 cursor-pointer mr-6 lg:mr-10 h-10 w-10 md:h-12 md:w-12 tracking-tighter shadow-sm">
@@ -56,13 +87,24 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
               <User className="w-6 h-6 mb-0.5 group-hover:fill-[#ff0000]/10" />
               <span className="text-[10px] uppercase font-bold tracking-widest">Account</span>
             </div>
-            <div className="hidden md:flex flex-col items-center cursor-pointer hover:text-[#ff0000] transition-colors group">
-              <Heart className="w-6 h-6 mb-0.5 group-hover:fill-[#ff0000]/10" />
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:flex flex-col items-center cursor-pointer hover:text-[#ff0000] transition-colors group relative"
+            >
+              <Heart className={`w-6 h-6 mb-0.5 group-hover:fill-[#ff0000]/10 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
               <span className="text-[10px] uppercase font-bold tracking-widest">Wishlist</span>
             </div>
-            <div className="flex flex-col items-center relative cursor-pointer hover:text-[#ff0000] transition-colors group">
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center relative cursor-pointer hover:text-[#ff0000] transition-colors group"
+            >
               <ShoppingCart className="w-6 h-6 mb-0.5 group-hover:fill-[#ff0000]/10" />
-              <span className="absolute top-0 right-0 md:right-1 bg-[#ff0000] text-white text-[9px] font-bold px-1 rounded-full">0</span>
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 md:right-1 bg-[#ff0000] text-white text-[9px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
               <span className="hidden md:block text-[10px] uppercase font-bold tracking-widest">Cart</span>
             </div>
           </div>
@@ -122,7 +164,7 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-10">
-            {products.slice(0, 5).map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[4/5] mb-4 bg-[#f4f4f4] overflow-hidden group-hover:opacity-95 transition-opacity">
                   <Image
@@ -136,23 +178,12 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
                     Limited Offer
                   </div>
                   <button className="absolute bottom-0 left-0 right-0 bg-white/95 py-3 text-center text-[12px] font-bold uppercase tracking-widest translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 border-t border-gray-200 hover:bg-[#f4f4f4]">
-                    Quick View
                   </button>
                 </div>
 
-                <div className="flex flex-col flex-1 px-1">
-                  {/* Swatches */}
-                  <div className="flex space-x-1.5 mb-2">
-                    <div className="w-4 h-4 bg-white border border-gray-300 shadow-sm cursor-pointer hover:border-black" />
-                    <div className="w-4 h-4 bg-[#1b1b1b] border border-gray-300 shadow-sm cursor-pointer hover:border-black" />
-                    {idx % 2 === 0 && <div className="w-4 h-4 bg-blue-800 border border-gray-300 shadow-sm cursor-pointer hover:border-black" />}
-                    {idx % 3 === 0 && <div className="w-4 h-4 bg-stone-300 border border-gray-300 shadow-sm cursor-pointer hover:border-black" />}
-                    <div className="text-[10px] text-gray-500 font-medium ml-1">+{(idx % 3) + 2} Colors</div>
-                  </div>
-
-                  <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Women</div>
-
-                  <h3 className="text-[13px] md:text-[14px] font-medium text-[#1b1b1b] line-clamp-2 leading-snug mb-2 group-hover:underline decoration-1 underline-offset-2">
+                <div className="flex flex-col flex-1">
+                  <div className="text-[11px] text-gray-500 uppercase tracking-widest font-bold mb-1">{product.category}</div>
+                  <h3 className="text-[13px] font-medium text-[#1b1b1b] line-clamp-2 leading-snug mb-2 group-hover:underline decoration-1 underline-offset-2">
                     {product.title}
                   </h3>
 
@@ -182,6 +213,19 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
           <div className="mt-8 flex justify-center md:hidden">
             <button className="border border-black bg-white text-black px-10 py-3.5 font-bold uppercase tracking-widest text-[13px] w-full">
               View All Limited Offers
@@ -228,7 +272,7 @@ export default function ZenBasicTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-10">
-            {products.slice(0, 6).map((product, idx) => (
+            {data.products.slice(0, 6).map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-square mb-3 bg-[#f4f4f4] overflow-hidden">
                   <Image

@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, ArrowRight, Star, Truck, RotateCcw, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, ArrowRight, Star, Truck, RotateCcw, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function SportStripeTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-black overflow-x-hidden" style={{ fontFamily: "'AdihausDIN', Helvetica, Arial, sans-serif" }}>
 
@@ -25,8 +52,11 @@ export default function SportStripeTemplate({ data }: { data: StoreData }) {
         <div className="w-full h-full px-4 lg:px-10 flex items-center justify-between">
 
           <div className="flex items-center space-x-4 lg:space-x-12 h-full">
-            <button className="lg:hidden p-1 hover:bg-gray-100 rounded-sm">
-              <Menu className="w-6 h-6" strokeWidth={2} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" strokeWidth={2.5} /> : <Menu className="w-6 h-6" strokeWidth={2.5} />}
             </button>
 
             {/* Logo (SportStripe 3 Bars - Simulated Support) */}
@@ -61,12 +91,23 @@ export default function SportStripeTemplate({ data }: { data: StoreData }) {
             <button className="hidden sm:block p-1 hover:bg-gray-100 rounded-sm tooltip-wrapper relative" title="Profile">
               <User className="w-[22px] h-[22px]" strokeWidth={2} />
             </button>
-            <button className="hidden sm:block p-1 hover:bg-gray-100 rounded-sm tooltip-wrapper relative" title="Wishlist">
-              <Heart className="w-[22px] h-[22px]" strokeWidth={2} />
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hidden sm:block p-1 hover:bg-gray-100 rounded-sm tooltip-wrapper relative" title="Wishlist"
+            >
+              <Heart className={`w-[22px] h-[22px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
+              {favorites.length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
             </button>
-            <button className="p-1 hover:bg-gray-100 rounded-sm relative tooltip-wrapper" title="Cart">
+            <button 
+              onClick={addToCart}
+              className="p-1 hover:bg-gray-100 rounded-sm relative tooltip-wrapper" title="Cart"
+            >
               <ShoppingBag className="w-[22px] h-[22px]" strokeWidth={2} />
-              <span className="absolute top-1 right-0 bg-[#0071ae] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full leading-none">0</span>
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-0 bg-[#0071ae] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full leading-none">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>

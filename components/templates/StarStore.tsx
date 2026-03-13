@@ -1,10 +1,36 @@
 'use client';
+
 import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
 import { Search, ShoppingBag, Heart, User, Menu, Star, ChevronDown, MapPin, ArrowRight, Gift, CreditCard, Smartphone, Facebook, Twitter, Instagram, Youtube, Percent, Clock, Box, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function StarStoreTemplate({ data }: { data: StoreData }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111] selection:bg-[#e01a2b] selection:text-white">
@@ -64,17 +90,32 @@ export default function StarStoreTemplate({ data }: { data: StoreData }) {
 
             {/* Account & Bag icons */}
             <div className="flex items-center gap-8 text-stone-600">
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden flex flex-col items-center cursor-pointer hover:text-[#e01a2b] group"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
               <div className="hidden lg:flex flex-col items-center cursor-pointer hover:text-[#e01a2b] group">
                 <User className="w-6 h-6 group-hover:translate-y-[-2px] transition-transform" />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-wider">Account</span>
               </div>
-              <div className="hidden lg:flex flex-col items-center cursor-pointer hover:text-[#e01a2b] group">
-                <Heart className="w-6 h-6 group-hover:translate-y-[-2px] transition-transform" />
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="hidden lg:flex flex-col items-center cursor-pointer hover:text-[#e01a2b] group relative"
+              >
+                <Heart className={`w-6 h-6 group-hover:translate-y-[-2px] transition-transform ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 right-0 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+                )}
                 <span className="text-[9px] font-black uppercase mt-1 tracking-wider">Lists</span>
               </div>
-              <div className="relative cursor-pointer hover:text-[#e01a2b] group flex items-center gap-3 bg-stone-50 px-4 py-2 rounded-full border border-stone-100 hover:bg-white hover:shadow-md transition-all">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer hover:text-[#e01a2b] group flex items-center gap-3 bg-stone-50 px-4 py-2 rounded-full border border-stone-100 hover:bg-white hover:shadow-md transition-all"
+              >
                 <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                <span className="bg-[#e01a2b] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full absolute -top-1 -right-1 ring-2 ring-white shadow-sm">0</span>
+                <span className="bg-[#e01a2b] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full absolute -top-1 -right-1 ring-2 ring-white shadow-sm">{cartCount}</span>
                 <span className="hidden sm:block text-[11px] font-black uppercase tracking-tighter">Your Bag</span>
               </div>
             </div>

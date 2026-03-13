@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, Gift, Star, ShieldCheck, Users, ArrowRight, Instagram, Twitter, Youtube, Facebook, Bell, Menu, Tag, ChevronDown, Check } from 'lucide-react';
+import { Search, ShoppingCart, Heart, Gift, Star, ShieldCheck, Users, ArrowRight, Instagram, Twitter, Youtube, Facebook, Bell, Menu, Tag, ChevronDown, Check, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function HandCraftTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const editorsPicks = data.products.slice(0, 5);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#222] overflow-x-hidden">
@@ -13,8 +40,11 @@ export default function HandCraftTemplate({ data }: { data: StoreData }) {
         {/* Main Header Row */}
         <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-6 py-2 md:py-3 flex items-center justify-between gap-3 md:gap-6">
 
-          <button className="md:hidden p-1 -ml-1 hover:bg-gray-100 rounded-full">
-            <Menu className="w-6 h-6" />
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-1 -ml-1 hover:bg-gray-100 rounded-full"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
 
           {/* Logo */}
@@ -45,14 +75,23 @@ export default function HandCraftTemplate({ data }: { data: StoreData }) {
             <span className="hidden lg:block hover:bg-gray-100 px-4 py-2.5 rounded-full cursor-pointer font-bold text-[14px] transition-colors">Sign in</span>
             <button className="p-2 hover:bg-gray-100 rounded-full cursor-pointer hidden md:block transition-colors tooltip-wrapper relative" title="Favorites">
               <Heart className="w-[22px] h-[22px]" strokeWidth={2} />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#F1641E] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{wishlist.length}</span>
+              )}
             </button>
             <button className="p-2 hover:bg-gray-100 rounded-full cursor-pointer hidden sm:block transition-colors tooltip-wrapper" title="Gift Mode">
               <Gift className="w-[22px] h-[22px]" strokeWidth={2} />
               <span className="sr-only">Gift Mode</span>
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative" title="Cart">
+            <button 
+              onClick={addToCart}
+              className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative" 
+              title="Cart"
+            >
               <ShoppingCart className="w-[22px] h-[22px]" strokeWidth={2} />
-              <span className="absolute top-1 right-0 bg-[#F1641E] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none border border-white">0</span>
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-0 bg-[#F1641E] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none border border-white">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -120,25 +159,23 @@ export default function HandCraftTemplate({ data }: { data: StoreData }) {
             <h2 className="text-[24px] font-bold text-[#222] tracking-tight">Popular right now</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8">
-            {data.products.map(product => {
+            {data.products.map((product, idx) => {
               // HandCraft randomly places "Bestseller" or "Rare find" tags
               const tagRng = Math.random();
               let tagText = '';
               let tagColor = '';
               if (tagRng > 0.8) {
                 tagText = "Bestseller";
-                tagColor = "bg-[#fdedc9] text-[#222]";
+                tagColor = "bg-[#F1641E] text-white";
               } else if (tagRng > 0.6) {
                 tagText = "Rare find";
-                tagColor = "bg-[#ffedd1] text-[#933008]";
+                tagColor = "bg-[#D7E6F5] text-[#222]";
               }
-
+              
               return (
-                <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
-                  {/* Image Container with Heart Button */}
-                  <div className="relative aspect-square rounded-[8px] overflow-hidden mb-2 bg-[#f4f4f4] shadow-[0_1px_3px_rgba(0,0,0,0.1)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] transition-all">
-                    <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply" />
-
+                <div key={`handcraft-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+                  <div className="relative aspect-square mb-2 bg-[#f4f4f4] overflow-hidden rounded-[8px]">
+                    <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
                     <button className="absolute top-2 right-2 bg-white/90 backdrop-blur w-[32px] h-[32px] flex items-center justify-center rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.1)] hover:bg-gray-50 active:scale-95 transition-transform z-10 opacity-0 group-hover:opacity-100 sm:opacity-100">
                       <Heart className="w-[18px] h-[18px] text-[#222]" strokeWidth={2} />
                     </button>

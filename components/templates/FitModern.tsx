@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, Dumbbell, ArrowRight, Play, Smartphone, Instagram, Twitter, Youtube, Facebook, MapPin } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, Dumbbell, ArrowRight, Play, Smartphone, Instagram, Twitter, Youtube, Facebook, MapPin, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function FitModernTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-black">
       <div className="bg-black text-white text-[11px] py-2 px-6 flex justify-center font-bold tracking-widest uppercase">
@@ -11,6 +38,12 @@ export default function FitModernTemplate({ data }: { data: StoreData }) {
       <header className="bg-white sticky top-0 z-50 border-b border-gray-100">
         <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-12">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:text-gray-600 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="flex items-center cursor-pointer shrink-0">
               <span className="font-black text-3xl tracking-tighter uppercase leading-none text-black flex items-center">
                 <Dumbbell className="w-8 h-8 mr-2 text-black" />
@@ -27,10 +60,23 @@ export default function FitModernTemplate({ data }: { data: StoreData }) {
           <div className="flex items-center space-x-6 text-black">
             <Search className="w-5 h-5 cursor-pointer hover:text-gray-600" />
             <User className="w-5 h-5 cursor-pointer hover:text-gray-600" />
-            <Heart className="w-5 h-5 cursor-pointer hover:text-gray-600" />
-            <div className="relative cursor-pointer hover:text-gray-600">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-gray-600"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-gray-600"
+            >
               <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-1 -right-2 bg-black text-white text-[9px] font-bold px-1.5 rounded-full">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-black text-white text-[9px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -54,25 +100,50 @@ export default function FitModernTemplate({ data }: { data: StoreData }) {
         </div>
         <div className="mb-24">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-black uppercase tracking-tighter text-black">Trending Now</h2>
+            <h2 className="text-4xl font-black uppercase tracking-tighter text-black">Trending Now ({totalItems})</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
-                <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-[#f4f4f4]">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+                <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-[#f4f4f4]">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
-                  <div className="absolute top-3 left-3 bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-widest">New</div>
+                  <div className="absolute top-2 left-2 bg-white text-black text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-widest">New</div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-black text-white py-1.5 text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
-                <div className="flex flex-col space-y-1 text-center">
-                  <h3 className="text-sm font-bold uppercase text-black line-clamp-1 group-hover:text-gray-600">{product.title}</h3>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{product.category}</div>
-                  <div className="flex items-center justify-center space-x-2 pt-1">
-                    <span className="font-bold text-sm text-black">${product.price}</span>
+                <div className="flex flex-col space-y-0.5 text-center">
+                  <h3 className="text-xs font-bold uppercase text-black line-clamp-1 group-hover:text-gray-600">{product.title}</h3>
+                  <div className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{product.category}</div>
+                  <div className="flex items-center justify-center space-x-2 pt-0.5">
+                    <span className="font-bold text-xs text-black">${product.price}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Shop by Edit */}

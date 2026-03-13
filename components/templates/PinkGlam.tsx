@@ -1,11 +1,36 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, Sparkles, ArrowRight, GraduationCap, Smartphone, Facebook, Twitter, Instagram, Youtube, PlayCircle, Star, Zap } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, Sparkles, ArrowRight, GraduationCap, Smartphone, Facebook, Twitter, Instagram, Youtube, PlayCircle, Star, Zap, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function PinkGlamTemplate({ data }: { data: StoreData }) {
   const pltPink = "#f4a2b6"; // Signature PinkGlam Pink
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#000] selection:bg-[#f4a2b6] selection:text-white pb-0 overflow-x-hidden">
@@ -26,7 +51,12 @@ export default function PinkGlamTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-7 h-7 lg:hidden mr-4 cursor-pointer hover:text-[#f4a2b6] transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:text-[#f4a2b6] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
 
             <div className="flex items-center cursor-pointer mr-6 lg:mr-10">
               <span className="font-black text-[22px] md:text-[28px] tracking-tighter uppercase leading-none text-black flex items-center">
@@ -52,10 +82,23 @@ export default function PinkGlamTemplate({ data }: { data: StoreData }) {
             </div>
             <Search className="w-6 h-6 xl:hidden cursor-pointer hover:text-[#f4a2b6] transition-colors" />
             <User className="hidden md:block w-7 h-7 cursor-pointer hover:text-[#f4a2b6] transition-colors" />
-            <Heart className="hidden md:block w-7 h-7 cursor-pointer hover:text-[#f4a2b6] transition-colors" />
-            <div className="relative cursor-pointer hover:text-[#f4a2b6] transition-colors group">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-[#f4a2b6] transition-colors hidden md:block"
+            >
+              <Heart className={`w-7 h-7 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[11px] font-black px-1.5 rounded-full min-w-[18px] text-center shadow-sm">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#f4a2b6] transition-colors"
+            >
               <ShoppingBag className="w-7 h-7" />
-              <span className="absolute -top-1.5 -right-2 bg-black group-hover:bg-[#f4a2b6] transition-colors text-white text-[11px] font-black px-1.5 rounded-full min-w-[20px] text-center shadow-sm">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-black group-hover:bg-[#f4a2b6] transition-colors text-white text-[11px] font-black px-1.5 rounded-full min-w-[20px] text-center shadow-sm">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -108,7 +151,7 @@ export default function PinkGlamTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
-            {products.slice(0, 5).map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white">
                 <div className="relative aspect-[3/4] mb-3 bg-[#f9f9f9] overflow-hidden rounded-[24px]">
                   <Image
@@ -127,12 +170,18 @@ export default function PinkGlamTemplate({ data }: { data: StoreData }) {
                     </div>
                   )}
                   {/* Quick Add Overlay */}
-                  <button className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md py-3 rounded-full text-center text-[12px] font-black uppercase tracking-widest translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-[#f4a2b6] shadow-xl">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md py-3 rounded-full text-center text-[12px] font-black uppercase tracking-widest translate-y-[150%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-[#f4a2b6] shadow-xl"
+                  >
                     Add to Bag
                   </button>
-                  <div className="absolute top-3 right-3 bg-white/80 rounded-full p-2.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-[#f4a2b6] hidden group-hover:block md:group-hover:hidden"> {/* Mobile heart logic placeholder */}
-                    <Heart className="w-4 h-4" strokeWidth={2.5} />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 bg-white/80 rounded-full p-2.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-[#f4a2b6] hidden group-hover:block md:group-hover:hidden"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2.5} />
+                  </button>
                 </div>
                 <div className="flex flex-col flex-1 px-1">
                   <h3 className="text-[13px] md:text-[14px] font-bold uppercase text-gray-800 line-clamp-2 leading-tight mb-1 group-hover:text-[#f4a2b6] transition-colors">
@@ -152,8 +201,25 @@ export default function PinkGlamTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+
           <div className="mt-8 flex justify-center md:hidden">
-            <button className="bg-[#f4a2b6] text-white px-10 py-4 font-black uppercase tracking-widest text-[14px] w-full rounded-full shadow-md">
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="bg-[#f4a2b6] text-white px-10 py-4 font-black uppercase tracking-widest text-[14px] w-full rounded-full shadow-md"
+            >
               View All
             </button>
           </div>

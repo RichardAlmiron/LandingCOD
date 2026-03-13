@@ -1,12 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, User, MapPin, Menu, ChevronRight, Gift, Phone, Clock, ShieldCheck, ArrowRight, Play } from 'lucide-react';
+import { Search, ShoppingBag, User, MapPin, Menu, ChevronRight, Gift, Phone, Clock, ShieldCheck, ArrowRight, Play, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function MaisonEleganceTemplate({ data }: { data: StoreData }) {
-  // MaisonElegance Signature Colors
-  // Deep Red: #e3000f or #bc001b (We'll use a rich red #bc001b for accents, and a deep maroon #530000 for backgrounds)
-  // Gold/Bronze: #c1a673
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-serif text-[#1a1a1a] overflow-x-hidden selection:bg-[#bc001b] selection:text-white" style={{ fontFamily: "'Brilliant Cut Pro', 'Times New Roman', Times, serif" }}>
@@ -21,10 +45,17 @@ export default function MaisonEleganceTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-[60px] md:h-[80px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 md:space-x-8 w-1/3">
-            <button className="flex lg:hidden flex-col space-y-[4px] hover:text-[#bc001b] transition-colors">
-              <span className="block h-[1px] bg-current w-5"></span>
-              <span className="block h-[1px] bg-current w-5"></span>
-              <span className="block h-[1px] bg-current w-5"></span>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex lg:hidden flex-col space-y-[4px] hover:text-[#bc001b] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : (
+                <>
+                  <span className="block h-[1px] bg-current w-5"></span>
+                  <span className="block h-[1px] bg-current w-5"></span>
+                  <span className="block h-[1px] bg-current w-5"></span>
+                </>
+              )}
             </button>
             <nav className="hidden lg:flex space-x-8 font-sans text-[10px] font-medium uppercase tracking-[0.15em] text-[#1a1a1a]">
               <a href="#" className="hover:text-[#bc001b] transition-colors pb-1 border-b border-transparent hover:border-[#bc001b]">High Jewelry</a>
@@ -45,8 +76,23 @@ export default function MaisonEleganceTemplate({ data }: { data: StoreData }) {
             <button className="hover:text-[#bc001b] transition-colors"><Search className="w-[18px] h-[18px]" strokeWidth={1} /></button>
             <button className="hidden md:block hover:text-[#bc001b] transition-colors"><User className="w-[18px] h-[18px]" strokeWidth={1} /></button>
             <button className="hidden sm:block hover:text-[#bc001b] transition-colors"><MapPin className="w-[18px] h-[18px]" strokeWidth={1} /></button>
-            <button className="hover:text-[#bc001b] transition-colors relative">
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hover:text-[#bc001b] transition-colors relative"
+            >
+              <Heart className={`w-[18px] h-[18px] ${favorites.length > 0 ? 'fill-[#bc001b] text-[#bc001b]' : ''}`} strokeWidth={1} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#bc001b] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </button>
+            <button 
+              onClick={addToCart}
+              className="hover:text-[#bc001b] transition-colors relative"
+            >
               <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={1} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#bc001b] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -81,47 +127,68 @@ export default function MaisonEleganceTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── ICONIC CREATIONS (Gold borders, elegant spacing) ─── */}
+        {/* ─── ICONIC CREATIONS (Paginated 3x5) ─── */}
         <div className="w-full max-w-[1920px] mx-auto pt-24 pb-16 md:pt-32 md:pb-24 px-4 md:px-10">
           <div className="text-center mb-16 md:mb-20">
-            <h2 className="text-[28px] md:text-[36px] font-serif text-[#1a1a1a] mb-6 italic tracking-wide">Iconic Creations</h2>
+            <h2 className="text-[28px] md:text-[36px] font-serif text-[#1a1a1a] mb-6 italic tracking-wide">Iconic Creations ({totalItems})</h2>
             <div className="w-16 h-[1px] bg-[#c1a673] mx-auto"></div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-16">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
-                <div className="relative aspect-square w-full mb-6 overflow-hidden bg-[#fcfcfc] border border-transparent group-hover:border-[#eaeaea] transition-all duration-500 shadow-sm group-hover:shadow-md">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
+                <div className="relative aspect-square w-full mb-4 overflow-hidden bg-[#fcfcfc] border border-transparent group-hover:border-[#eaeaea] transition-all duration-500 shadow-sm group-hover:shadow-md">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-8 group-hover:scale-110 transition-transform duration-[2000ms] mix-blend-darken"
+                    className="object-contain p-4 group-hover:scale-110 transition-transform duration-[2000ms] mix-blend-darken"
                     referrerPolicy="no-referrer"
                   />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 bg-white/80 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-[#bc001b] text-[#bc001b]' : 'text-[#1a1a1a]'}`} strokeWidth={1} />
+                  </button>
                   {/* Subtle 'New' or 'Exclusive' tag */}
                   {product.originalPrice && (
-                    <div className="absolute top-4 left-4 bg-[#bc001b] text-white text-[9px] px-2 py-1 font-sans font-bold tracking-widest uppercase">
+                    <div className="absolute top-3 left-3 bg-[#bc001b] text-white text-[8px] px-2 py-1 font-sans font-bold tracking-widest uppercase">
                       Novelty
                     </div>
                   )}
+                  {/* Add to Cart */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-0 left-0 right-0 bg-[#1a1a1a] text-white py-2 text-[9px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
-                <div className="flex flex-col space-y-2 px-2 w-full">
-                  <div className="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-[#888] mb-1">{product.category || 'Jewelry'}</div>
-                  <h3 className="text-[14px] md:text-[15px] font-serif text-[#1a1a1a] leading-snug group-hover:text-[#bc001b] transition-colors">{product.title}</h3>
-                  <div className="pt-2">
-                    <span className="font-sans font-medium text-[11px] md:text-[12px] tracking-widest text-[#1a1a1a]">${product.price}</span>
+                <div className="flex flex-col space-y-1 px-1 w-full">
+                  <div className="text-[8px] font-sans font-medium uppercase tracking-[0.2em] text-[#888]">{product.category || 'Jewelry'}</div>
+                  <h3 className="text-[12px] md:text-[13px] font-serif text-[#1a1a1a] leading-snug group-hover:text-[#bc001b] transition-colors">{product.title}</h3>
+                  <div className="pt-1">
+                    <span className="font-sans font-medium text-[10px] md:text-[11px] tracking-widest text-[#1a1a1a]">${product.price}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-center mt-16">
-            <button className="border border-[#1a1a1a] text-[#1a1a1a] px-10 py-3.5 font-sans font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-[#1a1a1a] hover:text-white transition-all duration-300">
-              View All Creations
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── FULL WIDTH EDITORIAL (Deep Red Background) ─── */}

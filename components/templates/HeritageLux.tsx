@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Menu, Heart, MapPin, Phone, ArrowRight, Facebook, Twitter, Instagram, Youtube, User } from 'lucide-react';
+import { Search, ShoppingBag, Menu, Heart, MapPin, Phone, ArrowRight, Facebook, Twitter, Instagram, Youtube, User, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function HeritageLuxTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#19110B] overflow-x-hidden" style={{ fontFamily: "'HeritageLux Web', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
@@ -17,8 +44,11 @@ export default function HeritageLuxTemplate({ data }: { data: StoreData }) {
         <div className="w-full px-4 md:px-8 h-[60px] md:h-[72px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 md:space-x-8 w-1/3">
-            <button className="hover:opacity-70 transition-opacity">
-              <Menu className="w-[22px] h-[22px] text-[#19110B]" strokeWidth={1} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="hover:opacity-70 transition-opacity"
+            >
+              {mobileMenuOpen ? <X className="w-[22px] h-[22px] text-[#19110B]" strokeWidth={1} /> : <Menu className="w-[22px] h-[22px] text-[#19110B]" strokeWidth={1} />}
             </button>
             <button className="hidden md:flex items-center hover:opacity-70 transition-opacity space-x-2">
               <Search className="w-5 h-5 text-[#19110B]" strokeWidth={1} />
@@ -35,12 +65,26 @@ export default function HeritageLuxTemplate({ data }: { data: StoreData }) {
 
           <div className="flex items-center justify-end space-x-5 md:space-x-7 w-1/3">
             <span className="text-[11px] tracking-[0.15em] uppercase hidden lg:block cursor-pointer hover:underline underline-offset-4 transition-all">Call Us</span>
-            <span className="text-[11px] tracking-[0.15em] uppercase hidden md:block cursor-pointer hover:underline underline-offset-4 transition-all">Wishlist</span>
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block relative cursor-pointer hover:underline underline-offset-4 transition-all"
+            >
+              <span className="text-[11px] tracking-[0.15em] uppercase">Wishlist</span>
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-3 bg-red-500 text-white text-[8px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
             <span className="text-[11px] tracking-[0.15em] uppercase hidden md:block cursor-pointer hover:underline underline-offset-4 transition-all">My LV</span>
             <button className="md:hidden hover:opacity-70 transition-opacity"><User className="w-[20px] h-[20px]" strokeWidth={1} /></button>
-            <button className="hover:opacity-70 transition-opacity relative">
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
               <ShoppingBag className="w-[20px] h-[20px] text-[#19110B]" strokeWidth={1} />
-            </button>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#19110B] text-white text-[9px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -75,54 +119,72 @@ export default function HeritageLuxTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── NOVELTIES GRID (Structured Museum Layout) ─── */}
+        {/* ─── NOVELTIES GRID (Structured Museum Layout - Paginated) ─── */}
         <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12 py-20 md:py-32">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 border-b border-[#e5e5e5] pb-6">
-            <h3 className="text-[22px] md:text-[28px] font-medium tracking-wide mb-4 md:mb-0">New This Season</h3>
+            <h3 className="text-[22px] md:text-[28px] font-medium tracking-wide mb-4 md:mb-0">New This Season ({totalItems})</h3>
             <a href="#" className="flex items-center text-[11px] tracking-[0.2em] uppercase font-bold hover:text-[#9e704e] transition-colors group">
               View the Selection
               <span className="ml-2 transform group-hover:translate-x-1 transition-transform"><ArrowRight className="w-4 h-4" strokeWidth={1.5} /></span>
             </a>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-2 md:gap-x-6 gap-y-12 md:gap-y-16">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-2 md:gap-x-4 gap-y-8 md:gap-y-12">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
                 {/* Product Image Box */}
-                <div className="relative aspect-square overflow-hidden bg-[#f6f5f3] mb-4">
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#f6f5f3] mb-3">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-6 mix-blend-multiply group-hover:scale-110 transition-transform duration-[800ms] ease-out"
+                    className="object-cover p-2 mix-blend-multiply group-hover:scale-105 transition-transform duration-[800ms] ease-out"
                     referrerPolicy="no-referrer"
                   />
                   {/* Subtle LV Hover Heart */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="p-2 hover:bg-white rounded-full transition-colors">
-                      <Heart className="w-5 h-5 text-[#19110B]" strokeWidth={1} />
-                    </button>
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-1.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-[#19110B]'}`} strokeWidth={1} />
+                  </button>
 
                   {/* Web Exclusive Tag Example */}
                   {product.originalPrice && (
-                    <div className="absolute bottom-4 left-4 text-[9px] uppercase tracking-widest font-bold bg-white/90 px-2 py-1">
+                    <div className="absolute bottom-3 left-3 text-[8px] uppercase tracking-widest font-bold bg-white/90 px-2 py-1">
                       Online Exclusive
                     </div>
                   )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-3 left-3 right-3 bg-[#19110B] text-white py-1.5 text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add
+                  </button>
                 </div>
 
                 {/* Product Info */}
-                <div className="flex-1 flex flex-col px-2">
-                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#767676] mb-1">{product.category || 'Leather Goods'}</span>
-                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-1 mb-1">
-                    <h4 className="text-[13px] md:text-[14px] font-medium tracking-wide group-hover:underline underline-offset-4 line-clamp-2">{product.title}</h4>
-                  </div>
-                  <span className="text-[13px] md:text-[14px] text-[#767676] whitespace-nowrap mt-1">${product.price}</span>
+                <div className="flex-1 flex flex-col px-1">
+                  <span className="text-[9px] tracking-[0.15em] uppercase text-[#767676] mb-0.5">{product.category || 'Leather Goods'}</span>
+                  <h4 className="text-[12px] font-medium tracking-wide group-hover:underline underline-offset-4 line-clamp-2">{product.title}</h4>
+                  <span className="text-[12px] text-[#767676] whitespace-nowrap mt-0.5">${product.price}</span>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── HERITAGE BANNER (Full width, text centered) ─── */}

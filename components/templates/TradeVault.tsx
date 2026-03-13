@@ -1,8 +1,26 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, MessageSquare, User, ShoppingCart, Menu, ShieldCheck, Globe, ChevronRight, Award, Truck, HeadphonesIcon, Factory, Star, CheckCircle2, Zap, LayoutGrid, PackageCheck } from 'lucide-react';
+import { Search, MessageSquare, User, ShoppingCart, Menu, ShieldCheck, Globe, ChevronRight, Award, Truck, HeadphonesIcon, Factory, Star, CheckCircle2, Zap, LayoutGrid, PackageCheck, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function TradeVaultTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
   return (
     <div className="min-h-full bg-[#f2f3f7] font-sans text-[#222]">
       {/* Top Bar - Ultra Precise */}
@@ -62,10 +80,22 @@ export default function TradeVaultTemplate({ data }: { data: StoreData }) {
               <span className="text-[11px] mt-1 font-medium group-hover:text-[#ff6a00]">Messages</span>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">2</div>
             </div>
-            <div className="flex flex-col items-center cursor-pointer group">
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center cursor-pointer group relative"
+            >
               <ShoppingCart className="w-6 h-6 text-gray-700 group-hover:text-[#ff6a00] transition-colors" />
               <span className="text-[11px] mt-1 font-medium group-hover:text-[#ff6a00]">Cart</span>
+              {cartCount > 0 && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff6a00] rounded-full text-[10px] text-white flex items-center justify-center font-bold">{cartCount}</div>
+              )}
             </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
       </header>
@@ -183,9 +213,9 @@ export default function TradeVaultTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="bg-white rounded-2xl overflow-hidden hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all cursor-pointer border border-transparent hover:border-[#ff6a00]/20 group flex flex-col h-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+            {paginatedItems.map((product, idx) => (
+              <div key={`tradevault-${idx}-${product.id}`} data-product-id={product.id} className="bg-white rounded-2xl overflow-hidden hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all cursor-pointer border border-transparent hover:border-[#ff6a00]/20 group flex flex-col h-full">
                 <div className="relative aspect-square overflow-hidden bg-gray-50 group-hover:bg-white transition-colors p-4">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 left-3 flex flex-col gap-1.5">
@@ -194,8 +224,11 @@ export default function TradeVaultTemplate({ data }: { data: StoreData }) {
                     </div>
                   </div>
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/20 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="w-full bg-[#ff6a00] text-white text-[10px] font-black py-2 rounded-lg shadow-xl shadow-orange-500/30">
-                      QUICK QUOTE
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-[#ff6a00] text-white text-[10px] font-black py-2 rounded-lg shadow-xl shadow-orange-500/30"
+                    >
+                      ADD TO CART
                     </button>
                   </div>
                 </div>
@@ -212,7 +245,7 @@ export default function TradeVaultTemplate({ data }: { data: StoreData }) {
 
                     <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-3.5 bg-gray-200 border border-gray-300 rounded-[2px]" /> {/* Country Flag Placeholder */}
+                        <div className="w-5 h-3.5 bg-gray-200 border border-gray-300 rounded-[2px]" />
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">CN Supplier</span>
                       </div>
                       <div className="flex items-center gap-1">
@@ -225,6 +258,19 @@ export default function TradeVaultTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Industrial RFQ Banner */}

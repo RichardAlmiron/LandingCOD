@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Zap, Smartphone, Package, ShieldCheck, Truck, Clock, HeadphonesIcon, ArrowRight, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Zap, Smartphone, Package, ShieldCheck, Truck, Clock, HeadphonesIcon, ArrowRight, Facebook, Twitter, Instagram, Youtube, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function PrimeGoodsTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-[#f4f4f4] font-sans text-[#333]">
       <div className="bg-[#e1251b] text-white text-[11px] py-1.5 px-6 flex justify-center font-bold tracking-wide">
@@ -24,6 +51,12 @@ export default function PrimeGoodsTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
           <div className="flex items-center space-x-8">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#e1251b] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="hidden md:flex flex-col items-center cursor-pointer hover:text-[#e1251b]">
               <User className="w-6 h-6" />
               <span className="text-[10px] font-bold uppercase mt-1">Sign In</span>
@@ -32,9 +65,24 @@ export default function PrimeGoodsTemplate({ data }: { data: StoreData }) {
               <Package className="w-6 h-6" />
               <span className="text-[10px] font-bold uppercase mt-1">Orders</span>
             </div>
-            <div className="relative cursor-pointer hover:text-[#e1251b]">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative hidden md:flex flex-col items-center cursor-pointer hover:text-[#e1251b]"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              <span className="text-[10px] font-bold uppercase mt-1">Favorites</span>
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#e1251b]"
+            >
               <ShoppingCart className="w-7 h-7" />
-              <span className="absolute top-0 right-0 bg-[#e1251b] text-white text-[10px] font-bold px-1.5 rounded-full">0</span>
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 bg-[#e1251b] text-white text-[10px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -65,16 +113,22 @@ export default function PrimeGoodsTemplate({ data }: { data: StoreData }) {
         <div className="mb-16">
           <div className="flex items-center justify-between mb-10 border-b-2 border-[#e1251b] pb-4">
             <h2 className="text-2xl font-black uppercase tracking-tight flex items-center">
-              <ShieldCheck className="w-7 h-7 mr-3 text-[#e1251b]" /> Quality Selection
+              <ShieldCheck className="w-7 h-7 mr-3 text-[#e1251b]" /> Quality Selection ({totalItems})
             </h2>
             <a href="#" className="text-sm font-black uppercase tracking-widest text-[#e1251b] hover:underline">See All</a>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all border border-gray-100">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all border border-gray-100">
                 <div className="relative aspect-square overflow-hidden bg-white p-6">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute top-3 left-3 bg-[#e1251b] text-white text-[10px] font-black uppercase px-2 py-1 rounded shadow-lg">PrimeGoods Global</div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
                 <div className="p-4 flex flex-col space-y-2">
                   <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px] leading-tight group-hover:text-[#e1251b]">{product.title}</h3>
@@ -85,10 +139,27 @@ export default function PrimeGoodsTemplate({ data }: { data: StoreData }) {
                   <div className="flex items-center text-[10px] font-bold text-green-600 uppercase tracking-tighter">
                     <Package className="w-3 h-3 mr-1" /> Fast Delivery
                   </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="w-full bg-[#e1251b] text-white py-2 rounded font-black text-sm hover:bg-black transition-colors mt-2"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Shop by Category */}

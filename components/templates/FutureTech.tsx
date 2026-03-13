@@ -1,12 +1,40 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, Menu, ChevronDown, Globe, Play, ArrowRight, Smartphone, MonitorPlay, Speaker, Watch, Plus } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, ChevronDown, Globe, Play, ArrowRight, Smartphone, MonitorPlay, Speaker, Watch, Plus, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function FutureTechTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
   const featuredProduct = data.products[0];
   const newReleases = data.products.slice(1, 4);
   const otherProducts = data.products.slice(4, 8);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-black selection:text-white pb-10 overflow-x-hidden">
@@ -51,15 +79,23 @@ export default function FutureTechTemplate({ data }: { data: StoreData }) {
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors group">
               <Search className="w-[20px] h-[20px] group-hover:scale-110 transition-transform" strokeWidth={2} />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors group relative">
+            <button 
+              onClick={addToCart}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors group relative"
+            >
               <ShoppingCart className="w-[20px] h-[20px] group-hover:scale-110 transition-transform" strokeWidth={2} />
-              <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#2189ff] rounded-full border border-white"></div>
+              {cartCount > 0 && (
+                <div className="absolute top-1 right-1 w-4 h-4 bg-[#2189ff] text-white text-[10px] font-bold rounded-full border border-white flex items-center justify-center">{cartCount}</div>
+              )}
             </button>
             <button className="hidden sm:block p-2 hover:bg-gray-100 rounded-full transition-colors group">
               <User className="w-[20px] h-[20px] group-hover:scale-110 transition-transform" strokeWidth={2} />
             </button>
-            <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Menu className="w-[22px] h-[22px]" strokeWidth={2} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-[22px] h-[22px]" strokeWidth={2} /> : <Menu className="w-[22px] h-[22px]" strokeWidth={2} />}
             </button>
           </div>
         </div>
@@ -221,8 +257,11 @@ export default function FutureTechTemplate({ data }: { data: StoreData }) {
                         className="object-contain p-6 group-hover:scale-110 transition-transform duration-[600ms] ease-out mix-blend-multiply"
                         referrerPolicy="no-referrer"
                       />
-                      <button className="absolute top-4 right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 shadow-sm border border-gray-100">
-                        <Plus className="w-4 h-4 text-black" />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                        className="absolute top-4 right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 shadow-sm border border-gray-100"
+                      >
+                        <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-black'}`} />
                       </button>
                     </div>
                     <div className="flex flex-col text-center px-2">
@@ -231,12 +270,68 @@ export default function FutureTechTemplate({ data }: { data: StoreData }) {
                       <div className="text-[16px] font-medium text-black mt-2">
                         ${product.price}
                       </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                        className="mt-3 bg-black text-white py-2 rounded-full text-[12px] font-bold hover:bg-gray-800 transition-colors"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          {/* All Products with Pagination */}
+          <div className="mb-20">
+            <h2 className="text-[28px] md:text-[36px] font-bold tracking-tight mb-10 text-center">All Products ({totalItems})</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+              {paginatedItems.map((product, idx) => (
+                <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+                  <div className="relative aspect-square mb-3 bg-[#f4f4f4] rounded-[12px] p-4 overflow-hidden flex items-center justify-center">
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.title}
+                      fill
+                      className="object-contain p-4 group-hover:scale-110 transition-transform duration-[600ms] ease-out mix-blend-multiply"
+                      referrerPolicy="no-referrer"
+                    />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-3 right-3 w-7 h-7 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-gray-100"
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-black'}`} />
+                    </button>
+                  </div>
+                  <div className="flex flex-col text-center px-1">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">{product.category || 'Galaxy'}</div>
+                    <h3 className="text-[13px] font-bold mb-1 text-black line-clamp-2 leading-tight">{product.title}</h3>
+                    <div className="text-[14px] font-medium text-black mt-1">${product.price}</div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="mt-2 bg-black text-white py-1.5 rounded-full text-[11px] font-bold hover:bg-gray-800 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Services highlight */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-gray-200 pt-16 mb-10">

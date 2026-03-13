@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, User, MapPin, Heart, Menu, ChevronRight, Sun } from 'lucide-react';
+import { Search, ShoppingBag, User, MapPin, Heart, Menu, ChevronRight, Sun, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ShadesHubTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111] selection:bg-[#111] selection:text-white pb-0 overflow-x-hidden">
@@ -19,7 +45,12 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 h-[72px] lg:h-[88px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 lg:space-x-8">
-            <Menu className="w-6 h-6 lg:hidden cursor-pointer hover:text-gray-500 transition-colors" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
 
             <nav className="hidden lg:flex space-x-8 font-sans text-[13px] font-black uppercase tracking-widest text-[#111]">
               <div className="group relative py-8">
@@ -67,9 +98,23 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
             <Search className="w-5 h-5 lg:w-6 lg:h-6 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={2.5} />
             <MapPin className="hidden md:block w-5 h-5 lg:w-6 lg:h-6 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={2.5} />
             <User className="hidden md:block w-5 h-5 lg:w-6 lg:h-6 cursor-pointer hover:text-gray-500 transition-colors" strokeWidth={2.5} />
-            <div className="relative cursor-pointer hover:text-gray-500 transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative hidden md:block cursor-pointer hover:text-gray-500 transition-colors"
+            >
+              <Heart className={`w-5 h-5 lg:w-6 lg:h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-gray-500 transition-colors"
+            >
               <ShoppingBag className="w-5 h-5 lg:w-6 lg:h-6" strokeWidth={2.5} />
-              <span className="absolute -top-1 -right-2 bg-[#111] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#111] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -124,7 +169,7 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
         <section className="max-w-[1600px] mx-auto px-4 md:px-8 py-20 md:py-28">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b-4 border-[#111] pb-4">
             <h2 className="text-[32px] md:text-[50px] font-black uppercase tracking-tighter text-[#111] leading-none text-center md:text-left">
-              Trending Now
+              Trending Now ({totalItems})
             </h2>
             <a href="#" className="hidden md:flex text-[14px] font-black uppercase tracking-widest text-gray-500 hover:text-[#111] transition-colors items-center group">
               Shop All Trending <ChevronRight className="w-5 h-5 ml-1 transform group-hover:translate-x-1 transition-transform" />
@@ -132,7 +177,7 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-8 gap-y-16">
-            {products.map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center">
                 <div className="relative aspect-[4/3] mb-6 overflow-hidden w-full bg-[#f8f8f8] border border-gray-200 flex items-center justify-center p-6 sm:p-10">
 
@@ -157,9 +202,12 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
                   />
 
                   {/* Heart Icon */}
-                  <div className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 translate-y-2 group-hover:translate-y-0 group-hover:opacity-100 transition-all text-gray-400 hover:text-red-500 z-20">
-                    <Heart className="w-5 h-5 fill-current" />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 translate-y-2 group-hover:translate-y-0 group-hover:opacity-100 transition-all hover:text-red-500 z-20"
+                  >
+                    <Heart className={`w-5 h-5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
 
                 <div className="flex flex-col w-full text-center">
@@ -191,8 +239,25 @@ export default function ShadesHubTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+
           <div className="mt-16 flex justify-center md:hidden">
-            <button className="bg-[#111] text-white px-10 py-4 font-black uppercase text-[12px] tracking-widest w-full border-2 border-[#111]">
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="bg-[#111] text-white px-10 py-4 font-black uppercase text-[12px] tracking-widest w-full border-2 border-[#111]"
+            >
               View All Trending
             </button>
           </div>

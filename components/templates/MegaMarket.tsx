@@ -1,11 +1,41 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Menu, MapPin, Star, ChevronRight, Globe, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, Menu, MapPin, Star, ChevronRight, Globe, ChevronDown, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function MegaMarketTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [cartCount, setCartCount] = useState(0);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
   // Use data products or default
   const flashDeals = data.products.slice(0, 5);
-  const recommendations = data.products;
+  const categories = ['Electrónicos', 'Hogar y Cocina', 'Moda', 'Belleza y Cuidado', 'Deportes', 'Juguetes'];
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-[#E3E6E6] font-sans text-[#0f1111] overflow-x-hidden">
@@ -14,51 +44,57 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
         {/* Mobile Top Row: Menu + Logo + User + Cart */}
         <div className="flex items-center justify-between md:hidden w-full pb-2 pt-1 border-b border-transparent">
           <div className="flex items-center">
-            <button className="p-2 text-white hover:border hover:border-white rounded-sm outline-none">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-white hover:border hover:border-white rounded-sm outline-none"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <div className="font-bold text-xl tracking-tight px-2 flex items-center">
+            <a href="#" className="font-bold text-xl tracking-tight px-2 flex items-center">
               {data.logoText}
               <span className="text-[#febd69] font-normal text-sm ml-1 mt-1">.com</span>
-            </div>
+            </a>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="flex items-center px-2 cursor-pointer text-sm">
+            <button className="flex items-center px-2 cursor-pointer text-sm">
               Identifícate
               <ChevronRight className="w-4 h-4 ml-1 text-gray-400" />
-            </div>
-            <div className="flex items-end px-2 pb-1 relative cursor-pointer">
+            </button>
+            <button 
+              onClick={addToCart}
+              className="flex items-end px-2 pb-1 relative cursor-pointer"
+            >
               <ShoppingCart className="w-8 h-8 relative top-1" />
-              <span className="absolute top-0 left-6 text-[#f08804] font-bold text-sm">0</span>
-            </div>
+              <span className="absolute top-0 left-6 text-[#f08804] font-bold text-sm">{cartCount}</span>
+            </button>
           </div>
         </div>
 
         {/* Desktop Navbar Left */}
         <div className="hidden md:flex items-center space-x-1 shrink-0 h-full py-1">
           {/* Logo */}
-          <div className="flex items-center justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
+          <a href="#" className="flex items-center justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
             <span className="font-extrabold text-2xl tracking-tighter mt-1">{data.logoText}</span>
             <span className="text-[#febd69] font-normal text-sm ml-1 mt-3">.com</span>
-          </div>
+          </a>
 
           {/* Deliver To */}
-          <div className="flex items-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
+          <button className="flex items-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
             <MapPin className="w-4 h-4 mt-3 mr-1 text-white" />
             <div className="flex flex-col leading-tight">
               <span className="text-[#cccccc] text-[12px] font-normal">Enviar a</span>
               <span className="text-white text-[14px] font-bold">Colombia</span>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Search Bar - Responsive */}
         <div className="flex flex-1 md:mx-4 mt-2 md:mt-0 relative h-10 md:h-10 rounded-md overflow-hidden focus-within:ring-[3px] focus-within:ring-[#f90] focus-within:border-transparent">
           {/* Desktop Search Dropdown */}
-          <div className="hidden md:flex items-center bg-[#f3f3f3] hover:bg-[#d4d4d4] text-[#555] text-[12px] border-r border-[#cdcdcd] px-3 cursor-pointer">
+          <button className="hidden md:flex items-center bg-[#f3f3f3] hover:bg-[#d4d4d4] text-[#555] text-[12px] border-r border-[#cdcdcd] px-3 cursor-pointer">
             Todos
             <ChevronDown className="w-3 h-3 ml-1 text-[#555]" />
-          </div>
+          </button>
           <input
             type="text"
             placeholder="Buscar productos, marcas y más..."
@@ -72,42 +108,48 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
         {/* Desktop Navbar Right */}
         <div className="hidden md:flex items-center space-x-1 shrink-0 h-full py-1 ml-2">
           {/* Language / Region */}
-          <div className="flex items-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
+          <button className="flex items-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px]">
             <Globe className="w-4 h-4 mr-1 text-gray-300" />
             <span className="text-[14px] font-bold">ES</span>
             <ChevronDown className="w-3 h-3 ml-1 text-gray-400 mt-1" />
-          </div>
+          </button>
 
           {/* Account */}
-          <div className="flex flex-col justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] leading-tight">
+          <button className="flex flex-col justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] leading-tight">
             <span className="text-white text-[12px] font-normal">Hola, Identifícate</span>
             <div className="flex items-center">
               <span className="text-white text-[14px] font-bold">Cuentas y Listas</span>
               <ChevronDown className="w-3 h-3 ml-1 text-gray-400" />
             </div>
-          </div>
+          </button>
 
           {/* Orders */}
-          <div className="flex flex-col justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] leading-tight">
+          <button className="flex flex-col justify-center p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] leading-tight">
             <span className="text-white text-[12px] font-normal">Devoluciones</span>
             <span className="text-white text-[14px] font-bold">y Pedidos</span>
-          </div>
+          </button>
 
           {/* Cart Desktop */}
-          <div className="flex items-end p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] relative">
+          <button 
+            onClick={addToCart}
+            className="flex items-end p-2 border border-transparent hover:border-white rounded-sm cursor-pointer h-full max-h-[50px] relative"
+          >
             <ShoppingCart className="w-8 h-8" />
-            <span className="absolute top-1 left-5 text-[#f08804] font-bold text-sm text-center w-[16px]">0</span>
+            <span className="absolute top-1 left-5 text-[#f08804] font-bold text-sm text-center w-[16px]">{cartCount}</span>
             <span className="text-white text-[14px] font-bold ml-1 hidden lg:block mb-1">Carrito</span>
-          </div>
+          </button>
         </div>
       </header>
 
       {/* ─── HEADER LEVEL 2: Sub Nav ─── */}
       <nav className="bg-[#232f3e] text-white flex items-center px-3 md:px-4 h-[39px] text-[14px] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden">
-        <div className="flex items-center border border-transparent hover:border-white rounded-sm px-2 cursor-pointer h-full">
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="flex items-center border border-transparent hover:border-white rounded-sm px-2 cursor-pointer h-full"
+        >
           <Menu className="w-5 h-5 mr-1" />
           <span className="font-bold">Todo</span>
-        </div>
+        </button>
         <div className="flex items-center space-x-1 ml-2">
           {['Ofertas del Día', 'Servicio al Cliente', 'Listas', 'Tarjetas de Regalo', 'Vender'].map((link) => (
             <a key={link} href="#" className="border border-transparent hover:border-white rounded-sm px-2 py-1 h-full flex items-center">
@@ -116,6 +158,20 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
           ))}
         </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white shadow-lg z-50">
+          <div className="p-4 space-y-3">
+            <h3 className="font-bold text-lg">Departamentos</h3>
+            {categories.map((cat) => (
+              <a key={cat} href="#" className="block py-2 text-[#0f1111] hover:text-[#007185]">
+                {cat}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className="w-full relative mx-auto pb-10">
 
@@ -126,7 +182,6 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
             alt="MegaMarket Banner Hero"
             className="w-full h-full object-cover object-top"
           />
-          {/* The iconic MegaMarket gradient that blends the banner into the main background color */}
           <div
             className="absolute bottom-0 w-full h-[250px]"
             style={{ background: 'linear-gradient(to bottom, rgba(227,230,230,0) 0%, rgba(227,230,230,1) 100%)' }}
@@ -138,7 +193,7 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
 
           {/* Row 1: 4 Cards Quad Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-            {['Electrónicos', 'Hogar y Cocina', 'Moda', 'Belleza y Cuidado'].map((cat, gridIdx) => (
+            {categories.slice(0, 4).map((cat, gridIdx) => (
               <div key={gridIdx} className="bg-white p-4 h-[380px] sm:h-[420px] flex flex-col cursor-pointer z-10">
                 <h2 className="text-[21px] font-bold mb-3 leading-tight tracking-tight text-[#0f1111]">{cat}</h2>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4 flex-1">
@@ -146,12 +201,12 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
                     const prodIdx = (gridIdx * 4 + i) % data.products.length;
                     const p = data.products[prodIdx];
                     return (
-                      <div key={i} data-product-id={p.id} className="flex flex-col">
+                      <a key={i} href="#" data-product-id={p.id} className="flex flex-col group">
                         <div className="h-[100px] sm:h-[115px] bg-white mb-2 overflow-hidden flex items-center justify-center">
-                          <img src={p.imageUrl} alt={p.title} className="max-h-full object-contain mix-blend-multiply" />
+                          <img src={p.imageUrl} alt={p.title} className="max-h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
                         </div>
-                        <span className="text-[12px] truncate text-[#0f1111]">{p.title}</span>
-                      </div>
+                        <span className="text-[12px] truncate text-[#0f1111] group-hover:text-[#007185] transition-colors">{p.title}</span>
+                      </a>
                     )
                   })}
                 </div>
@@ -168,7 +223,7 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
             </div>
             <div className="flex overflow-x-auto space-x-4 pb-4 snap-x [&::-webkit-scrollbar]:hidden md:custom-scrollbar">
               {flashDeals.map((product, i) => (
-                <div key={i} data-product-id={product.id} className="shrink-0 w-[180px] sm:w-[220px] flex flex-col snap-start cursor-pointer group">
+                <a key={i} href="#" data-product-id={product.id} className="shrink-0 w-[180px] sm:w-[220px] flex flex-col snap-start cursor-pointer group">
                   <div className="bg-[#f7f7f7] w-full h-[200px] flex items-center justify-center p-4 mb-2 relative">
                     <img src={product.imageUrl} alt={product.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-[1.03] transition-transform duration-300" />
                   </div>
@@ -184,31 +239,43 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
                     <span className="text-[12px] align-text-top ml-[1px]">{product.price.split('.')[1] || '00'}</span>
                   </div>
                   <div className="text-[13px] text-[#0f1111] line-clamp-2 leading-tight">{product.title}</div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
 
-          {/* Row 3: Product Listing Grid (Typical Search Result View) */}
+          {/* Row 3: Product Listing Grid WITH PAGINATION (3x5 = 15 products) */}
           <div className="mt-5">
             <div className="bg-white p-5">
-              <h2 className="text-[21px] font-bold tracking-tight text-[#0f1111] mb-4">Inspirado en tu historial de navegación</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-6">
-                {recommendations.map((p, i) => (
-                  <div key={i} data-product-id={p.id} className="flex flex-col cursor-pointer group">
-                    <div className="h-[180px] flex items-center justify-center p-2 mb-2">
-                      <img src={p.imageUrl} alt={p.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-[1.02] transition-transform" />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[21px] font-bold tracking-tight text-[#0f1111]">Todos los Productos</h2>
+                <span className="text-sm text-gray-600">{totalItems} resultados</span>
+              </div>
+              
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                {paginatedItems.map((p, i) => (
+                  <div key={`megamarket-grid-${i}-${p.id}`} data-product-id={p.id} className="flex flex-col cursor-pointer group relative">
+                    <div className="relative">
+                      <div className="h-[180px] flex items-center justify-center p-2 mb-2">
+                        <img src={p.imageUrl} alt={p.title} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-[1.02] transition-transform" />
+                      </div>
+                      <button
+                        onClick={(e) => { e.preventDefault(); toggleWishlist(p.id); }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-md hover:bg-gray-100 transition-colors"
+                      >
+                        <Heart className={`w-4 h-4 ${wishlist.includes(p.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                      </button>
                     </div>
-                    <div className="text-[#007185] group-hover:text-[#c45500] text-[14px] line-clamp-2 leading-tight mb-1">{p.title}</div>
+                    <a href="#" className="text-[#007185] group-hover:text-[#c45500] text-[14px] line-clamp-2 leading-tight mb-1">{p.title}</a>
 
                     <div className="flex items-center space-x-1 mb-1">
                       <div className="flex text-[#ffa41c]">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`w-[14px] h-[14px] ${i < Math.floor(p.rating) ? 'fill-current' : 'text-gray-300'}`} />
+                        {[...Array(5)].map((_, starIdx) => (
+                          <Star key={`megamarket-star-${starIdx}`} className={`w-[14px] h-[14px] ${starIdx < Math.floor(p.rating || 4) ? 'fill-current' : 'text-gray-300'}`} />
                         ))}
                       </div>
                       <ChevronDown className="w-3 h-3 text-[#555] cursor-pointer" />
-                      <span className="text-[12px] text-[#007185]">{p.reviews}</span>
+                      <span className="text-[12px] text-[#007185]">{p.reviews || 124}</span>
                     </div>
 
                     <div className="flex items-baseline mb-1">
@@ -217,16 +284,29 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
                       <span className="text-[12px] align-text-top ml-[1px]">{p.price.split('.')[1] || '00'}</span>
                     </div>
                     {p.originalPrice && (
-                      <span className="text-[12px] text-[#565959]">Precio recomendado: <span className="line-through">${p.originalPrice}</span></span>
+                      <span className="text-[12px] text-[#565959]">Precio: <span className="line-through">${p.originalPrice}</span></span>
                     )}
 
-                    {/* MegaMarket Add to cart button style */}
-                    <button className="mt-3 w-full bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] text-[13px] py-[6px] rounded-full border border-[#fcd200] hover:border-[#F2C200] hover:shadow-sm font-medium transition-all active:ring-2 active:ring-[#008296] outline-none">
+                    <button 
+                      onClick={addToCart}
+                      className="mt-3 w-full bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] text-[13px] py-[6px] rounded-full border border-[#fcd200] hover:border-[#F2C200] hover:shadow-sm font-medium transition-all active:ring-2 active:ring-[#008296] outline-none"
+                    >
                       Agregar al carrito
                     </button>
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              )}
             </div>
           </div>
         </div>

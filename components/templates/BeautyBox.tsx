@@ -1,12 +1,48 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin, Store, Star, ChevronRight, ChevronDown, Calendar, MessageCircle, ArrowRight, Menu, Truck, ShieldCheck, Zap, Sparkles } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, Store, Star, ChevronRight, ChevronDown, Calendar, MessageCircle, ArrowRight, Menu, Truck, ShieldCheck, Zap, Sparkles, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  
   const topCategories = ['Makeup', 'Skincare', 'Hair', 'Fragrance', 'Tools & Brushes', 'Bath & Body', 'Mini Size', 'Gifts', 'Beauty Under $20'];
   const trendingProducts = data.products.slice(0, 4);
   const newArrivals = data.products.slice(4, 10);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  
+  const categories = ['All', ...Array.from(new Set(data.products.map(p => p.category).filter(Boolean)))];
+  
+  const filteredProducts = activeCategory === 'All' 
+    ? data.products 
+    : data.products.filter(p => p.category === activeCategory);
+  
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(filteredProducts, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#000000] overflow-x-hidden selection:bg-black selection:text-white">
@@ -22,13 +58,16 @@ export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1400px] mx-auto px-4 lg:px-8 py-4 flex items-center justify-between gap-4 lg:gap-8 overflow-hidden h-[72px]">
 
           <div className="flex items-center gap-3 shrink-0">
-            <button className="lg:hidden p-1 hover:bg-gray-100 rounded-full transition-colors">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
             {/* BeautyBox Logo representation */}
-            <div className="font-serif text-[28px] md:text-[34px] tracking-[0.15em] uppercase cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap">
+            <a href="#" className="font-serif text-[28px] md:text-[34px] tracking-[0.15em] uppercase cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap">
               {data.logoText !== 'BeautyBox' ? data.logoText : 'BeautyBox'}
-            </div>
+            </a>
           </div>
 
           {/* Search Bar - Expandable on focus */}
@@ -61,10 +100,23 @@ export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
 
             <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
               <Heart className="w-6 h-6" strokeWidth={1.5} />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#e32636] text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  {wishlist.length}
+                </span>
+              )}
             </button>
 
-            <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
+            <button 
+              onClick={addToCart}
+              className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+            >
               <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#e32636] text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -92,9 +144,13 @@ export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
             <div className="md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-[#fed6e3]">
               <h1 className="text-[32px] md:text-[42px] font-bold mb-4 leading-[1.1] tracking-tight text-[#c81045]">{data.name}</h1>
               <p className="text-[16px] md:text-[18px] mb-8 font-medium text-[#9a0932] max-w-md">{data.description || "Discover the latest in beauty, skincare, and fragrance."}</p>
-              <button className="bg-[#c81045] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-colors w-fit text-[14px]">
-                Shop the Collection
-              </button>
+              <button 
+              onClick={addToCart}
+              className="bg-[#c81045] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-colors w-fit text-[14px] flex items-center gap-2"
+            >
+              Shop the Collection
+              <ArrowRight className="w-4 h-4" />
+            </button>
             </div>
             <div className="md:w-1/2 relative min-h-[300px] md:min-h-[450px]">
               <Image
@@ -130,7 +186,10 @@ export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
                   <div className="absolute top-2 left-2 bg-white border border-black text-black text-[10px] font-bold px-2 py-1 uppercase rounded-sm z-10">
                     New
                   </div>
-                  <button className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 z-10 hover:bg-black hover:text-white">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 z-10 hover:bg-black hover:text-white"
+                  >
                     <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                 </div>
@@ -280,8 +339,99 @@ export default function BeautyBoxTemplate({ data }: { data: StoreData }) {
           </div>
         )}
 
-        {/* ─── SERVICES ─── */}
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16">
+      {/* ─── FULL PRODUCT CATALOG WITH PAGINATION ─── */}
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 md:py-16">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-[24px] md:text-[28px] font-bold mb-2">Shop All Products</h2>
+            <p className="text-gray-600">{totalItems} items available</p>
+          </div>
+          
+          {/* Category Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            {categories.slice(0, 6).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  handlePageChange(1);
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Product Grid (3x5 = 15 products) */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 md:gap-6">
+          {paginatedItems.map((product, idx) => (
+            <div 
+              key={product.id || idx} 
+              data-product-id={product.id}
+              className="group cursor-pointer bg-white rounded-lg hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200"
+            >
+              <div className="relative aspect-square mb-3 bg-[#f6f6f8] rounded-t-lg overflow-hidden flex items-center justify-center p-4">
+                <Image
+                  src={product.imageUrl}
+                  alt={product.title}
+                  fill
+                  className="object-contain p-4 group-hover:scale-105 transition-transform duration-500 mix-blend-darken"
+                />
+                {idx % 4 === 0 && (
+                  <span className="absolute top-2 left-2 bg-[#e32636] text-white text-[10px] font-bold px-2 py-1 rounded-sm">
+                    HOT
+                  </span>
+                )}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                >
+                  <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-[#e32636] text-[#e32636]' : 'text-gray-400'}`} />
+                </button>
+              </div>
+              <div className="px-3 pb-4 flex flex-col flex-grow">
+                <h3 className="font-bold text-[13px] mb-1">{product.category || 'Brand Name'}</h3>
+                <p className="text-[12px] text-gray-700 line-clamp-2 mb-2 leading-relaxed">{product.title}</p>
+                <div className="mt-auto">
+                  <div className="font-bold text-[15px] mb-2">${product.price}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex text-[#FFCE00]">
+                      {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-[12px] h-[12px] fill-current" />)}
+                      <span className="text-gray-500 text-[11px] ml-1">({product.reviews || 24})</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={addToCart}
+                    className="w-full mt-2 bg-black text-white py-2 rounded-full text-[12px] font-bold hover:bg-gray-800 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <ProductPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        )}
+      </section>
+
+      {/* ─── SERVICES ─── */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16">
           <div className="bg-white border-4 border-black rounded-[8px] p-8 md:p-12 relative overflow-hidden">
             <div className="absolute -right-20 -bottom-20 opacity-5"><Zap className="w-[300px] h-[300px]" /></div>
             <h2 className="text-[24px] md:text-[32px] font-bold mb-10 text-center relative z-10">In-Store & Online Services</h2>

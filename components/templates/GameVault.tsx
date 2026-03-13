@@ -1,12 +1,42 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, Menu, Gamepad2, Monitor, Laptop, Bell, Cloud, Globe, Download, Play, MessageSquare, ThumbsUp, ChevronDown, Facebook, Twitter } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Gamepad2, Monitor, Laptop, Bell, Cloud, Globe, Download, Play, MessageSquare, ThumbsUp, ChevronDown, Facebook, Twitter, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function GameVaultTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  // Keep original product sections
   const featuredProduct = data.products[0];
   const specialOffers = data.products.slice(1, 5);
   const communityRecommendations = data.products.slice(5, 9);
+  
+  // Pagination for all products
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#1b2838] font-sans text-[#c7d5e0] selection:bg-[#66c0f4] selection:text-white pb-10 overflow-x-hidden">
@@ -53,8 +83,11 @@ export default function GameVaultTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="flex items-center h-full">
-            <button className="lg:hidden p-2 text-gray-300 hover:text-white">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-gray-300 hover:text-white transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -95,13 +128,19 @@ export default function GameVaultTemplate({ data }: { data: StoreData }) {
 
         {/* Wishlist / Cart floating strip */}
         <div className="flex items-center justify-between text-[11px] text-[#8f98a0] mb-8 font-medium">
-          <a href="#" className="bg-[#000000]/30 hover:bg-[#000000]/50 hover:text-white px-3 py-1.5 rounded-sm transition-colors border border-[#3d4450]/50 flex items-center">
-            <span className="text-[#66c0f4] mr-1">WISHLIST</span> (0)
-          </a>
-          <a href="#" className="bg-[#000000]/30 hover:bg-[#000000]/50 hover:text-white px-3 py-1.5 rounded-sm transition-colors border border-[#3d4450]/50 flex items-center">
+          <div 
+            onClick={() => toggleFavorite('header')}
+            className="bg-[#000000]/30 hover:bg-[#000000]/50 hover:text-white px-3 py-1.5 rounded-sm transition-colors border border-[#3d4450]/50 flex items-center cursor-pointer"
+          >
+            <span className="text-[#66c0f4] mr-1">WISHLIST</span> ({favorites.length})
+          </div>
+          <div 
+            onClick={addToCart}
+            className="bg-[#000000]/30 hover:bg-[#000000]/50 hover:text-white px-3 py-1.5 rounded-sm transition-colors border border-[#3d4450]/50 flex items-center cursor-pointer"
+          >
             <ShoppingCart className="w-3 h-3 mr-1.5 text-gray-400" />
-            <span className="text-white mr-1">CART</span> (0)
-          </a>
+            <span className="text-white mr-1">CART</span> ({cartCount})
+          </div>
         </div>
 
         {/* ─── FEATURED AND RECOMMENDED HERO (CAROUSEL-LIKE) ─── */}
@@ -242,6 +281,58 @@ export default function GameVaultTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
         )}
+
+        {/* ─── ALL GAMES WITH PAGINATION ─── */}
+        <div className="mb-16">
+          <h2 className="text-[14px] text-white font-medium uppercase tracking-widest mb-4 shadow-text">All Games ({totalItems})</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-[#16202d] hover:bg-[#2a475e] transition-colors shadow-lg border border-[#3d4450]/20 active:scale-[0.98]">
+                <div className="relative aspect-[3/4] overflow-hidden">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                    referrerPolicy="no-referrer"
+                  />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full hover:bg-black/80 transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+                  </button>
+                </div>
+                <div className="p-2 flex flex-col">
+                  <h3 className="text-[12px] font-normal text-white line-clamp-1 mb-1">{product.title}</h3>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-[#66c0f4] text-[11px]">${product.price}</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="bg-[#5c7e10] hover:bg-[#79a617] text-white text-[10px] px-2 py-1 rounded-sm transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+        </div>
 
       </main>
 

@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Sparkles, Leaf, Droplets, ArrowRight } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Sparkles, Leaf, Droplets, ArrowRight, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function FreshCraftTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-black selection:text-white overflow-x-hidden">
@@ -19,11 +45,18 @@ export default function FreshCraftTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-[72px] lg:h-[88px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 lg:space-x-10 h-full">
-            <div className="lg:hidden flex flex-col space-y-1.5 cursor-pointer p-2">
-              <span className="w-6 h-1 bg-black block"></span>
-              <span className="w-6 h-1 bg-black block"></span>
-              <span className="w-6 h-1 bg-black block"></span>
-            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+                <div className="flex flex-col space-y-1.5 cursor-pointer">
+                  <span className="w-6 h-1 bg-black block"></span>
+                  <span className="w-6 h-1 bg-black block"></span>
+                  <span className="w-6 h-1 bg-black block"></span>
+                </div>
+              )}
+            </button>
 
             <nav className="hidden lg:flex h-full font-black text-[14px] uppercase tracking-wider text-black">
               <div className="h-full flex items-center px-4 hover:bg-black hover:text-white transition-colors cursor-pointer">
@@ -57,10 +90,23 @@ export default function FreshCraftTemplate({ data }: { data: StoreData }) {
             </div>
 
             <Search className="xl:hidden w-6 h-6 lg:w-7 lg:h-7 cursor-pointer hover:opacity-70 transition-opacity" strokeWidth={2.5} />
-            <User className="hidden md:block w-6 h-6 lg:w-7 lg:h-7 cursor-pointer hover:opacity-70 transition-opacity" strokeWidth={2.5} />
-            <div className="relative cursor-pointer hover:opacity-70 transition-opacity">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="cursor-pointer hover:opacity-70 transition-opacity relative"
+            >
+              <Heart className={`w-6 h-6 lg:w-7 lg:h-7 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
               <ShoppingBag className="w-6 h-6 lg:w-7 lg:h-7" strokeWidth={2.5} />
-              <div className="absolute -top-2 -right-2 bg-[#ffeb3b] border-2 border-black text-black text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">0</div>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -158,77 +204,95 @@ export default function FreshCraftTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── NEW ARRIVALS GRID ─── */}
+        {/* ─── FRESH ARRIVALS WITH PAGINATION ─── */}
         <section className="max-w-[1440px] mx-auto px-6 py-20 lg:py-24">
           <div className="flex items-end justify-between mb-12">
             <h2 className="text-[40px] md:text-[56px] font-black tracking-tighter text-black uppercase leading-[0.9]">
-              Fresh Arrivals
+              Fresh Arrivals ({totalItems})
             </h2>
             <a href="#" className="hidden sm:flex text-[16px] font-black uppercase tracking-widest text-black hover:underline border-b-4 border-black pb-1">
               Shop All New
             </a>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-x-8 gap-y-16">
-            {products.map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative bg-white border-4 border-black rounded-xl p-4 shadow-[6px_6px_0_0_#000] hover:-translate-y-2 hover:-translate-x-1 hover:shadow-[10px_10px_0_0_#000] transition-all">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative bg-white border-4 border-black rounded-xl p-3 shadow-[4px_4px_0_0_#000] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] transition-all">
 
                 {/* Badges */}
-                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                   {idx % 4 === 0 && (
-                    <span className="bg-[#ffeb3b] border-2 border-black text-black text-[11px] font-black uppercase tracking-widest px-3 py-1 shadow-[2px_2px_0_0_#000]">
-                      Limited Edition
+                    <span className="bg-[#ffeb3b] border-2 border-black text-black text-[9px] font-black uppercase tracking-widest px-2 py-0.5 shadow-[2px_2px_0_0_#000]">
+                      Limited
                     </span>
                   )}
                   {idx % 3 === 0 && (
-                    <span className="bg-[#4caf50] border-2 border-black text-white text-[11px] font-black uppercase tracking-widest px-3 py-1 shadow-[2px_2px_0_0_#000]">
+                    <span className="bg-[#4caf50] border-2 border-black text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 shadow-[2px_2px_0_0_#000]">
                       Vegan
                     </span>
                   )}
                 </div>
 
-                <div className="relative w-full aspect-square mb-4 bg-gray-50 flex items-center justify-center overflow-hidden border-2 border-black">
+                {/* Favorite Button */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 rounded-full shadow-sm transition-colors"
+                >
+                  <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}`} />
+                </button>
+
+                <div className="relative w-full aspect-square mb-3 bg-gray-50 flex items-center justify-center overflow-hidden border-2 border-black">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-4 group-hover:scale-110 transition-transform duration-[800ms] ease-out mix-blend-multiply"
+                    className="object-contain p-3 group-hover:scale-110 transition-transform duration-[800ms] ease-out mix-blend-multiply"
                     referrerPolicy="no-referrer"
                   />
-                  {/* Quick View */}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                    <button className="bg-white border-2 border-black text-black font-black uppercase tracking-widest text-[12px] py-3 px-6 hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0_0_#000]">
-                      Quick View
-                    </button>
-                  </div>
                 </div>
 
-                <div className="flex flex-col flex-1 text-center px-2">
-                  <div className="font-black text-[12px] text-gray-500 uppercase tracking-widest mb-1 line-clamp-1">
+                <div className="flex flex-col flex-1 text-center px-1">
+                  <div className="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-1 line-clamp-1">
                     {product.category || 'Fresh Cosmetics'}
                   </div>
-                  <h3 className="text-[20px] font-black text-black uppercase tracking-tighter leading-snug line-clamp-2 md:h-[48px] mb-2 group-hover:underline">
+                  <h3 className="text-[16px] font-black text-black uppercase tracking-tighter leading-snug line-clamp-2 mb-2 group-hover:underline">
                     {product.title}
                   </h3>
 
                   <div className="flex flex-col items-center justify-center mt-auto">
                     {product.originalPrice ? (
                       <div className="flex items-center space-x-2">
-                        <span className="font-black text-[22px] text-[#e91e63]">${product.price}</span>
-                        <span className="text-[14px] font-bold text-gray-400 line-through">${product.originalPrice}</span>
+                        <span className="font-black text-[18px] text-[#e91e63]">${product.price}</span>
+                        <span className="text-[12px] font-bold text-gray-400 line-through">${product.originalPrice}</span>
                       </div>
                     ) : (
-                      <span className="font-black text-[22px] text-black">${product.price}</span>
+                      <span className="font-black text-[18px] text-black">${product.price}</span>
                     )}
                   </div>
 
-                  <button className="w-full mt-4 bg-black text-white border-2 border-black font-black uppercase tracking-widest text-[13px] py-3 hover:bg-white hover:text-black transition-colors md:hidden">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="w-full mt-3 bg-black text-white border-2 border-black font-black uppercase tracking-widest text-[11px] py-2 hover:bg-white hover:text-black transition-colors"
+                  >
                     Add To Bag
                   </button>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
       </main>

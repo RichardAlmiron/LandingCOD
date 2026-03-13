@@ -2,9 +2,33 @@
 import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
 import { Search, ShoppingBag, Heart, User, Menu, ChevronDown, MapPin, Star, Gift, Sparkles, ArrowRight, X, Phone, Globe, Instagram, Facebook, Box } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ChicStoreTemplate({ data }: { data: StoreData }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-black selection:text-white">
@@ -42,12 +66,23 @@ export default function ChicStoreTemplate({ data }: { data: StoreData }) {
                 <User className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-black tracking-widest uppercase border-b border-transparent group-hover:border-black transition-all">Sign In</span>
               </div>
-              <div className="hidden md:block relative cursor-pointer group">
-                <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="hidden md:block relative cursor-pointer group"
+              >
+                <Heart className={`w-5 h-5 group-hover:scale-110 transition-transform ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">{favorites.length}</span>
+                )}
               </div>
-              <div className="relative cursor-pointer group flex items-center gap-2">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group flex items-center gap-2"
+              >
                 <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-full absolute -top-2 -right-2">0</span>
+                {cartCount > 0 && (
+                  <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-full absolute -top-2 -right-2">{cartCount}</span>
+                )}
               </div>
             </div>
           </div>
@@ -124,67 +159,77 @@ export default function ChicStoreTemplate({ data }: { data: StoreData }) {
           ))}
         </div>
 
-        {/* Curated Product Grid */}
+        {/* Curated Product Grid (Paginated) */}
         <div className="mb-32">
           <div className="flex flex-col md:flex-row items-end justify-between mb-20">
             <div>
               <div className="text-[11px] font-black tracking-[0.5em] text-zinc-300 mb-4 uppercase">Selected Works</div>
-              <h2 className="text-5xl font-serif uppercase tracking-tight italic">The New Standard</h2>
+              <h2 className="text-5xl font-serif uppercase tracking-tight italic">The New Standard ({totalItems})</h2>
             </div>
             <div className="flex gap-1 items-center mt-8 md:mt-0 font-black text-[10px] tracking-[0.2em] group cursor-pointer">
               VIEW THE COLLECTION <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-x-12 sm:gap-y-24">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer">
-                <div className="relative aspect-[3/4] mb-8 overflow-hidden bg-zinc-50 shadow-sm">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-x-4 sm:gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer">
+                <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-zinc-50 shadow-sm">
                   <img
                     src={product.imageUrl}
                     alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]"
                   />
-                  <div className="absolute top-5 left-5">
-                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 text-[9px] font-black tracking-[0.2em] uppercase border border-black/10 shadow-sm">
-                      NEW SEASON
+                  <div className="absolute top-3 left-3">
+                    <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 text-[8px] font-black tracking-[0.2em] uppercase border border-black/10 shadow-sm">
+                      NEW
                     </div>
                   </div>
-                  <div className="absolute bottom-6 inset-x-6 flex gap-2 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                    <button className="flex-1 bg-black text-white px-4 py-3 text-[10px] font-black tracking-widest uppercase hover:bg-zinc-800 shadow-xl">
-                      QUICK SHOP
+                  <div className="absolute bottom-4 inset-x-4 flex gap-2 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="flex-1 bg-black text-white px-3 py-2 text-[9px] font-black tracking-widest uppercase hover:bg-zinc-800 shadow-xl"
+                    >
+                      ADD
                     </button>
-                    <button className="bg-white text-black p-3 hover:bg-zinc-100 border border-zinc-200">
-                      <Heart className="w-4 h-4" />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="bg-white text-black p-2 hover:bg-zinc-100 border border-zinc-200"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black tracking-[0.3em] text-zinc-400 uppercase">{product.category || "CONTEMPORARY"}</span>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-zinc-300" />
-                      <span className="text-[9px] font-bold text-zinc-300 uppercase underline">In Store</span>
-                    </div>
+                    <span className="text-[9px] font-black tracking-[0.3em] text-zinc-400 uppercase">{product.category || "CONTEMPORARY"}</span>
                   </div>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-zinc-900 group-hover:text-zinc-500 transition-colors leading-relaxed line-clamp-2 min-h-[40px]">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-zinc-900 group-hover:text-zinc-500 transition-colors leading-relaxed line-clamp-2 min-h-[32px]">
                     {product.title}
                   </h3>
-                  <div className="flex items-center gap-4 pt-1">
-                    <span className="font-serif italic text-lg tracking-tight">${product.price}</span>
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="font-serif italic text-base tracking-tight">${product.price}</span>
                     {product.originalPrice && (
                       <span className="text-xs text-zinc-300 line-through font-bold decoration-red-500/50">${product.originalPrice}</span>
                     )}
-                  </div>
-                  <div className="flex gap-1.5 pt-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className={`w-3.5 h-3.5 rounded-full border border-zinc-200 cursor-pointer hover:scale-125 transition-transform ${i === 1 ? 'bg-zinc-900' : i === 2 ? 'bg-zinc-400' : 'bg-zinc-100'}`} />
-                    ))}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Loyallist Signature Experience */}

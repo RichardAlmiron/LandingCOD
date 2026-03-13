@@ -1,10 +1,27 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Grid, User, MapPin, ChevronDown, Heart, Smartphone, Monitor, Coffee, Shirt, Truck, ShieldCheck, Info } from 'lucide-react';
+import { Search, ShoppingCart, Grid, User, MapPin, ChevronDown, Heart, Smartphone, Monitor, Coffee, Shirt, Truck, ShieldCheck, Info, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BlueRetailTemplate({ data }: { data: StoreData }) {
-  // Use recommendations logic
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const flashDeals = data.products.slice(0, 6);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-[#f2f8fd] font-sans text-[#2e2f32] overflow-x-hidden">
@@ -17,8 +34,11 @@ export default function BlueRetailTemplate({ data }: { data: StoreData }) {
 
           {/* Mobile Menu & Logo */}
           <div className="flex items-center gap-4 shrink-0 h-full py-4">
-            <button className="lg:hidden p-2 -ml-2 text-white hover:bg-black/20 rounded-full transition-colors flex items-center justify-center">
-              <Grid className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 -ml-2 text-white hover:bg-black/20 rounded-full transition-colors flex items-center justify-center"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Grid className="w-6 h-6" />}
             </button>
             <div className="font-extrabold text-[24px] tracking-tight flex items-center cursor-pointer hover:bg-black/10 px-2 py-1 rounded-[8px] transition-colors">
               {data.logoText}
@@ -63,12 +83,17 @@ export default function BlueRetailTemplate({ data }: { data: StoreData }) {
                 <span className="text-[12px] font-bold leading-none">Account</span>
               </div>
             </button>
-            <button className="flex flex-col items-center justify-center cursor-pointer hover:bg-black/10 px-4 h-full rounded-full transition-colors relative">
+            <button 
+              onClick={addToCart}
+              className="flex flex-col items-center justify-center cursor-pointer hover:bg-black/10 px-4 h-full rounded-full transition-colors relative"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[24px] h-[24px] mb-[2px]" />
-                <span className="absolute -top-1 -right-2 bg-[#ffc220] text-[#0071dc] text-[10px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-[#ffc220] text-[#0071dc] text-[10px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full">{cartCount}</span>
+                )}
               </div>
-              <span className="text-[12px] font-bold leading-none">$0.00</span>
+              <span className="text-[12px] font-bold leading-none">${(cartCount * 29.99).toFixed(2)}</span>
             </button>
           </div>
 
@@ -142,8 +167,8 @@ export default function BlueRetailTemplate({ data }: { data: StoreData }) {
             Flash Picks <span className="text-[#0071dc] font-normal text-[14px] hover:underline cursor-pointer">View all</span>
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {flashDeals.map(product => (
-              <div key={product.id} data-product-id={product.id} className="bg-white rounded-[8px] p-[10px] shadow-[0_2px_4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-shadow cursor-pointer flex flex-col group border border-transparent hover:border-black/5">
+            {data.products.slice(0, 6).map((product, idx) => (
+              <div key={`blueretail-flash-${idx}-${product.id}`} data-product-id={product.id} className="bg-white rounded-[8px] p-[10px] shadow-[0_2px_4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-shadow cursor-pointer flex flex-col group border border-transparent hover:border-black/5">
                 <div className="relative aspect-square mb-3 bg-[#f2f8fd] overflow-hidden rounded-[8px]">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain mix-blend-multiply p-3 group-hover:scale-105 transition-transform duration-300" />
                   <button className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.15)] hover:bg-gray-50 z-10 transition-transform active:scale-90">
@@ -241,29 +266,45 @@ export default function BlueRetailTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* Recommended Grids */}
+        {/* All Products Grid with Pagination */}
         <div className="bg-white rounded-[16px] shadow-[0_2px_4px_rgba(0,0,0,0.08)] p-6 lg:p-8 mb-10">
-          <h3 className="text-[20px] font-bold mb-6 tracking-tight flex items-center gap-2">
-            Continue your shopping <Info className="w-4 h-4 text-gray-400 cursor-pointer" />
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8">
-            {data.products.slice(0, 8).map((product, i) => (
-              <div key={i} className="flex flex-col group cursor-pointer">
-                <div className="relative aspect-square w-full mb-3 rounded-[8px] overflow-hidden">
-                  <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                  <div className="absolute top-0 left-0 bg-[#0071dc] text-white text-[10px] font-bold px-2 py-1 rounded-sm">
-                    Best seller
-                  </div>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[20px] font-bold tracking-tight">All Products ({totalItems})</h3>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={`blueretail-grid-${idx}-${product.id}`} data-product-id={product.id} className="flex flex-col group cursor-pointer">
+                <div className="relative aspect-square w-full mb-3 rounded-[8px] overflow-hidden bg-gray-50">
+                  <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 right-2 bg-[#0071dc] text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </button>
                 </div>
                 <div className="flex-1 flex flex-col">
-                  <span className="text-[#2a8703] font-bold text-[20px] leading-tight mb-1 flex items-start">
-                    <span className="text-[12px] mt-1 mr-0.5">$</span>{product.price.split('.')[0] || product.price}<span className="text-[12px] mt-1 ml-0.5">{product.price.split('.')[1] || '00'}</span>
+                  <span className="text-[#2a8703] font-bold text-[16px] leading-tight mb-1">
+                    ${product.price}
                   </span>
-                  <h4 className="text-[14px] text-[#2e2f32] line-clamp-2 leading-[1.3] font-normal hover:underline">{product.title}</h4>
+                  <h4 className="text-[13px] text-[#2e2f32] line-clamp-2 leading-[1.3] font-normal hover:underline">{product.title}</h4>
                 </div>
               </div>
             ))}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
       </main>

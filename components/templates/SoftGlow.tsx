@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Sparkles, ArrowRight, Instagram, MapPin } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Sparkles, ArrowRight, Instagram, MapPin, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function SoftGlowTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#fdfafaf] font-sans text-[#1a1a1a] selection:bg-[#f4d2d8] selection:text-[#1a1a1a] overflow-x-hidden">
@@ -21,11 +47,12 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
 
           <div className="flex items-center space-x-8">
-            <div className="lg:hidden flex flex-col space-y-1 cursor-pointer p-2">
-              <span className="w-6 h-[2px] bg-[#1a1a1a] block rounded-full"></span>
-              <span className="w-6 h-[2px] bg-[#1a1a1a] block rounded-full"></span>
-              <span className="w-6 h-[2px] bg-[#1a1a1a] block rounded-full"></span>
-            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#e4a6a6] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <nav className="hidden lg:flex space-x-8 font-bold text-[13px] text-[#1a1a1a]">
               <a href="#" className="hover:text-[#e4a6a6] transition-colors py-2">Skincare</a>
               <a href="#" className="hover:text-[#e4a6a6] transition-colors py-2">Makeup</a>
@@ -48,9 +75,23 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
 
             <Search className="md:hidden w-6 h-6 cursor-pointer hover:text-[#e4a6a6] transition-colors" strokeWidth={1.5} />
             <User className="hidden md:block w-6 h-6 cursor-pointer hover:text-[#e4a6a6] transition-colors" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-[#e4a6a6] transition-colors group">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-[#e4a6a6] transition-colors hidden md:block"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#e4a6a6] transition-colors group"
+            >
               <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-2 bg-[#f4d2d8] text-[#1a1a1a] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#f4d2d8] text-[#1a1a1a] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -98,7 +139,7 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {products.map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative bg-white p-5 rounded-[24px] shadow-sm hover:shadow-xl transition-shadow duration-300 border border-[#fdf5f5]">
 
                 {idx % 3 === 0 && (
@@ -107,8 +148,11 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
                   </span>
                 )}
 
-                <button className="absolute top-5 right-5 z-10 w-8 h-8 bg-white/50 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-[#e4a6a6] hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all">
-                  <Heart className="w-4 h-4 fill-transparent hover:fill-current" />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-5 right-5 z-10 w-8 h-8 bg-white/50 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-[#e4a6a6] hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
 
                 <div className="relative w-full aspect-square mb-6 overflow-hidden rounded-xl bg-[#fdfafaf] flex items-center justify-center">
@@ -121,7 +165,10 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
                   />
                   {/* Quick Add Overlay */}
                   <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:block">
-                    <button className="w-full bg-[#1a1a1a] text-white font-bold text-[13px] py-3 rounded-full hover:bg-black transition-colors shadow-md">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-[#1a1a1a] text-white font-bold text-[13px] py-3 rounded-full hover:bg-black transition-colors shadow-md"
+                    >
                       Add to bag - ${product.price}
                     </button>
                   </div>
@@ -149,13 +196,29 @@ export default function SoftGlowTemplate({ data }: { data: StoreData }) {
                     <span className="font-bold text-[16px] text-[#1a1a1a]">${product.price}</span>
                   </div>
                   {/* Mobile Add to Bag */}
-                  <button className="w-full mt-4 bg-[#fdf5f5] text-[#1a1a1a] font-bold text-[13px] py-2.5 rounded-full hover:bg-[#f4d2d8] transition-colors lg:hidden">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="w-full mt-4 bg-[#fdf5f5] text-[#1a1a1a] font-bold text-[13px] py-2.5 rounded-full hover:bg-[#f4d2d8] transition-colors lg:hidden"
+                  >
                     Add to bag - ${product.price}
                   </button>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── HOW-TO: THE 3-STEP ROUTINE ─── */}

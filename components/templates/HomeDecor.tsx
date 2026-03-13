@@ -1,9 +1,16 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, Heart, Menu, MapPin, ChevronDown, HelpCircle, Truck, Phone, ArrowRight, ShieldCheck, Tag, Star } from 'lucide-react';
+import { Search, ShoppingCart, User, Heart, Menu, MapPin, ChevronDown, HelpCircle, Truck, Phone, ArrowRight, ShieldCheck, Tag, Star, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function HomeDecorTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
   const categories = [
     { name: 'Furniture', img: 'https://picsum.photos/250/250?random=150' },
     { name: 'Outdoor', img: 'https://picsum.photos/250/250?random=151' },
@@ -14,6 +21,27 @@ export default function HomeDecorTemplate({ data }: { data: StoreData }) {
     { name: 'Kitchen', img: 'https://picsum.photos/250/250?random=156' },
     { name: 'Baby & Kids', img: 'https://picsum.photos/250/250?random=157' },
   ];
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#222222] selection:bg-[#7f187f] selection:text-white overflow-x-hidden pb-10">
@@ -50,8 +78,11 @@ export default function HomeDecorTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-8 py-3 md:py-4 flex items-center justify-between gap-4 lg:gap-8 lg:h-[80px]">
 
           <div className="flex items-center space-x-4 shrink-0">
-            <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Menu className="w-6 h-6 text-gray-700" strokeWidth={2} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6 text-gray-700" strokeWidth={2} /> : <Menu className="w-6 h-6 text-gray-700" strokeWidth={2} />}
             </button>
             <div className="cursor-pointer">
               <span className="font-bold text-[32px] md:text-[40px] tracking-tight text-[#7f187f] italic leading-none select-none">
@@ -83,10 +114,15 @@ export default function HomeDecorTemplate({ data }: { data: StoreData }) {
               <Heart className="w-6 h-6 mb-0.5 group-hover:fill-purple-50" strokeWidth={1.5} />
               <span className="text-[12px] font-bold">Lists</span>
             </button>
-            <button className="flex flex-col items-center cursor-pointer hover:text-[#7f187f] transition-colors p-1 group relative">
+            <button 
+              onClick={addToCart}
+              className="flex flex-col items-center cursor-pointer hover:text-[#7f187f] transition-colors p-1 group relative"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[28px] h-[28px] mb-0.5 group-hover:fill-purple-50" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#7f187f] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#7f187f] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">{cartCount}</span>
+                )}
               </div>
               <span className="text-[12px] font-bold hidden sm:block">Cart</span>
             </button>
@@ -167,70 +203,81 @@ export default function HomeDecorTemplate({ data }: { data: StoreData }) {
 
         {/* ─── TOP PICKS (Personalized Grid) ─── */}
         <div className="mb-16 md:mb-20">
-          <div className="flex items-center justify-between mb-6 md:mb-8">
-            <h2 className="text-[24px] md:text-[28px] font-black text-[#222]">Top Picks for Your Home</h2>
-            <div className="hidden sm:flex items-center gap-2">
-              <button className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 hover:border-[#7f187f] hover:text-[#7f187f] transition-all bg-white shadow-sm cursor-pointer">
-                <ArrowRight className="w-5 h-5 rotate-180" />
-              </button>
-              <button className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 hover:border-[#7f187f] hover:text-[#7f187f] transition-all bg-white shadow-sm cursor-pointer">
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[22px] md:text-[28px] font-bold text-[#222]">Featured Products ({totalItems})</h2>
+            <a href="#" className="text-[14px] font-bold text-[#7f187f] hover:underline flex items-center">
+              See All <ArrowRight className="w-4 h-4 ml-1" />
+            </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {data.products.map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative h-full">
-                {/* Image & Heart icon */}
-                <div className="relative aspect-square mb-3 rounded-[8px] overflow-hidden bg-[#f9f9f9] group-hover:shadow-md transition-shadow">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-gray-200 rounded-[8px] p-3 hover:shadow-lg hover:border-[#7f187f]/30 transition-all relative">
+                {/* Image */}
+                <div className="relative aspect-square mb-3 bg-gray-50 rounded-[6px] overflow-hidden flex items-center justify-center">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-cover group-hover:scale-[1.03] transition-transform duration-500 mix-blend-multiply"
+                    className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                   />
-                  <button className="absolute top-3 right-3 bg-white p-2 md:p-2.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.15)] opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 text-gray-500 hover:text-[#7f187f] z-10">
-                    <Heart className="w-[18px] h-[18px]" strokeWidth={2} />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-sm transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-[#7f187f] text-[#7f187f]' : 'text-gray-400 hover:text-[#7f187f]'}`} />
                   </button>
-                  {/* HomeDecor Day! or Sale tag */}
-                  {idx % 3 === 0 && (
-                    <div className="absolute top-3 left-3 bg-[#d01345] text-white text-[11px] font-bold px-2 py-1 rounded-[2px] uppercase shadow-sm">
+                  {product.originalPrice && (
+                    <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
                       Sale
                     </div>
                   )}
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 flex flex-col px-1">
-                  <h3 className="text-[14px] md:text-[15px] text-[#222] line-clamp-2 md:line-clamp-3 mb-2 font-medium leading-relaxed group-hover:underline underline-offset-2">{product.title}</h3>
+                <div className="flex-1 flex flex-col">
+                  <h3 className="text-[13px] text-[#222] line-clamp-2 mb-1 font-medium leading-relaxed group-hover:underline underline-offset-2">{product.title}</h3>
 
                   {/* Price Block */}
                   <div className="flex items-baseline space-x-2 my-1">
-                    <span className="text-[20px] md:text-[22px] font-black text-[#222]">${product.price}</span>
-                    {product.originalPrice && <span className="text-[13px] line-through text-gray-500 font-medium">${product.originalPrice}</span>}
+                    <span className="text-[18px] font-black text-[#222]">${product.price}</span>
+                    {product.originalPrice && <span className="text-[12px] line-through text-gray-500 font-medium">${product.originalPrice}</span>}
                   </div>
 
                   {/* Reviews */}
-                  <div className="flex items-center space-x-1.5 mb-3">
+                  <div className="flex items-center space-x-1 mb-2">
                     <div className="flex text-[#7f187f]">
-                      {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-[12px] h-[12px] md:w-[14px] md:h-[14px] fill-current" />)}
+                      {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-3 h-3 fill-current" />)}
                     </div>
-                    <span className="text-[12px] md:text-[13px] text-gray-600 font-medium">({product.reviews || Math.floor(Math.random() * 2000) + 100})</span>
+                    <span className="text-[11px] text-gray-600">({product.reviews || 100 + idx})</span>
                   </div>
 
-                  {/* Shipping Info */}
-                  <div className="mt-auto pt-2 border-t border-gray-100">
-                    <div className="text-[12px] md:text-[13px] font-bold text-green-700 flex items-center mb-1">
-                      <Truck className="w-[14px] h-[14px] mr-1.5" /> Free Shipping
-                    </div>
-                    <div className="text-[12px] text-gray-500 font-medium">Arrives {['Tue, Oct 24', 'Tomorrow', 'In 2 Days'][idx % 3]}</div>
-                  </div>
+                  {/* Add to Cart */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="mt-auto w-full bg-[#7f187f] text-white py-2 rounded-md text-[12px] font-bold hover:bg-[#681468] transition-colors"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── HOMEDECOR VALUE PROPS ─── */}

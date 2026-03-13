@@ -1,9 +1,27 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Menu, Heart, User, Star, ChevronRight, ChevronDown, Smartphone, ShieldCheck, HelpCircle, Globe } from 'lucide-react';
+import { Search, ShoppingCart, Menu, Heart, User, Star, ChevronRight, ChevronDown, Smartphone, ShieldCheck, HelpCircle, Globe, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function FlashDealsTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const flashDeals = data.products.slice(0, 5);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns for consistency
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-[#f5f5f5] font-sans text-[#222] overflow-x-hidden">
@@ -40,8 +58,11 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1500px] mx-auto px-4 xl:px-8 h-[76px] flex items-center justify-between gap-4 md:gap-8">
 
           {/* Mobile Menu Icon */}
-          <button className="md:hidden p-2 text-gray-600">
-            <Menu className="w-7 h-7" />
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600"
+          >
+            {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
           </button>
 
           {/* Logo */}
@@ -91,10 +112,13 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
             </div>
 
             {/* Cart */}
-            <div className="flex items-center cursor-pointer hover:text-[#fd384f] px-2 relative group">
+            <div 
+              onClick={addToCart}
+              className="flex items-center cursor-pointer hover:text-[#fd384f] px-2 relative group"
+            >
               <div className="w-10 h-10 flex items-center justify-center relative">
                 <ShoppingCart className="w-[30px] h-[30px]" />
-                <span className="absolute top-0 right-0 bg-[#fd384f] text-white text-[12px] font-bold px-[6px] py-[1px] rounded-full border-2 border-white leading-none">0</span>
+                <span className="absolute top-0 right-0 bg-[#fd384f] text-white text-[12px] font-bold px-[6px] py-[1px] rounded-full border-2 border-white leading-none">{cartCount}</span>
               </div>
               <div className="hidden lg:flex flex-col ml-1">
                 <span className="text-[14px] font-bold leading-tight mt-3">Cesta</span>
@@ -229,13 +253,16 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── MAIN PRODUCT GRID (More To Love) ─── */}
+        {/* ─── MAIN PRODUCT GRID WITH PAGINATION (3x5 = 15 products) ─── */}
         <div className="mb-4">
-          <h3 className="text-[22px] font-bold mb-4 text-[#222]">Más para amar</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[22px] font-bold text-[#222]">Más para amar</h3>
+            <span className="text-sm text-gray-500">{totalItems} productos</span>
+          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="bg-white rounded-[16px] overflow-hidden hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all cursor-pointer group flex flex-col h-full border border-gray-100 hover:border-transparent">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            {paginatedItems.map((product, idx) => (
+              <div key={`flashdeals-${idx}-${product.id}`} data-product-id={product.id} className="bg-white rounded-[16px] overflow-hidden hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all cursor-pointer group flex flex-col h-full border border-gray-100 hover:border-transparent">
                 {/* Product Image */}
                 <div className="relative aspect-square bg-[#f5f5f5] overflow-hidden">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain mix-blend-multiply p-2 group-hover:opacity-90 transition-opacity" />
@@ -256,8 +283,8 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
                   {/* Rating */}
                   <div className="flex items-center space-x-1 mb-2">
                     <Star className="w-[10px] h-[10px] fill-current text-[#222]" />
-                    <span className="text-[11px] font-bold text-[#222]">{product.rating}</span>
-                    <span className="text-[11px] text-[#999]">{product.reviews}+ vendidos</span>
+                    <span className="text-[11px] font-bold text-[#222]">{product.rating || 4.5}</span>
+                    <span className="text-[11px] text-[#999]">{product.reviews || 120}+ vendidos</span>
                   </div>
 
                   <div className="mt-auto">
@@ -275,17 +302,31 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
                       </span>
                     </div>
 
-                    {/* Add to Cart button (Icon only like new FlashDeals) */}
+                    {/* Add to Cart button */}
                     <div className="flex justify-end relative">
-                      <div className="w-8 h-8 rounded-full bg-[#f5f5f5] group-hover:bg-[#fd384f] group-hover:text-white text-[#222] flex items-center justify-center transition-colors shadow-sm">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                        className="w-8 h-8 rounded-full bg-[#f5f5f5] group-hover:bg-[#fd384f] group-hover:text-white text-[#222] flex items-center justify-center transition-colors shadow-sm"
+                      >
                         <ShoppingCart className="w-[14px] h-[14px] ml-[-1px]" />
-                      </div>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
         </div>
 
       </main>

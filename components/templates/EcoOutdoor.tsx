@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
 import { Search, ShoppingBag, Heart, User, Menu, Leaf, Mountain, ArrowRight, Recycle, Globe, BookOpen, Facebook, Twitter, Instagram, Youtube, X, HelpCircle, ChevronRight, PlayCircle } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function EcoOutdoorTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#f6f6f6] font-sans text-[#1a1a1a] selection:bg-[#1a1a1a] selection:text-white pb-0 overflow-x-hidden">
@@ -20,7 +46,12 @@ export default function EcoOutdoorTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-6 h-6 lg:hidden mr-4 cursor-pointer hover:opacity-70 transition-opacity" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:opacity-70 transition-opacity"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="flex items-center cursor-pointer">
               {/* EcoOutdoor Logo styling */}
               <div className="flex flex-col items-center justify-center leading-none">
@@ -48,9 +79,23 @@ export default function EcoOutdoorTemplate({ data }: { data: StoreData }) {
             <div className="hidden md:flex items-center cursor-pointer hover:opacity-70 transition-opacity">
               <User className="w-5 h-5" />
             </div>
-            <div className="relative cursor-pointer hover:opacity-70 transition-opacity">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:flex relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full min-w-[16px] text-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
               <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-1 -right-2 bg-[#1a1a1a] text-white text-[10px] font-bold px-1.5 rounded-full min-w-[16px] text-center border-2 border-white">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#1a1a1a] text-white text-[10px] font-bold px-1.5 rounded-full min-w-[16px] text-center border-2 border-white">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -85,19 +130,19 @@ export default function EcoOutdoorTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── PRODUCT GRID ─── */}
+        {/* ─── PRODUCT GRID (Paginated) ─── */}
         <section className="px-4 md:px-8 max-w-[1600px] mx-auto mb-20">
           <div className="flex flex-col md:flex-row items-baseline justify-between mb-10 border-b border-gray-300 pb-4">
-            <h2 className="text-[32px] md:text-[40px] font-black uppercase tracking-tighter text-[#1a1a1a]">Built For The Elements</h2>
+            <h2 className="text-[32px] md:text-[40px] font-black uppercase tracking-tighter text-[#1a1a1a]">Built For The Elements ({totalItems})</h2>
             <a href="#" className="text-[14px] font-bold uppercase tracking-widest text-[#1a1a1a] hover:underline underline-offset-8 mt-4 md:mt-0 flex items-center">
               Shop All <ChevronRight className="w-4 h-4 ml-1" />
             </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {products.slice(0, 8).map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white p-4">
-                <div className="relative aspect-[3/4] mb-4 bg-gray-100 overflow-hidden">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white p-3">
+                <div className="relative aspect-[3/4] mb-3 bg-gray-100 overflow-hidden">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
@@ -106,35 +151,57 @@ export default function EcoOutdoorTemplate({ data }: { data: StoreData }) {
                     referrerPolicy="no-referrer"
                   />
                   {idx % 3 === 0 && (
-                    <div className="absolute top-3 left-3 bg-[#e4dac6] text-[#4b3e2b] text-[10px] font-black px-2 py-1 uppercase tracking-widest shadow-sm">
-                      Recycled Materials
+                    <div className="absolute top-2 left-2 bg-[#e4dac6] text-[#4b3e2b] text-[9px] font-black px-1.5 py-0.5 uppercase tracking-widest shadow-sm">
+                      Recycled
                     </div>
                   )}
                   {idx % 5 === 0 && (
-                    <div className="absolute top-3 left-3 bg-[#a2b399] text-[#2c3d22] text-[10px] font-black px-2 py-1 uppercase tracking-widest shadow-sm">
+                    <div className="absolute top-2 left-2 bg-[#a2b399] text-[#2c3d22] text-[9px] font-black px-1.5 py-0.5 uppercase tracking-widest shadow-sm">
                       Fair Trade
                     </div>
                   )}
-                  <div className="absolute top-3 right-3 text-gray-400 group-hover:text-[#1a1a1a] transition-colors">
-                    <Heart className="w-5 h-5" strokeWidth={1.5} />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-[#1a1a1a] text-white py-2 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add
+                  </button>
                 </div>
-                <div className="flex flex-col flex-1 text-center items-center px-2">
-                  <div className="flex gap-2">
-                    <div className="w-4 h-4 rounded-full bg-blue-900 border border-gray-300"></div>
-                    <div className="w-4 h-4 rounded-full bg-gray-800 border border-gray-300"></div>
-                    <div className="w-4 h-4 rounded-full bg-orange-700 border border-gray-300"></div>
+                <div className="flex flex-col flex-1 text-center items-center px-1">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-blue-900 border border-gray-300"></div>
+                    <div className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></div>
+                    <div className="w-3 h-3 rounded-full bg-orange-700 border border-gray-300"></div>
                   </div>
-                  <h3 className="text-[15px] font-bold text-[#1a1a1a] line-clamp-2 leading-tight mt-4 group-hover:underline underline-offset-2">
+                  <h3 className="text-[13px] font-bold text-[#1a1a1a] line-clamp-2 leading-tight mt-2 group-hover:underline underline-offset-2">
                     {product.title}
                   </h3>
-                  <div className="text-[16px] font-normal text-gray-700 mt-2 mb-2">
+                  <div className="text-[14px] font-normal text-gray-700 mt-1">
                     ${product.price}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── ACTIVISM PROMO (EARTH FUND) ─── */}

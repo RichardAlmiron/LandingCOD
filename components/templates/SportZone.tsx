@@ -1,11 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, MapPin, Activity, Leaf, Smartphone, ChevronRight, Facebook, Twitter, Instagram, Youtube, HelpCircle, ArrowRight, ShieldCheck, RefreshCcw } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, MapPin, Activity, Leaf, Smartphone, ChevronRight, Facebook, Twitter, Instagram, Youtube, HelpCircle, ArrowRight, ShieldCheck, RefreshCcw, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function SportZoneTemplate({ data }: { data: StoreData }) {
-  const topProducts = data.products.slice(0, 5);
-  const featuredProducts = data.products.slice(5, 9);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#f4f5f7] font-sans text-[#333333] selection:bg-[#0082c3] selection:text-white pb-10 overflow-x-hidden">
@@ -21,8 +46,11 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1400px] mx-auto px-4 lg:px-6 h-[70px] lg:h-[80px] flex items-center justify-between gap-4 lg:gap-8">
 
           <div className="flex items-center gap-4 lg:gap-6 shrink-0">
-            <button className="lg:hidden p-1.5 hover:bg-gray-100 rounded-md transition-colors">
-              <Menu className="w-6 h-6" strokeWidth={2.5} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" strokeWidth={2.5} /> : <Menu className="w-6 h-6" strokeWidth={2.5} />}
             </button>
             <div className="flex flex-col cursor-pointer">
               <span className="font-sans font-black text-[28px] md:text-[36px] tracking-tighter text-[#0082c3] uppercase italic leading-none select-none">
@@ -47,10 +75,25 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
               <User className="w-6 h-6 mb-0.5 group-hover:text-[#0082c3] transition-colors" strokeWidth={1.5} />
               <span className="text-[11px] font-bold tracking-wide">Account</span>
             </button>
-            <button className="flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors group min-w-[50px] relative">
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hidden sm:flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors group min-w-[50px] relative"
+            >
+              <Heart className={`w-6 h-6 mb-0.5 group-hover:text-[#0082c3] transition-colors ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">{favorites.length}</span>
+              )}
+              <span className="text-[11px] font-bold tracking-wide">Favorites</span>
+            </button>
+            <button 
+              onClick={addToCart}
+              className="flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors group min-w-[50px] relative"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[26px] h-[26px] mb-0.5 group-hover:text-[#0082c3] transition-colors" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#ffd100] text-black text-[11px] font-black w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#ffd100] text-black text-[11px] font-black w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">{cartCount}</span>
+                )}
               </div>
               <span className="text-[11px] font-bold tracking-wide hidden sm:block">Cart</span>
             </button>
@@ -132,11 +175,11 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
         </div>
 
         {/* ─── TOP PRODUCTS (CAROUSEL-LIKE) ─── */}
-        {topProducts.length > 0 && (
+        {paginatedItems.length > 0 && (
           <div className="mb-16 md:mb-20">
             <div className="flex items-center justify-between mb-6 border-b-2 border-[#f4f5f7] pb-2">
               <h2 className="text-[24px] md:text-[28px] font-black text-[#333] uppercase italic flex items-center">
-                Top Rated Gear
+                Top Rated Gear ({totalItems})
               </h2>
               <a href="#" className="text-[14px] font-black text-[#0082c3] hover:underline uppercase italic flex items-center">
                 View All <ChevronRight className="w-4 h-4" />
@@ -144,7 +187,7 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
-              {topProducts.map((product, idx) => (
+              {paginatedItems.map((product: any, idx: number) => (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-gray-200 rounded-[4px] hover:border-[#0082c3] hover:shadow-[0_8px_20px_rgba(0,130,195,0.15)] transition-all h-full relative">
                   {idx === 0 && <div className="absolute top-0 right-0 z-10 bg-[#cc163f] text-white text-[10px] md:text-[12px] font-black px-2 py-1 uppercase italic shadow-sm">-20% OFF</div>}
                   {idx === 2 && <div className="absolute top-0 left-0 z-10 bg-[#ffd100] text-black text-[10px] md:text-[12px] font-black px-2 py-1 uppercase italic shadow-sm">BEST SELLER</div>}
@@ -171,6 +214,19 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
         )}
 

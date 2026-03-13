@@ -1,17 +1,41 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, Menu, Leaf, ShieldCheck, Star, HeartPulse, Brain, Eye, Bone, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, FlaskConical, Beaker, CheckCircle2, ChevronDown, Plus, Minus, Globe, Sparkles, Filter, Info, CreditCard } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Leaf, ShieldCheck, Star, Heart, HeartPulse, Brain, Eye, Bone, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, FlaskConical, Beaker, CheckCircle2, ChevronDown, Plus, Minus, Globe, Sparkles, Filter, Info, CreditCard } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function GreenHealthTemplate({ data }: { data: StoreData }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('Supplements');
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#fcfdfa] font-sans text-slate-900 selection:bg-[#458500] selection:text-white antialiased">
@@ -62,11 +86,16 @@ export default function GreenHealthTemplate({ data }: { data: StoreData }) {
                 <User className="w-6 h-6" />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-widest">Apothecary</span>
               </div>
-              <div className="relative cursor-pointer group bg-slate-50 p-3.5 rounded-2xl hover:bg-[#458500] hover:text-white transition-all border border-slate-200">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group bg-slate-50 p-3.5 rounded-2xl hover:bg-[#458500] hover:text-white transition-all border border-slate-200"
+              >
                 <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-2 -right-2 bg-[#ff8c00] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg">
-                  0
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#ff8c00] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg">
+                    {cartCount}
+                  </span>
+                )}
               </div>
               <Menu className="w-7 h-7 xl:hidden cursor-pointer" />
             </div>
@@ -129,12 +158,12 @@ export default function GreenHealthTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* Science-Driven Product Discovery */}
+        {/* Science-Driven Product Discovery with Pagination */}
         <section className="mb-32">
           <div className="flex flex-col xl:flex-row xl:items-end justify-between mb-16 gap-12 border-b-2 border-slate-100 pb-12">
             <div className="space-y-4">
               <h2 className="text-5xl font-black uppercase tracking-tighter flex items-center gap-5 leading-none text-slate-800">
-                <Beaker className="w-12 h-12 text-[#ff8c00]" /> CLINICAL PICKS
+                <Beaker className="w-12 h-12 text-[#ff8c00]" /> CLINICAL PICKS ({totalItems})
               </h2>
               <p className="text-slate-400 font-bold uppercase text-[11px] tracking-[0.4em]">Optimizing human performance through verified formulations</p>
             </div>
@@ -153,33 +182,38 @@ export default function GreenHealthTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:border-[#458500] hover:shadow-[0_40px_80px_-15px_rgba(69,133,0,0.12)] transition-all duration-700">
-                <div className="relative aspect-square overflow-hidden bg-slate-50 rounded-3xl mb-8 flex items-center justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {paginatedItems.map(product => (
+              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-slate-100 p-6 rounded-3xl hover:border-[#458500] hover:shadow-[0_40px_80px_-15px_rgba(69,133,0,0.12)] transition-all duration-700">
+                <div className="relative aspect-square overflow-hidden bg-slate-50 rounded-2xl mb-4 flex items-center justify-center">
                   <img
                     src={product.imageUrl}
                     alt={product.title}
-                    className="w-full h-full object-contain p-6 transform scale-100 group-hover:scale-110 transition-transform duration-1000"
+                    className="w-full h-full object-contain p-4 transform scale-100 group-hover:scale-110 transition-transform duration-1000"
                   />
 
                   {/* Purity Labels */}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    <div className="bg-white/80 backdrop-blur-md text-[#458500] text-[9px] font-black uppercase px-4 py-1.5 rounded-full flex items-center gap-2 border border-[#458500]/10 shadow-sm">
+                  <div className="absolute top-3 left-3 flex flex-col gap-1">
+                    <div className="bg-white/80 backdrop-blur-md text-[#458500] text-[9px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-2 border border-[#458500]/10 shadow-sm">
                       <CheckCircle2 className="w-3 h-3" /> VERIFIED
                     </div>
                     {product.originalPrice && (
-                      <div className="bg-[#ff8c00] text-white text-[9px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg">
+                      <div className="bg-[#ff8c00] text-white text-[9px] font-black uppercase px-3 py-1 rounded-full shadow-lg">
                         SAVE {Math.round((1 - Number(product.price) / Number(product.originalPrice)) * 100)}%
                       </div>
                     )}
                   </div>
 
-                  {/* Subtle Grain Overlay */}
-                  <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/granite.png')]" />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 bg-white/80 rounded-full shadow-sm transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}`} />
+                  </button>
                 </div>
 
-                <div className="space-y-5 flex-1 flex flex-col">
+                <div className="space-y-3 flex-1 flex flex-col">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#458500] bg-[#458500]/5 px-3 py-1 rounded-full">{product.category}</span>
                     <div className="flex items-center gap-1">
@@ -192,10 +226,10 @@ export default function GreenHealthTemplate({ data }: { data: StoreData }) {
                     {product.title}
                   </h3>
 
-                  <div className="pt-6 border-t border-slate-50 mt-auto">
-                    <div className="flex flex-col mb-6">
+                  <div className="pt-4 border-t border-slate-50 mt-auto">
+                    <div className="flex flex-col mb-4">
                       <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-black tracking-tighter text-slate-900">${product.price}</span>
+                        <span className="text-2xl font-black tracking-tighter text-slate-900">${product.price}</span>
                         {product.originalPrice && (
                           <span className="text-sm text-slate-300 line-through font-bold">${product.originalPrice}</span>
                         )}
@@ -205,14 +239,30 @@ export default function GreenHealthTemplate({ data }: { data: StoreData }) {
                       </div>
                     </div>
 
-                    <button className="w-full bg-[#458500] text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-xl flex items-center justify-center gap-3">
-                      <ShoppingCart className="w-4 h-4" /> Finalize Selection
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-[#458500] text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-xl flex items-center justify-center gap-3"
+                    >
+                      <ShoppingCart className="w-4 h-4" /> Add to Cart
                     </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* Diagnostic Path / Shop by Concern */}

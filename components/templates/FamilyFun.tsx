@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, User, Menu, MapPin, ChevronDown, Tag, ArrowRight, DollarSign, Smartphone, Facebook, Twitter, Instagram, Youtube, Users } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, MapPin, ChevronDown, Tag, ArrowRight, DollarSign, Smartphone, Facebook, Twitter, Instagram, Youtube, Users, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function FamilyFunTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#111]">
       <div className="bg-[#003057] text-white text-[10px] py-1.5 px-6 flex justify-center space-x-8 font-bold uppercase tracking-widest">
@@ -17,6 +44,12 @@ export default function FamilyFunTemplate({ data }: { data: StoreData }) {
       <header className="bg-white border-b border-gray-100">
         <div className="w-full mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-10">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:text-[#003057] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="bg-[#003057] text-white px-4 py-2 rounded-full font-black text-2xl italic tracking-tighter cursor-pointer">
               FAMILYFUN
             </div>
@@ -37,13 +70,24 @@ export default function FamilyFunTemplate({ data }: { data: StoreData }) {
               <input type="text" placeholder="Search" className="bg-transparent outline-none text-xs w-full font-bold" />
             </div>
             <div className="flex items-center space-x-6 text-[#003057]">
-              <div className="flex flex-col items-center cursor-pointer hover:underline">
-                <User className="w-5 h-5" />
-                <span className="text-[10px] font-black uppercase italic">Sign In</span>
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="hidden sm:flex flex-col items-center cursor-pointer hover:underline"
+              >
+                <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                <span className="text-[10px] font-black uppercase italic">Lists</span>
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+                )}
               </div>
-              <div className="relative cursor-pointer hover:underline">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer hover:underline"
+              >
                 <ShoppingBag className="w-6 h-6" />
-                <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 rounded-full">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 rounded-full">{cartCount}</span>
+                )}
               </div>
             </div>
           </div>
@@ -63,22 +107,31 @@ export default function FamilyFunTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
         <div className="flex items-center justify-between mb-10">
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-[#003057]">Hot Deals</h2>
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-[#003057]">Hot Deals ({totalItems})</h2>
           <div className="flex space-x-4">
             <button className="bg-gray-100 px-6 py-2 rounded-full font-black text-xs uppercase italic hover:bg-gray-200 transition-colors">Shop All Deals</button>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {data.products.map(product => (
-            <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+          {paginatedItems.map((product, idx) => (
+            <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
               <div className="relative aspect-[4/5] mb-4 overflow-hidden bg-[#f5f5f5] rounded-xl">
                 <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-full shadow-lg">
+                <div className="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-full shadow-lg">
                   <Tag className="w-4 h-4" />
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur py-3 rounded-lg text-center font-black uppercase italic text-[11px] text-[#003057] translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all shadow-xl">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                  className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur py-2 rounded-lg text-center font-black uppercase italic text-[10px] text-[#003057] translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all shadow-xl"
+                >
                   Add to Bag
-                </div>
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-3 left-3 bg-white p-1.5 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                </button>
               </div>
               <div className="flex flex-col space-y-1 px-2">
                 <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px] group-hover:text-[#003057] group-hover:underline">{product.title}</h3>
@@ -91,6 +144,19 @@ export default function FamilyFunTemplate({ data }: { data: StoreData }) {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-10">
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
+          </div>
+        )}
 
         {/* Shop by Category */}
         <div className="mt-24 mb-24">

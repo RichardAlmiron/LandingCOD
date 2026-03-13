@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, MapPin, ChevronRight, ArrowRight } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, MapPin, ChevronRight, ArrowRight, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ModernLensTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#1a1a1a] selection:bg-[#cbe3f5] selection:text-[#1a1a1a] overflow-x-hidden">
@@ -21,6 +47,12 @@ export default function ModernLensTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center space-x-6 lg:space-x-10 h-full">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:text-[#458ad2] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
 
             {/* Logo */}
             <div className="flex items-center justify-center cursor-pointer shrink-0">
@@ -53,9 +85,23 @@ export default function ModernLensTemplate({ data }: { data: StoreData }) {
 
             <Search className="w-6 h-6 cursor-pointer hover:text-[#458ad2] transition-colors" strokeWidth={1.5} />
             <User className="w-6 h-6 cursor-pointer hover:text-[#458ad2] transition-colors hidden sm:block" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-[#458ad2] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-[#458ad2] transition-colors hidden sm:block"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#458ad2] transition-colors"
+            >
               <ShoppingCart className="w-6 h-6" strokeWidth={1.5} />
-              <span className="absolute -top-1.5 -right-2 bg-[#458ad2] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#458ad2] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -143,14 +189,14 @@ export default function ModernLensTemplate({ data }: { data: StoreData }) {
         {/* ─── PRODUCT GRID ─── */}
         <section className="max-w-[1440px] mx-auto px-6 py-20 lg:py-24">
           <div className="flex flex-col md:flex-row items-baseline justify-between mb-12 border-b border-gray-200 pb-4">
-            <h2 className="text-[32px] lg:text-[40px] font-serif tracking-tight text-[#1a1a1a]">New Arrivals</h2>
+            <h2 className="text-[32px] lg:text-[40px] font-serif tracking-tight text-[#1a1a1a]">New Arrivals ({totalItems})</h2>
             <a href="#" className="text-[15px] font-bold text-[#458ad2] hover:underline underline-offset-4 mt-2 md:mt-0 transition-all">
               Shop all new frames
             </a>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            {products.map((product, idx) => (
+            {paginatedItems.map((product: any, idx: number) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[3/2] mb-6 overflow-hidden w-full bg-[#f6f6f4] rounded-lg">
                   <Image
@@ -168,6 +214,12 @@ export default function ModernLensTemplate({ data }: { data: StoreData }) {
                       <span className="w-1/2 h-full bg-[#e8e6e1]"></span><span className="w-1/2 h-full bg-[#8c8881]"></span>
                     </span>
                   </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
 
                 <div className="flex flex-col text-center">
@@ -187,6 +239,19 @@ export default function ModernLensTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
       </main>

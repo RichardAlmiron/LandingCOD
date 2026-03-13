@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Menu, Heart, ArrowRight, PlayCircle, Shield, Truck, Smartphone, Instagram, Twitter, Facebook, Youtube, ChevronDown, User } from 'lucide-react';
+import { Search, ShoppingBag, Menu, Heart, ArrowRight, PlayCircle, Shield, Truck, Smartphone, Instagram, Twitter, Facebook, Youtube, ChevronDown, User, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function MilanoModernTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-black overflow-x-hidden selection:bg-black selection:text-white" style={{ fontFamily: "'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
@@ -12,10 +39,17 @@ export default function MilanoModernTemplate({ data }: { data: StoreData }) {
         <div className="w-full px-4 md:px-8 h-[60px] md:h-[70px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 md:space-x-8 w-1/3">
-            <button className="flex flex-col space-y-[4px] hover:opacity-50 transition-opacity">
-              <span className="block h-[1.5px] bg-black w-6"></span>
-              <span className="block h-[1.5px] bg-black w-6"></span>
-              <span className="block h-[1.5px] bg-black w-6"></span>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex flex-col space-y-[4px] hover:opacity-50 transition-opacity"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+                <>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                </>
+              )}
             </button>
             <button className="hidden md:flex items-center hover:opacity-50 transition-opacity space-x-2">
               <Search className="w-[18px] h-[18px]" strokeWidth={1.5} />
@@ -31,9 +65,23 @@ export default function MilanoModernTemplate({ data }: { data: StoreData }) {
 
           <div className="flex items-center justify-end space-x-5 md:space-x-8 w-1/3">
             <button className="hidden sm:block hover:opacity-50 transition-opacity"><User className="w-[20px] h-[20px]" strokeWidth={1.5} /></button>
-            <button className="hidden md:block hover:opacity-50 transition-opacity"><Heart className="w-[20px] h-[20px]" strokeWidth={1.5} /></button>
-            <button className="hover:opacity-50 transition-opacity relative">
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block hover:opacity-50 transition-opacity relative"
+            >
+              <Heart className={`w-[20px] h-[20px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </button>
+            <button 
+              onClick={addToCart}
+              className="hover:opacity-50 transition-opacity relative"
+            >
               <ShoppingBag className="w-[20px] h-[20px]" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-black text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -75,46 +123,65 @@ export default function MilanoModernTemplate({ data }: { data: StoreData }) {
           <span className="sm:hidden">Complimentary Shipping & Returns</span>
         </div>
 
-        {/* ─── NEW ARRIVALS GRID (Stark white BG, hovering focus) ─── */}
-        <div className="w-full max-w-[1920px] mx-auto px-4 md:px-10 py-20 md:py-32">
-          <div className="flex flex-col items-center justify-center mb-16 md:mb-24">
-            <h3 className="text-[20px] md:text-[28px] font-black tracking-[0.25em] uppercase mb-6">New Arrivals</h3>
-            <a href="#" className="flex items-center text-[10px] md:text-[11px] font-bold tracking-[0.2em] uppercase border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
-              View All <ArrowRight className="w-4 h-4 ml-2" strokeWidth={2} />
-            </a>
+        {/* ─── PRODUCT GRID (Paginated 3x5) ─── */}
+        <div className="w-full px-4 md:px-10 py-24 md:py-32 bg-white">
+          <div className="text-center mb-16">
+            <h3 className="text-[24px] md:text-[32px] font-black tracking-[0.2em] uppercase mb-4">The Collection ({totalItems})</h3>
+            <p className="text-[12px] md:text-[13px] font-medium tracking-wide text-gray-500 max-w-lg mx-auto">
+              Curated essentials for the modern wardrobe. Bold silhouettes, architectural forms.
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-12 md:gap-y-20">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f4f4f4] mb-6 shadow-sm group-hover:shadow-md transition-shadow duration-500">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
+                <div className="relative w-full aspect-[3/4] bg-[#f4f4f4] mb-4 overflow-hidden">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-6 group-hover:scale-110 transition-transform duration-[1000ms] mix-blend-multiply"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                     referrerPolicy="no-referrer"
                   />
-                  {/* MilanoModern Signature Triangle tag proxy */}
-                  <div className="absolute top-4 left-4">
-                    {product.originalPrice && <span className="bg-black text-white px-2 py-1 text-[9px] font-black tracking-widest uppercase">Online Exclusive</span>}
-                  </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="p-2 bg-white/50 backdrop-blur-sm rounded-full hover:bg-white transition-colors">
-                      <Heart className="w-[18px] h-[18px] text-black font-bold" strokeWidth={1.5} />
+                  {/* Favorite & Add to Cart Buttons */}
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="p-2 bg-white/50 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                    >
+                      <Heart className={`w-[16px] h-[16px] ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-black'}`} strokeWidth={1.5} />
                     </button>
                   </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-0 left-0 right-0 bg-black text-white py-2 text-[10px] font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
-                <div className="flex-1 flex flex-col justify-end w-full px-2">
-                  <span className="text-[10px] tracking-[0.25em] uppercase text-gray-500 mb-3">{product.category || 'Collection'}</span>
-                  <h4 className="text-[12px] md:text-[13px] font-bold tracking-[0.1em] uppercase mb-2 line-clamp-2 px-4 leading-relaxed group-hover:underline underline-offset-4">{product.title}</h4>
-                  <div className="mt-2">
-                    <span className="text-[12px] md:text-[14px] font-bold tracking-widest">${product.price}</span>
+                <div className="flex-1 flex flex-col justify-end w-full px-1">
+                  <span className="text-[9px] tracking-[0.25em] uppercase text-gray-500 mb-2">{product.category || 'Collection'}</span>
+                  <h4 className="text-[11px] md:text-[12px] font-bold tracking-[0.1em] uppercase mb-1 line-clamp-2 leading-relaxed group-hover:underline underline-offset-4">{product.title}</h4>
+                  <div className="mt-1">
+                    <span className="text-[11px] md:text-[12px] font-bold tracking-widest">${product.price}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── ARCHITECTURAL CATEGORY BLOCKS ─── */}

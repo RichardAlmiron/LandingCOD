@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Globe, ChevronRight, Gift, Camera, ShoppingCart, Percent, RotateCcw, Truck } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Globe, ChevronRight, Gift, Camera, ShoppingCart, Percent, RotateCcw, Truck, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function TrendFastTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#222] overflow-x-hidden">
 
@@ -36,14 +63,27 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
 
             {/* Icons Right */}
             <div className="flex items-center space-x-4 md:space-x-6 shrink-0">
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-1"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
               <User className="w-[22px] h-[22px] md:w-[26px] md:h-[26px] hover:text-[#fa6338] cursor-pointer transition-colors" strokeWidth={1.5} />
               <div className="relative cursor-pointer hover:text-[#fa6338] transition-colors">
                 <Heart className="w-[22px] h-[22px] md:w-[26px] md:h-[26px]" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#222] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">0</span>
+                {wishlist.length > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#fa6338] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">{wishlist.length}</span>
+                )}
               </div>
-              <div className="relative cursor-pointer hover:text-[#fa6338] transition-colors hidden md:block">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer hover:text-[#fa6338] transition-colors hidden md:block"
+              >
                 <ShoppingBag className="w-[22px] h-[22px] md:w-[26px] md:h-[26px]" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#222] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#fa6338] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">{cartCount}</span>
+                )}
               </div>
               <Globe className="w-[22px] h-[22px] md:w-[26px] md:h-[26px] hover:text-[#fa6338] cursor-pointer transition-colors hidden lg:block" strokeWidth={1.5} />
             </div>
@@ -72,9 +112,14 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
             <input type="text" placeholder="Buscar..." className="w-full bg-[#f5f5f5] rounded-full pl-4 pr-10 py-1.5 text-[14px] outline-none" />
             <Search className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2" />
           </div>
-          <div className="relative ml-4">
+          <div 
+            onClick={addToCart}
+            className="relative ml-4"
+          >
             <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
-            <span className="absolute -top-1.5 -right-2 bg-[#222] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">0</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-[#fa6338] text-white text-[10px] font-bold w-[16px] h-[16px] flex items-center justify-center rounded-full leading-none">{cartCount}</span>
+            )}
           </div>
         </div>
       </header>
@@ -202,22 +247,31 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
           </button>
         </div>
 
-        {/* Main Product Grid (Recomendado para ti) */}
+        {/* Main Product Grid WITH PAGINATION (3x5 = 15 products) */}
         <div className="mb-10">
-          <h3 className="text-[20px] font-black uppercase text-center mb-8 tracking-wide">Recomendado para ti</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-8">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-[20px] font-black uppercase tracking-wide">Recomendado para ti</h3>
+            <span className="text-sm text-gray-500">{totalItems} productos</span>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={`trendfast-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-[#f5f5f5] rounded-sm group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply" />
 
                   {/* Floating Like Button */}
-                  <button className="absolute top-2 right-2 bg-white/80 backdrop-blur w-8 h-8 flex items-center justify-center rounded-full text-[#222] hover:text-[#fa6338] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart className="w-4 h-4" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                    className="absolute top-2 right-2 bg-white/80 backdrop-blur w-8 h-8 flex items-center justify-center rounded-full hover:text-[#fa6338] transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-[#fa6338] text-[#fa6338]' : 'text-[#222]'}`} />
                   </button>
 
                   <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur py-[10px] px-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex justify-center shadow-[0_-2px_6px_rgba(0,0,0,0.03)] border-t border-gray-100">
-                    <button className="text-[12px] font-bold uppercase hover:text-[#fa6338] transition-colors flex items-center justify-center gap-1.5 w-full">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="text-[12px] font-bold uppercase hover:text-[#fa6338] transition-colors flex items-center justify-center gap-1.5 w-full"
+                    >
                       <ShoppingCart className="w-[14px] h-[14px]" />
                       Añadir
                     </button>
@@ -231,7 +285,7 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
                   {product.originalPrice && <span className="text-[12px] text-gray-400 line-through">${product.originalPrice}</span>}
                 </div>
 
-                {/* Randomly show reviews block to make it look realistic */}
+                {/* Randomly show reviews block */}
                 {Math.random() > 0.4 && (
                   <div className="flex items-center gap-1 text-[11px] text-gray-500 px-1 mt-auto">
                     <span className="flex text-[#222]">
@@ -244,12 +298,18 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
             ))}
           </div>
 
-          {/* Load More Button Style */}
-          <div className="flex justify-center mt-12 mb-8">
-            <button className="border-2 border-[#222] bg-white text-[#222] px-12 py-3 font-bold uppercase text-[13px] tracking-widest hover:bg-[#222] hover:text-white transition-colors">
-              Cargar Más
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
       </main>

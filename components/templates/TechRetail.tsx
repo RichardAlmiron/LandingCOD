@@ -1,9 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Menu, User, MapPin, ChevronDown, Star, Monitor, Smartphone, Laptop, Headphones, Camera, Watch, ShieldCheck, Wrench, Truck, CreditCard, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, Menu, User, MapPin, ChevronDown, Star, Monitor, Smartphone, Laptop, Headphones, Camera, Watch, ShieldCheck, Wrench, Truck, CreditCard, ChevronRight, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function TechRetailTemplate({ data }: { data: StoreData }) {
-  const featuredOffer = data.products.slice(0, 5);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#f0f2f4] font-sans text-[#040c13] overflow-x-hidden">
@@ -30,8 +56,11 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
               <span>Menu</span>
             </button>
 
-            <button className="lg:hidden flex items-center text-white p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex items-center text-white p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
 
@@ -58,9 +87,20 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
               </div>
             </a>
 
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="flex items-center gap-2 cursor-pointer hover:text-white/80 transition-colors px-2 h-full relative"
+            >
+              <Heart className={`w-[20px] h-[20px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-0 -right-1 bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+              <span>Saved</span>
+            </div>
+
             <a href="#" className="flex items-center gap-2 cursor-pointer hover:text-[#fff200] transition-colors px-2 h-full">
               <ShoppingCart className="w-[24px] h-[24px]" />
-              <span>Cart</span>
+              <span>Cart ({cartCount})</span>
             </a>
 
             <div className="w-[1px] h-[24px] bg-white/20 mx-2"></div>
@@ -126,17 +166,17 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
         {/* Featured Offers (Product Grid) */}
         <div className="mb-14">
           <div className="flex items-end justify-between mb-6 pb-2 border-b border-gray-300">
-            <h2 className="text-[20px] font-bold tracking-tight">Featured Offers</h2>
+            <h2 className="text-[20px] font-bold tracking-tight">Featured Offers ({totalItems})</h2>
             <a href="#" className="text-[14px] text-[#0046be] hover:underline font-bold flex items-center">
               View all <ChevronRight className="w-4 h-4 ml-0.5" />
             </a>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
-            {featuredOffer.map(product => (
-              <div key={product.id} data-product-id={product.id} className="bg-white rounded-[4px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all flex flex-col border border-gray-200 hover:border-blue-400 group relative">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="bg-white rounded-[4px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all flex flex-col border border-gray-200 hover:border-blue-400 group relative">
 
-                {Math.random() > 0.5 && (
+                {idx % 3 === 0 && (
                   <div className="absolute top-0 left-4 bg-[#b8281e] text-white text-[11px] font-bold px-2 py-0.5 rounded-b-[4px] z-10 tracking-wider">
                     DEAL
                   </div>
@@ -180,7 +220,10 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
                     {!product.originalPrice && <div className="h-6 mb-4"></div>}
 
                     {/* Add to Cart button */}
-                    <button className="w-full bg-[#fff200] text-[#040c13] py-[10px] rounded-[4px] text-[14px] font-bold border border-transparent hover:bg-[#ffe000] hover:border-[#ffe000] transition-colors flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <button 
+                      onClick={addToCart}
+                      className="w-full bg-[#fff200] text-[#040c13] py-[10px] rounded-[4px] text-[14px] font-bold border border-transparent hover:bg-[#ffe000] hover:border-[#ffe000] transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
+                    >
                       <ShoppingCart className="w-[18px] h-[18px]" strokeWidth={2.5} />
                       <span className="hidden sm:inline">Add to Cart</span>
                       <span className="sm:hidden">Add</span>
@@ -190,6 +233,19 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Deal of the Day (Full Width Banner Style) */}

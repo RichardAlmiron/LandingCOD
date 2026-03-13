@@ -1,12 +1,40 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
 import { Search, ShoppingBag, ShoppingCart, Heart, User, TrendingUp, ShieldCheck, Globe, HelpCircle, ChevronRight, X, Menu, Info, ArrowRight, Activity } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
-  const featuredProduct = data.products[0];
-  const recommendedProducts = data.products.slice(1, 7);
-  const trendingProducts = data.products.slice(2, 6);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const featuredProduct = paginatedItems[0];
+  const recommendedProducts = paginatedItems.slice(1, 7);
+  const trendingProducts = paginatedItems.slice(2, 6);
 
   return (
     <div className="min-h-full bg-white font-sans text-black selection:bg-[#006341] selection:text-white pb-0 overflow-x-hidden">
@@ -34,7 +62,12 @@ export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
           <div className="flex items-center justify-between w-full lg:w-auto h-full space-x-4 md:space-x-8">
             <div className="flex items-center">
-              <Menu className="w-6 h-6 lg:hidden mr-4 cursor-pointer" />
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden mr-4 cursor-pointer p-1 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
               <div className="font-black text-[28px] md:text-[36px] tracking-tighter uppercase cursor-pointer flex items-center select-none pt-1">
                 STOCK<span className="text-[#006341]">X</span>
               </div>
@@ -73,11 +106,23 @@ export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
               <button className="flex flex-col items-center cursor-pointer hover:text-[#006341] transition-colors group">
                 <User className="w-[22px] h-[22px] group-hover:fill-[#006341]/10" strokeWidth={1.5} />
               </button>
-              <button className="flex flex-col items-center cursor-pointer hover:text-[#006341] transition-colors group relative">
-                <ShieldCheck className="w-[22px] h-[22px] group-hover:fill-[#006341]/10" strokeWidth={1.5} />
+              <button 
+                onClick={() => toggleFavorite('header')}
+                className="flex flex-col items-center cursor-pointer hover:text-[#006341] transition-colors group relative"
+              >
+                <Heart className={`w-[22px] h-[22px] group-hover:fill-[#006341]/10 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+                )}
               </button>
-              <button className="relative flex flex-col items-center cursor-pointer hover:text-[#006341] transition-colors group">
+              <button 
+                onClick={addToCart}
+                className="relative flex flex-col items-center cursor-pointer hover:text-[#006341] transition-colors group"
+              >
                 <ShoppingBag className="w-[22px] h-[22px] group-hover:fill-[#006341]/10" strokeWidth={1.5} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-[#006341] text-white text-[9px] font-black px-1.5 rounded-full">{cartCount}</span>
+                )}
               </button>
             </div>
           </div>
@@ -177,7 +222,7 @@ export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {recommendedProducts.map(product => {
+            {recommendedProducts.map((product: any) => {
               const soldCount = Math.floor(Math.random() * 500) + 10;
               return (
                 <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-gray-200 p-4 rounded-[8px] hover:shadow-[0_4px_15px_rgba(0,0,0,0.08)] hover:border-gray-300 transition-all">
@@ -189,9 +234,12 @@ export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
                       className="object-contain group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-0 right-0 w-[40px] h-[40px] flex justify-end">
-                      <Heart className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors stroke-[2px]" />
-                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-0 right-0 w-[40px] h-[40px] flex justify-end"
+                    >
+                      <Heart className={`w-5 h-5 transition-colors stroke-[2px] ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-300 group-hover:text-gray-500'}`} />
+                    </button>
                   </div>
                   <div className="flex flex-col h-[100px]">
                     <h3 className="text-[14px] font-medium text-black line-clamp-2 leading-tight w-full hover:underline">{product.title}</h3>
@@ -207,6 +255,19 @@ export default function VerifyMarketTemplate({ data }: { data: StoreData }) {
               )
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── BANNER / CALL TO ACTION ─── */}

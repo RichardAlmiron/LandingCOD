@@ -1,7 +1,10 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, MapPin, Menu, ChevronRight, Play } from 'lucide-react';
+import { Search, MapPin, Menu, ChevronRight, Play, Heart, ShoppingBag, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 // TimeCraft SVG Crown Icon
 const TimeCraftCrown = ({ className, color = "#006039" }: { className?: string, color?: string }) => (
@@ -19,7 +22,31 @@ const TimeCraftCrown = ({ className, color = "#006039" }: { className?: string, 
 export default function TimeCraftTemplate({ data }: { data: StoreData }) {
   const brandGreen = "#006039";
   const brandGold = "#B4975A";
-  const products = data.products;
+  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#222222] selection:bg-[#006039] selection:text-white pb-0 overflow-x-hidden">
@@ -29,7 +56,12 @@ export default function TimeCraftTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1800px] mx-auto px-6 md:px-12 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-7 h-7 cursor-pointer text-[#222] mr-8 hover:text-[#006039] transition-colors" strokeWidth={1.5} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 hover:bg-gray-100 rounded-md transition-colors mr-4"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" strokeWidth={1.5} /> : <Menu className="w-7 h-7" strokeWidth={1.5} />}
+            </button>
             <nav className="hidden lg:flex space-x-10 font-sans text-[11px] font-bold uppercase tracking-[0.2em] text-[#222]">
               <div className="group relative h-[96px] flex items-center cursor-pointer">
                 <span className="group-hover:text-[#006039] transition-colors">Watches</span>
@@ -65,8 +97,25 @@ export default function TimeCraftTemplate({ data }: { data: StoreData }) {
               <span className="font-sans text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-[#006039] transition-colors">Store Locator</span>
             </div>
             <div className="flex items-center space-x-3 cursor-pointer group">
-              <span className="hidden md:block font-sans text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-[#006039] transition-colors">Search</span>
               <Search className="w-5 h-5 md:w-6 md:h-6 group-hover:text-[#006039] transition-colors" strokeWidth={1.5} />
+            </div>
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer group hidden sm:block"
+            >
+              <Heart className={`w-5 h-5 group-hover:text-[#006039] transition-colors ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer group"
+            >
+              <ShoppingBag className="w-5 h-5 md:w-6 md:h-6 group-hover:text-[#006039] transition-colors" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#006039] text-white text-[9px] font-black px-1.5 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
 
@@ -146,7 +195,7 @@ export default function TimeCraftTemplate({ data }: { data: StoreData }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border border-[#e0e0e0] bg-white">
-              {products.map((product, idx) => (
+              {paginatedItems.map((product: any, idx: number) => (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center border-r border-b border-[#e0e0e0] hover:shadow-[0_0_30px_rgba(0,0,0,0.08)] relative z-10 hover:z-20 transition-all bg-white p-12 lg:p-16">
 
                   <div className="text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-gray-400 mb-2">
@@ -170,7 +219,10 @@ export default function TimeCraftTemplate({ data }: { data: StoreData }) {
                     <span className="font-sans font-bold text-[12px] tracking-wider text-[#222] mb-6">
                       ${product.price}
                     </span>
-                    <button className="text-[#006039] font-sans font-bold text-[11px] uppercase tracking-[0.2em] border border-[#006039] px-8 py-3 hover:bg-[#006039] hover:text-white transition-all w-full max-w-[200px]">
+                    <button 
+                      onClick={addToCart}
+                      className="text-[#006039] font-sans font-bold text-[11px] uppercase tracking-[0.2em] border border-[#006039] px-8 py-3 hover:bg-[#006039] hover:text-white transition-all w-full max-w-[200px]"
+                    >
                       Discover more
                     </button>
                   </div>
@@ -178,6 +230,19 @@ export default function TimeCraftTemplate({ data }: { data: StoreData }) {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
 
             <div className="mt-12 flex justify-center md:hidden">
               <a href="#" className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-[#006039] border-b border-[#006039] pb-1">

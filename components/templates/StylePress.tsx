@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, ChevronRight, Facebook, Instagram, Twitter, Youtube, Smartphone } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, ChevronRight, Facebook, Instagram, Twitter, Youtube, Smartphone, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function StylePressTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#2d2d2d] overflow-x-hidden" style={{ fontFamily: "'futura-pt', Tahoma, Geneva, Verdana, Arial, sans-serif" }}>
 
@@ -59,14 +86,32 @@ export default function StylePressTemplate({ data }: { data: StoreData }) {
             <button className="lg:hidden">
               <Search className="w-6 h-6" strokeWidth={1.5} />
             </button>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden hover:bg-[#525050] p-2 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <button className="hidden sm:block hover:bg-[#525050] p-2 rounded-full transition-colors tooltip-group">
               <User className="w-[22px] h-[22px]" strokeWidth={1.5} />
             </button>
-            <button className="hover:bg-[#525050] p-2 rounded-full transition-colors relative">
-              <Heart className="w-[22px] h-[22px]" strokeWidth={1.5} />
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hover:bg-[#525050] p-2 rounded-full transition-colors relative"
+            >
+              <Heart className={`w-[22px] h-[22px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
             </button>
-            <button className="hover:bg-[#525050] p-2 rounded-full transition-colors relative">
+            <button 
+              onClick={addToCart}
+              className="hover:bg-[#525050] p-2 rounded-full transition-colors relative"
+            >
               <ShoppingBag className="w-[22px] h-[22px]" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#d01345] text-white text-[10px] font-black px-1.5 rounded-full">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -196,10 +241,10 @@ export default function StylePressTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-10 md:gap-x-5 md:gap-y-14">
-            {data.products.map(product => {
+            {paginatedItems.map((product: any, idx: number) => {
               const isSale = product.originalPrice ? true : false;
               return (
-                <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
+                <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
                   <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-[#f8f8f8]">
                     <Image
                       src={product.imageUrl}
@@ -209,8 +254,11 @@ export default function StylePressTemplate({ data }: { data: StoreData }) {
                       referrerPolicy="no-referrer"
                     />
                     {/* StylePress style save bubble */}
-                    <button className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-white hover:scale-110 transition-all z-10">
-                      <Heart className="w-[18px] h-[18px] text-[#2d2d2d]" strokeWidth={2} />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-white hover:scale-110 transition-all z-10"
+                    >
+                      <Heart className={`w-[18px] h-[18px] ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-[#2d2d2d]'}`} strokeWidth={2} />
                     </button>
                     {isSale && (
                       <div className="absolute bottom-3 left-3 bg-white px-2 py-1 text-[#d01345] text-[11px] font-bold tracking-widest uppercase border border-[#d01345]">
@@ -236,8 +284,24 @@ export default function StylePressTemplate({ data }: { data: StoreData }) {
             })}
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+
           <div className="flex justify-center mt-12 text-center w-full">
-            <button className="border-[2px] border-[#2d2d2d] bg-white text-[#2d2d2d] px-10 py-3.5 font-bold uppercase text-[13px] tracking-widest hover:bg-[#2d2d2d] hover:text-white transition-colors w-full sm:w-auto">
+            <button 
+              onClick={addToCart}
+              className="border-[2px] border-[#2d2d2d] bg-white text-[#2d2d2d] px-10 py-3.5 font-bold uppercase text-[13px] tracking-widest hover:bg-[#2d2d2d] hover:text-white transition-colors w-full sm:w-auto"
+            >
               View All
             </button>
           </div>

@@ -1,11 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Zap, Gift, Percent, ChevronDown, CheckCircle, Smartphone, ExternalLink } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Zap, Gift, Percent, ChevronDown, CheckCircle, Smartphone, ExternalLink, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function CashFlowTemplate({ data }: { data: StoreData }) {
-  const trendingBrands = data.products.slice(0, 8);
-  const hotDeals = data.products.slice(2, 6);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#f4f4f4] font-sans text-black selection:bg-[#bf0000] selection:text-white pb-10 overflow-x-hidden">
@@ -21,7 +46,12 @@ export default function CashFlowTemplate({ data }: { data: StoreData }) {
       <header className="bg-white sticky top-0 z-40 border-b border-gray-200">
         <div className="w-full max-w-[1240px] mx-auto px-4 md:px-6 h-[72px] flex items-center justify-between">
           <div className="flex items-center space-x-6 md:space-x-10 shrink-0 h-full">
-            <Menu className="w-6 h-6 lg:hidden cursor-pointer" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#bf0000] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <div className="flex items-center cursor-pointer">
               {/* CashFlow Logo Text */}
               <span className="font-black text-[28px] md:text-[32px] tracking-tighter text-[#bf0000]">
@@ -98,23 +128,23 @@ export default function CashFlowTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── TRENDING STORES GRID ─── */}
+        {/* ─── TRENDING STORES GRID (Paginated) ─── */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-[28px] font-black tracking-tight text-gray-900">Trending Stores</h2>
+            <h2 className="text-[28px] font-black tracking-tight text-gray-900">Trending Stores ({totalItems})</h2>
             <a href="#" className="hidden md:flex text-[15px] font-bold text-[#bf0000] hover:underline items-center">
               See all stores
             </a>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-6">
-            {trendingBrands.map((brand, idx) => {
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {paginatedItems.map((brand, idx) => {
               // Assign a random cash back percentage between 2.0% and 15.0%
               const cashbackStr = `${(Math.random() * 8 + 2).toFixed(1)}%`;
               const isDouble = idx % 3 === 0;
               return (
-                <div key={brand.id || idx} data-product-id={brand.id} className="group cursor-pointer flex flex-col bg-white rounded-[12px] p-6 hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all border border-gray-200">
-                  <div className="relative aspect-[3/2] w-full flex items-center justify-center mb-4">
+                <div key={brand.id || idx} data-product-id={brand.id} className="group cursor-pointer flex flex-col bg-white rounded-[12px] p-4 hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all border border-gray-200">
+                  <div className="relative aspect-[3/2] w-full flex items-center justify-center mb-3">
                     <Image
                       src={brand.imageUrl}
                       alt={brand.title}
@@ -124,27 +154,43 @@ export default function CashFlowTemplate({ data }: { data: StoreData }) {
                     />
                   </div>
                   <div className="flex flex-col items-center flex-1">
-                    <h3 className="text-[14px] font-bold text-gray-900 line-clamp-1 mb-1">{brand.title}</h3>
-                    <div className="text-[12px] text-gray-500 font-medium mb-3">Coupons & Promo Codes</div>
-                    <div className={`mt-auto text-center w-full py-2 rounded-[8px] ${isDouble ? 'bg-[#fff0f0] text-[#bf0000]' : 'bg-[#eef8f3] text-[#08a05c]'}`}>
-                      <div className="font-black text-[22px] leading-none mb-1">
+                    <h3 className="text-[12px] font-bold text-gray-900 line-clamp-1 mb-1">{brand.title}</h3>
+                    <div className="text-[10px] text-gray-500 font-medium mb-2">Coupons & Codes</div>
+                    <div className={`mt-auto text-center w-full py-1.5 rounded-[8px] ${isDouble ? 'bg-[#fff0f0] text-[#bf0000]' : 'bg-[#eef8f3] text-[#08a05c]'}`}>
+                      <div className="font-black text-[18px] leading-none mb-0.5">
                         {isDouble ? 'Up to 15%' : `Up to ${cashbackStr}`}
                       </div>
-                      <div className="text-[12px] font-bold uppercase tracking-widest leading-none">Cash Back</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest leading-none">Cash Back</div>
                     </div>
                     {isDouble && (
-                      <div className="bg-[#bf0000] text-white text-[10px] font-bold px-2 py-0.5 rounded-[4px] mt-2 tracking-wide uppercase">
+                      <div className="bg-[#bf0000] text-white text-[9px] font-bold px-2 py-0.5 rounded-[4px] mt-1.5 tracking-wide uppercase">
                         Was 5.0%
                       </div>
                     )}
                   </div>
-                  <button className="w-full bg-white border border-gray-300 text-black py-2.5 rounded-full font-bold text-[14px] mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-gray-50">
-                    Shop Now <ExternalLink className="w-4 h-4 ml-1.5 text-gray-400" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="w-full bg-white border border-gray-300 text-black py-2 rounded-full font-bold text-[12px] mt-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-gray-50"
+                  >
+                    Shop Now <ExternalLink className="w-3 h-3 ml-1.5 text-gray-400" />
                   </button>
                 </div>
               )
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── HOW IT WORKS BANNER ─── */}
@@ -186,7 +232,7 @@ export default function CashFlowTemplate({ data }: { data: StoreData }) {
             <h2 className="text-[28px] font-black tracking-tight text-gray-900">Hot Deals & Coupons</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {hotDeals.map((deal, idx) => (
+            {data.products.slice(0, 4).map((deal: any, idx: number) => (
               <div key={idx} data-product-id={deal.id} className="bg-white border border-gray-200 rounded-[12px] p-6 flex items-start gap-6 hover:shadow-lg transition-shadow cursor-pointer group">
                 <div className="relative w-[100px] h-[100px] bg-gray-50 rounded-lg p-2 border border-gray-100 flex items-center justify-center shrink-0">
                   <Image src={deal.imageUrl} alt="" fill className="object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" />

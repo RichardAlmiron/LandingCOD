@@ -1,11 +1,37 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, User, Menu, ArrowRight, MapPin, IceCream, Star, Instagram, Twitter, Facebook, Youtube, ChevronDown, Plus, Minus, X, Clock, Globe, Shield } from 'lucide-react';
+import { Search, ShoppingBag, User, Menu, ArrowRight, MapPin, IceCream, Star, Instagram, Twitter, Facebook, Youtube, ChevronDown, Plus, Minus, X, Clock, Globe, Shield, Heart } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('New Arrivals');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -59,14 +85,29 @@ export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
               ))}
             </nav>
             <div className="flex items-center gap-8 text-stone-900">
-              <Search className="w-4 h-4 cursor-pointer hover:opacity-50 transition-opacity" />
-              <div className="relative cursor-pointer group">
-                <ShoppingBag className="w-5 h-5 group-hover:opacity-50 transition-all" />
-                <span className="absolute -top-1.5 -right-2 bg-stone-900 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full">
-                  0
-                </span>
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-1 hover:text-stone-600 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <Search className="w-4 h-4 cursor-pointer hover:opacity-50 transition-opacity hidden sm:block" />
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="relative cursor-pointer group hidden sm:block"
+              >
+                <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full">{favorites.length}</span>
+                )}
               </div>
-              <Menu className="w-5 h-5 lg:hidden cursor-pointer" />
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group"
+              >
+                <ShoppingBag className="w-5 h-5 group-hover:opacity-50 transition-all" />
+                <span className="absolute -top-1.5 -right-2 bg-stone-900 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -113,7 +154,7 @@ export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
         {/* Curated Feed Section */}
         <section className="max-w-full mx-auto px-10 py-32 bg-stone-50/50">
           <div className="flex flex-col items-center mb-24 space-y-6">
-            <h2 className="text-4xl font-serif uppercase tracking-[0.4em] text-stone-900">Now Available</h2>
+            <h2 className="text-4xl font-serif uppercase tracking-[0.4em] text-stone-900">Now Available ({totalItems})</h2>
             <div className="flex gap-12 font-bold text-[10px] uppercase tracking-[0.3em] text-stone-300">
               {['New Arrivals', 'Mens', 'Womens', 'Footwear'].map(tab => (
                 <button
@@ -129,8 +170,8 @@ export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-24">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[3/4] mb-8 overflow-hidden bg-white">
                   <img
                     src={product.imageUrl}
@@ -140,10 +181,20 @@ export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
 
                   {/* Subtle Action Overlays */}
                   <div className="absolute inset-x-0 bottom-0 p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-700 bg-white/80 backdrop-blur-md">
-                    <button className="w-full bg-stone-900 text-white py-4 font-bold uppercase text-[9px] tracking-[0.3em] hover:bg-stone-700 transition-colors">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-stone-900 text-white py-4 font-bold uppercase text-[9px] tracking-[0.3em] hover:bg-stone-700 transition-colors"
+                    >
                       Quick Add
                     </button>
                   </div>
+
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-4 right-4 p-2 bg-white/50 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
 
                   {product.originalPrice && (
                     <div className="absolute top-6 left-6 font-bold text-[8px] uppercase tracking-[0.3em] bg-stone-900 text-white px-3 py-1.5 grayscale">
@@ -164,6 +215,19 @@ export default function StreetBoutiqueTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-16">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
 
           <div className="flex justify-center mt-32">
             <button className="border border-stone-200 px-20 py-5 font-bold uppercase text-[10px] tracking-[0.4em] hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-700 text-stone-500">

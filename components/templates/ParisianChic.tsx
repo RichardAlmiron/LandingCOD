@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Menu, User, MapPin, Phone, ChevronRight, Instagram, Facebook, Twitter, Youtube, ArrowRight, X } from 'lucide-react';
+import { Search, ShoppingBag, Menu, User, MapPin, Phone, ChevronRight, Instagram, Facebook, Twitter, Youtube, ArrowRight, X, Heart } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ParisianChicTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-black overflow-x-hidden selection:bg-black selection:text-white" style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
@@ -17,10 +44,17 @@ export default function ParisianChicTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-[60px] md:h-[72px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 md:space-x-8 w-1/3">
-            <button className="flex flex-col space-y-[5px] hover:opacity-70 transition-opacity">
-              <span className="block h-[1.5px] bg-black w-[22px]"></span>
-              <span className="block h-[1.5px] bg-black w-[22px]"></span>
-              <span className="block h-[1.5px] bg-black w-[22px]"></span>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex flex-col space-y-[5px] hover:opacity-70 transition-opacity"
+            >
+              {mobileMenuOpen ? <X className="w-[22px] h-[22px]" strokeWidth={1.5} /> : (
+                <>
+                  <span className="block h-[1.5px] bg-black w-[22px]"></span>
+                  <span className="block h-[1.5px] bg-black w-[22px]"></span>
+                  <span className="block h-[1.5px] bg-black w-[22px]"></span>
+                </>
+              )}
             </button>
             <button className="hidden md:block hover:opacity-70 transition-opacity">
               <Search className="w-[20px] h-[20px]" strokeWidth={1.5} />
@@ -38,9 +72,24 @@ export default function ParisianChicTemplate({ data }: { data: StoreData }) {
             <button className="hidden md:block hover:opacity-70 transition-opacity">
               <User className="w-[20px] h-[20px]" strokeWidth={1.5} />
             </button>
-            <button className="hover:opacity-70 transition-opacity relative">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity hidden md:block"
+            >
+              <Heart className={`w-[20px] h-[20px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
               <ShoppingBag className="w-[20px] h-[20px]" strokeWidth={1.5} />
-            </button>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-black text-white text-[9px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -84,15 +133,15 @@ export default function ParisianChicTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── FASHION OVERVIEW (Strict Grid) ─── */}
+        {/* ─── FASHION OVERVIEW (Strict Grid - Paginated) ─── */}
         <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12 py-20 md:py-32">
           <div className="text-center mb-16 md:mb-24 flex flex-col items-center">
-            <h3 className="text-[18px] md:text-[24px] font-bold tracking-[0.2em] uppercase mb-6">The Collection</h3>
+            <h3 className="text-[18px] md:text-[24px] font-bold tracking-[0.2em] uppercase mb-6">The Collection ({totalItems})</h3>
             <div className="w-10 h-[2px] bg-black"></div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-2 md:gap-x-6 gap-y-12 md:gap-y-20">
-            {data.products.map((product) => (
+            {paginatedItems.map((product: any) => (
               <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#f4f4f4] mb-6">
                   <Image
@@ -103,10 +152,19 @@ export default function ParisianChicTemplate({ data }: { data: StoreData }) {
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out">
-                    <button className="w-full text-[10px] font-bold tracking-[0.2em] uppercase text-center hover:text-gray-500 transition-colors">
-                      Quick View
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full text-[10px] font-bold tracking-[0.2em] uppercase text-center hover:text-gray-500 transition-colors"
+                    >
+                      Add to Cart
                     </button>
                   </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1} />
+                  </button>
                 </div>
                 <div className="text-center flex-1 flex flex-col px-2">
                   <h4 className="text-[12px] md:text-[13px] font-bold tracking-widest uppercase mb-2 line-clamp-1 group-hover:underline underline-offset-4">{product.title}</h4>
@@ -119,8 +177,24 @@ export default function ParisianChicTemplate({ data }: { data: StoreData }) {
             ))}
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
+
           <div className="flex justify-center mt-16 md:mt-24">
-            <button className="border-2 border-black text-black px-12 py-3.5 text-[10px] md:text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-500">
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="border-2 border-black text-black px-12 py-3.5 text-[10px] md:text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-black hover:text-white transition-colors duration-500"
+            >
               See All
             </button>
           </div>

@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { ShoppingBag, Menu, Search, User, ArrowRight, Instagram, Twitter, Facebook, Youtube, X } from 'lucide-react';
+import { ShoppingBag, Menu, Search, User, ArrowRight, Instagram, Twitter, Facebook, Youtube, X, Heart } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function EditorialChicTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-black overflow-x-hidden selection:bg-black selection:text-white" style={{ fontFamily: "'Neue Helvetica', Helvetica, Arial, sans-serif" }}>
 
@@ -26,11 +53,20 @@ export default function EditorialChicTemplate({ data }: { data: StoreData }) {
         <div className="w-full px-4 md:px-10 py-6 md:py-8 flex items-start justify-between">
 
           <div className="flex flex-col items-start space-y-6 pointer-events-auto mt-16 md:mt-24">
-            <button className="flex items-center group">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center group"
+            >
               <div className="flex flex-col space-y-[4px] w-6 md:w-8 group-hover:opacity-70 transition-opacity">
-                <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
-                <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
-                <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
+                {mobileMenuOpen ? (
+                  <X className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                ) : (
+                  <>
+                    <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
+                    <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
+                    <span className="block h-[1px] md:h-[1.5px] bg-white w-full"></span>
+                  </>
+                )}
               </div>
             </button>
           </div>
@@ -41,9 +77,23 @@ export default function EditorialChicTemplate({ data }: { data: StoreData }) {
             </div>
             <span className="cursor-pointer hidden sm:block hover:opacity-70 transition-opacity">Log In</span>
             <span className="cursor-pointer hidden sm:block hover:opacity-70 transition-opacity">Help</span>
-            <div className="flex items-center space-x-2 cursor-pointer hover:opacity-70 transition-opacity relative group">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
+              <Heart className={`w-4 h-4 md:w-5 md:h-5 stroke-[1.5] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 text-[9px] font-bold">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity flex items-center space-x-2"
+            >
               <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
-              <span className="absolute top-2 right-[-8px] text-[9px] font-bold">0</span>
+              {cartCount > 0 && (
+                <span className="absolute top-2 right-[-8px] text-[9px] font-bold">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -107,27 +157,52 @@ export default function EditorialChicTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
 
-          {/* Double Grid (Classic Catalog View) */}
+          {/* Double Grid (Classic Catalog View - Paginated) */}
           <div className="w-full px-2 md:px-8 mb-32 md:mb-48">
             <div className="flex items-center justify-between mb-8 px-2 md:px-4">
-              <h2 className="text-[12px] md:text-[14px] uppercase tracking-[0.15em] font-medium">New In / Basics</h2>
+              <h2 className="text-[12px] md:text-[14px] uppercase tracking-[0.15em] font-medium">New In / Basics ({totalItems})</h2>
               <div className="flex space-x-6 text-[11px] md:text-[13px] uppercase tracking-widest text-gray-500 font-medium">
                 <button className="text-black border-b border-black pb-0.5">View All</button>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-              {data.products.slice(0, 4).map((product, i) => (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
+              {paginatedItems.map((product, i) => (
                 <div key={i} data-product-id={product.id} className="group cursor-pointer flex flex-col mb-8 md:mb-0">
-                  <div className="relative aspect-[2/3] overflow-hidden bg-[#f4f4f4] mb-3">
+                  <div className="relative aspect-[2/3] overflow-hidden bg-[#f4f4f4] mb-2">
                     <Image src={product.imageUrl} alt={product.title} fill className="object-cover object-center group-hover:opacity-80 transition-opacity duration-300 mix-blend-darken p-0" />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="absolute bottom-2 left-2 right-2 bg-black text-white py-1.5 text-[8px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Add
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Heart className={`w-3 h-3 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                    </button>
                   </div>
                   <div className="flex flex-col items-start px-1">
-                    <h3 className="text-[10px] md:text-[11px] uppercase tracking-[0.05em] font-medium text-black line-clamp-1 w-full">{product.title}</h3>
-                    <div className="text-[10px] md:text-[11px] tracking-widest text-[#666] mt-1">${product.price}</div>
+                    <h3 className="text-[9px] md:text-[10px] uppercase tracking-[0.05em] font-medium text-black line-clamp-1 w-full">{product.title}</h3>
+                    <div className="text-[9px] md:text-[10px] tracking-widest text-[#666] mt-0.5">${product.price}</div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
 
           {/* Full Width Collection Banner */}

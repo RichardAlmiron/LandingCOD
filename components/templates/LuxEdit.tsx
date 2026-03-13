@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, ChevronDown, Globe, ArrowRight, PlayCircle, Smartphone, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, ChevronDown, Globe, ArrowRight, PlayCircle, Smartphone, Facebook, Twitter, Instagram, Youtube, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function LuxEditTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#000]">
       <div className="bg-black text-white text-[10px] py-2 px-6 flex justify-between items-center font-bold tracking-[0.2em] uppercase">
@@ -36,11 +63,24 @@ export default function LuxEditTemplate({ data }: { data: StoreData }) {
               </div>
               <div className="flex items-center space-x-6">
                 <User className="w-5 h-5 cursor-pointer hover:opacity-50" />
-                <Heart className="w-5 h-5 cursor-pointer hover:opacity-50" />
-                <div className="relative cursor-pointer hover:opacity-50">
-                  <ShoppingBag className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-2 bg-black text-white text-[9px] font-bold px-1 rounded-full">0</span>
-                </div>
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="relative cursor-pointer hover:opacity-50"
+              >
+                <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-black text-white text-[9px] font-bold px-1 rounded-full">{favorites.length}</span>
+                )}
+              </div>
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer hover:opacity-50"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-black text-white text-[9px] font-bold px-1 rounded-full">{cartCount}</span>
+                )}
+              </div>
               </div>
             </div>
           </div>
@@ -60,29 +100,51 @@ export default function LuxEditTemplate({ data }: { data: StoreData }) {
         </div>
         <div className="mb-24">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-serif uppercase tracking-widest mb-4">The New Arrivals</h2>
+            <h2 className="text-3xl font-serif uppercase tracking-widest mb-4">The New Arrivals ({totalItems})</h2>
             <div className="w-16 h-px bg-black mx-auto" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-20">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
-                <div className="relative aspect-[3/4] mb-6 overflow-hidden bg-[#f9f9f9]">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-4 gap-y-8">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+                <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-[#f9f9f9]">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
-                  <button className="absolute bottom-4 right-4 bg-white p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart className="w-4 h-4" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute bottom-3 right-3 bg-white p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-3 left-3 bg-black text-white px-3 py-1.5 text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add
                   </button>
                 </div>
-                <div className="flex flex-col space-y-2 text-center">
+                <div className="flex flex-col space-y-1 text-center">
                   <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">{product.category}</div>
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-900 line-clamp-2 min-h-[32px] leading-relaxed group-hover:underline">{product.title}</h3>
-                  <div className="flex items-center justify-center space-x-3 pt-2">
-                    <span className="font-bold text-sm tracking-widest">${product.price}</span>
-                    {product.originalPrice && <span className="text-xs text-gray-400 line-through tracking-widest">${product.originalPrice}</span>}
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-900 line-clamp-2 min-h-[28px] leading-relaxed group-hover:underline">{product.title}</h3>
+                  <div className="flex items-center justify-center space-x-2 pt-1">
+                    <span className="font-bold text-xs tracking-widest">${product.price}</span>
+                    {product.originalPrice && <span className="text-[10px] text-gray-400 line-through tracking-widest">${product.originalPrice}</span>}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Shop by Category */}

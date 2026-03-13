@@ -1,10 +1,36 @@
 'use client';
+
 import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Gamepad2, Trophy, Zap, RefreshCw, Star, Headphones, ArrowRight, Facebook, Twitter, Instagram, Youtube, Monitor, Smartphone, Cpu, Target, Rocket, Clock, ShieldCheck, ChevronRight, Share2, Info } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Gamepad2, Trophy, Zap, RefreshCw, Star, Headphones, ArrowRight, Facebook, Twitter, Instagram, Youtube, Monitor, Smartphone, Cpu, Target, Rocket, Clock, ShieldCheck, ChevronRight, Share2, Info, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ProGamerTemplate({ data }: { data: StoreData }) {
   const [activePlatform, setActivePlatform] = useState('All');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-stone-50 font-sans text-stone-900 selection:bg-red-600 selection:text-white">
@@ -55,17 +81,32 @@ export default function ProGamerTemplate({ data }: { data: StoreData }) {
                 <User className="w-6 h-6" />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-widest text-stone-500 group-hover:text-red-600">Account</span>
               </div>
-              <div className="relative cursor-pointer group p-2">
-                <Heart className="w-6 h-6 group-hover:text-red-600 transition-colors" />
-                <span className="absolute top-0 right-0 bg-black text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full group-hover:bg-red-600">0</span>
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="relative cursor-pointer group p-2"
+              >
+                <Heart className={`w-6 h-6 group-hover:text-red-600 transition-colors ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-black text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full group-hover:bg-red-600">{favorites.length}</span>
+                )}
               </div>
-              <div className="relative cursor-pointer group bg-stone-100 p-3 rounded-xl hover:bg-black transition-all">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group bg-stone-100 p-3 rounded-xl hover:bg-black transition-all"
+              >
                 <ShoppingCart className="w-6 h-6 group-hover:text-white transition-colors" />
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce">
-                  0
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce">
+                    {cartCount}
+                  </span>
+                )}
               </div>
-              <Menu className="w-6 h-6 xl:hidden cursor-pointer" />
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="xl:hidden p-2 hover:text-red-600 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
@@ -140,8 +181,8 @@ export default function ProGamerTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-stone-200 rounded-3xl overflow-hidden hover:border-red-600 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-stone-200 rounded-3xl overflow-hidden hover:border-red-600 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
                 <div className="relative aspect-[3/4] overflow-hidden bg-black group-hover:bg-stone-50">
                   <img
                     src={product.imageUrl}
@@ -161,8 +202,17 @@ export default function ProGamerTemplate({ data }: { data: StoreData }) {
                     <Target className="w-5 h-5 text-red-600" />
                   </div>
 
-                  <button className="absolute bottom-6 left-6 right-6 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 bg-red-600 text-white py-4 rounded-xl font-black uppercase italic text-xs tracking-widest transition-all duration-300 shadow-2xl hover:bg-black">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-6 left-6 right-6 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 bg-red-600 text-white py-4 rounded-xl font-black uppercase italic text-xs tracking-widest transition-all duration-300 shadow-2xl hover:bg-black"
+                  >
                     Add to Cart
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-5 right-5 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                   </button>
                 </div>
 
@@ -189,6 +239,19 @@ export default function ProGamerTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* Pro Membership - Ultra Premium Section */}

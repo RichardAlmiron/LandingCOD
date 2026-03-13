@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin, ArrowRight, Gift, Star, Smartphone, Facebook, Twitter, Instagram, Youtube, PlayCircle } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, ArrowRight, Gift, Star, Smartphone, Facebook, Twitter, Instagram, Youtube, PlayCircle, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function CharmBoutiqueTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#222222]">
       <div className="bg-[#ffc0cb] text-[#222222] text-[12px] py-2 px-6 flex justify-center font-medium tracking-wide">
@@ -11,6 +38,12 @@ export default function CharmBoutiqueTemplate({ data }: { data: StoreData }) {
       <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
         <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-8">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
             <nav className="hidden lg:flex space-x-6 font-sans text-[13px] font-medium text-[#222222]">
               <a href="#" className="hover:text-[#ffc0cb] transition-colors">Charms & Bracelets</a>
               <a href="#" className="hover:text-[#ffc0cb] transition-colors">Rings</a>
@@ -26,11 +59,25 @@ export default function CharmBoutiqueTemplate({ data }: { data: StoreData }) {
           </div>
           <div className="flex items-center space-x-6 text-[#222222]">
             <Search className="w-5 h-5 cursor-pointer hover:text-[#ffc0cb] transition-colors" />
-            <MapPin className="w-5 h-5 cursor-pointer hover:text-[#ffc0cb] transition-colors" />
+            <MapPin className="w-5 h-5 cursor-pointer hover:text-[#ffc0cb] transition-colors hidden sm:block" />
             <User className="w-5 h-5 cursor-pointer hover:text-[#ffc0cb] transition-colors" />
-            <Heart className="w-5 h-5 cursor-pointer hover:text-[#ffc0cb] transition-colors" />
-            <div className="relative cursor-pointer hover:text-[#ffc0cb] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="cursor-pointer hover:text-[#ffc0cb] transition-colors relative"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-[#ffc0cb] text-[#ffc0cb]' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#ffc0cb] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#ffc0cb] transition-colors"
+            >
               <ShoppingBag className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#ffc0cb] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -49,14 +96,28 @@ export default function CharmBoutiqueTemplate({ data }: { data: StoreData }) {
         </div>
         <div className="mb-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-serif text-[#222222] mb-2">New Arrivals</h2>
+            <h2 className="text-3xl font-serif text-[#222222] mb-2">New Arrivals ({totalItems})</h2>
             <p className="text-sm font-sans text-gray-500">Discover the latest additions to our collection.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
-            {data.products.map(product => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-4 gap-y-8">
+            {paginatedItems.map((product) => (
               <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
                 <div className="relative aspect-square mb-4 overflow-hidden w-full bg-[#f9f9f9] rounded-lg">
-                  <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-[1500ms]" />
+                  <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-[1500ms]" />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-[#ffc0cb] text-[#ffc0cb]' : 'text-gray-400'}`} />
+                  </button>
+                  {/* Add to Cart Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-[#222222] text-white text-[11px] py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Bag
+                  </button>
                 </div>
                 <div className="flex flex-col space-y-1">
                   <h3 className="text-sm font-sans font-medium text-[#222222]">{product.title}</h3>
@@ -68,6 +129,19 @@ export default function CharmBoutiqueTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Shop by Category */}

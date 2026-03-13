@@ -1,10 +1,35 @@
 'use client';
 import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Menu, ChevronDown, MapPin, ArrowRight, Smartphone, Facebook, Twitter, Instagram, Youtube, Gift, Truck, Star, Sparkles, Clock, Percent, ShieldCheck, Shirt, Scissors, Eye, ChevronRight, Mail } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, ChevronDown, MapPin, ArrowRight, Smartphone, Facebook, Twitter, Instagram, Youtube, Gift, Truck, Star, Sparkles, Clock, Percent, ShieldCheck, Shirt, Scissors, Eye, ChevronRight, Mail, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function LuxServiceTemplate({ data }: { data: StoreData }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-stone-900 selection:bg-stone-900 selection:text-white">
@@ -66,14 +91,31 @@ export default function LuxServiceTemplate({ data }: { data: StoreData }) {
                   <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   <span className="hidden xl:inline text-[11px] font-black uppercase tracking-widest">Sign In</span>
                 </div>
-                <div className="flex items-center gap-3 cursor-pointer hover:opacity-60 transition-opacity group">
-                  <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <div 
+                  onClick={() => toggleFavorite('header')}
+                  className="relative cursor-pointer hover:opacity-60 transition-opacity group flex items-center gap-3"
+                >
+                  <Heart className={`w-5 h-5 group-hover:scale-110 transition-transform ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
                   <span className="hidden xl:inline text-[11px] font-black uppercase tracking-widest">Wish List</span>
+                  {favorites.length > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white">{favorites.length}</span>
+                  )}
                 </div>
-                <div className="relative cursor-pointer hover:opacity-60 transition-opacity group flex items-center gap-3">
+                <div 
+                  onClick={addToCart}
+                  className="relative cursor-pointer hover:opacity-60 transition-opacity group flex items-center gap-3"
+                >
                   <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                  <span className="absolute -top-1 -right-2 bg-stone-950 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white">0</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-stone-950 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white">{cartCount}</span>
+                  )}
                 </div>
+                <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="lg:hidden p-2 hover:text-stone-600 transition-colors"
+                >
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
               </div>
             </div>
           </div>
@@ -128,24 +170,27 @@ export default function LuxServiceTemplate({ data }: { data: StoreData }) {
           <div className="flex flex-col sm:flex-row items-end justify-between mb-20 border-b border-stone-200 pb-10">
             <div className="space-y-3">
               <div className="text-[11px] font-black tracking-[0.4em] text-stone-300 uppercase">Curated For You</div>
-              <h2 className="text-5xl font-serif italic tracking-tight text-stone-950">New <span className="not-italic">Arrivals</span></h2>
+              <h2 className="text-5xl font-serif italic tracking-tight text-stone-950">New <span className="not-italic">Arrivals ({totalItems})</span></h2>
             </div>
             <div className="flex items-center gap-4 mt-8 sm:mt-0 font-black text-[11px] tracking-widest cursor-pointer group hover:text-stone-400 transition-colors uppercase">
-              View All 1,420 Items <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform" />
+              View All Items <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-x-12 gap-y-24">
-            {data.products.map((product) => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="relative aspect-[2/3] mb-8 overflow-hidden bg-stone-50 rounded-sm">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
                   <div className="absolute inset-0 bg-stone-950/0 group-hover:bg-stone-950/[0.02] transition-colors" />
 
                   {/* Premium Hover Actions */}
                   <div className="absolute top-6 right-6 flex flex-col gap-3 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500">
-                    <button className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-2xl hover:bg-stone-950 hover:text-white transition-all">
-                      <Heart className="w-4 h-4" />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-2xl hover:bg-stone-950 hover:text-white transition-all"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                     </button>
                     <button className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-2xl hover:bg-stone-950 hover:text-white transition-all">
                       <Eye className="w-4 h-4" />
@@ -154,7 +199,11 @@ export default function LuxServiceTemplate({ data }: { data: StoreData }) {
 
                   <div className="absolute bottom-6 inset-x-6 flex flex-wrap gap-2 justify-center translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
                     {['S', 'M', 'L', 'XL'].map(size => (
-                      <button key={size} className="w-10 h-10 bg-white/95 backdrop-blur-sm border border-stone-200 text-[10px] font-black hover:bg-stone-950 hover:text-white hover:border-stone-950 transition-all uppercase rounded-sm">
+                      <button 
+                        key={size} 
+                        onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                        className="w-10 h-10 bg-white/95 backdrop-blur-sm border border-stone-200 text-[10px] font-black hover:bg-stone-950 hover:text-white hover:border-stone-950 transition-all uppercase rounded-sm"
+                      >
                         {size}
                       </button>
                     ))}
@@ -184,6 +233,19 @@ export default function LuxServiceTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* The Thread - Editorial Center */}

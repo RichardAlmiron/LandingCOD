@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function EliteStoreTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111] selection:bg-[#111] selection:text-white overflow-x-hidden">
@@ -34,11 +60,12 @@ export default function EliteStoreTemplate({ data }: { data: StoreData }) {
               <Search className="w-4 h-4 text-gray-400 group-focus-within:text-[#111] transition-colors" strokeWidth={2} />
             </div>
             {/* Mobile menu icon */}
-            <div className="lg:hidden flex flex-col space-y-1.5 cursor-pointer p-2">
-              <span className="w-6 h-0.5 bg-[#111] block"></span>
-              <span className="w-6 h-0.5 bg-[#111] block"></span>
-              <span className="w-6 h-0.5 bg-[#111] block"></span>
-            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
 
           <div className="flex flex-col items-center justify-center cursor-pointer flex-none">
@@ -54,10 +81,23 @@ export default function EliteStoreTemplate({ data }: { data: StoreData }) {
               <User className="w-5 h-5" strokeWidth={1.5} />
               <span>Sign In</span>
             </div>
-            <Heart className="w-6 h-6 cursor-pointer hover:text-gray-500 transition-colors hidden sm:block" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-gray-500 transition-colors flex items-center">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="cursor-pointer hover:text-gray-500 transition-colors hidden sm:block relative"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-gray-500 transition-colors flex items-center"
+            >
               <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
-              <div className="bg-[#111] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center absolute -top-1 -right-1">0</div>
+              {cartCount > 0 && (
+                <div className="bg-[#111] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center absolute -top-1 -right-1">{cartCount}</div>
+              )}
             </div>
           </div>
         </div>
@@ -138,23 +178,26 @@ export default function EliteStoreTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── NEW ARRIVALS CAROUSEL ─── */}
+        {/* ─── NEW ARRIVALS WITH PAGINATION ─── */}
         <section className="bg-[#fcfcfc] border-y border-gray-100 py-24">
           <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
             <div className="flex items-end justify-between mb-12 border-b border-gray-200 pb-4">
-              <h2 className="text-[28px] md:text-[36px] font-serif tracking-tighter text-[#111]">Just Arrived</h2>
+              <h2 className="text-[28px] md:text-[36px] font-serif tracking-tighter text-[#111]">Just Arrived ({totalItems})</h2>
               <a href="#" className="text-[11px] font-bold uppercase tracking-widest hover:text-gray-500 transition-colors hidden sm:block">View All</a>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-16">
-              {products.map((product, idx) => (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-10">
+              {paginatedItems.map((product, idx) => (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative">
-                  {/* Hover Quick Add */}
-                  <button className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full shadow-sm text-gray-400 hover:text-red-500 hover:bg-white inset-0 m-auto w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart className="w-5 h-5 fill-transparent hover:fill-current" />
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 z-10 p-2 bg-white/90 rounded-full shadow-sm text-gray-400 hover:text-red-500 hover:bg-white w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                   </button>
 
-                  <div className="relative aspect-[3/4] mb-6 overflow-hidden bg-[#f4f4f4] flex items-center justify-center">
+                  <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-[#f4f4f4] flex items-center justify-center">
                     <Image
                       src={product.imageUrl}
                       alt={product.title}
@@ -167,23 +210,43 @@ export default function EliteStoreTemplate({ data }: { data: StoreData }) {
                         Exclusive
                       </div>
                     )}
+                    {/* Add to Cart */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="absolute bottom-2 left-2 right-2 bg-[#111] text-white text-[10px] font-bold uppercase tracking-widest py-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Add to Bag
+                    </button>
                   </div>
 
                   <div className="flex flex-col text-center">
-                    <div className="text-[12px] font-bold uppercase tracking-widest text-[#111] mb-1.5">
+                    <div className="text-[11px] font-bold uppercase tracking-widest text-[#111] mb-1">
                       {product.category || 'Designer Brand'}
                     </div>
-                    <h3 className="text-[13px] text-gray-600 font-medium leading-relaxed line-clamp-1 mb-3">
+                    <h3 className="text-[12px] text-gray-600 font-medium leading-relaxed line-clamp-1 mb-2">
                       {product.title}
                     </h3>
-                    <div className="flex items-center justify-center space-x-3">
-                      <span className="font-sans font-medium text-[14px] text-[#111]">${product.price}</span>
-                      {product.originalPrice && <span className="text-[12px] text-red-500 line-through">${product.originalPrice}</span>}
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="font-sans font-medium text-[13px] text-[#111]">${product.price}</span>
+                      {product.originalPrice && <span className="text-[11px] text-red-500 line-through">${product.originalPrice}</span>}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
         </section>
 

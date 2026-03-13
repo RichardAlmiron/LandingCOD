@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, ArrowRight, CheckCircle2, Star, PlayCircle, MapPin, ChevronLeft, ChevronRight, Menu, Facebook, Twitter, Instagram, ChevronDown } from 'lucide-react';
+import { Search, ShoppingBag, Heart, ArrowRight, CheckCircle2, Star, PlayCircle, MapPin, ChevronLeft, ChevronRight, Menu, Facebook, Twitter, Instagram, ChevronDown, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BoldAthleteTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#111] overflow-x-hidden">
 
@@ -67,13 +94,29 @@ export default function BoldAthleteTemplate({ data }: { data: StoreData }) {
 
           <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"><Search className="w-6 h-6 text-[#111]" strokeWidth={2} /></button>
 
-          <button className="hidden sm:flex p-2 hover:bg-gray-100 rounded-full transition-colors"><Heart className="w-6 h-6 text-[#111]" strokeWidth={2} /></button>
-
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-            <ShoppingBag className="w-6 h-6 text-[#111]" strokeWidth={2} />
+          <button className="hidden sm:flex p-2 hover:bg-gray-100 rounded-full transition-colors relative" onClick={() => toggleWishlist('header')}>
+            <Heart className={`w-6 h-6 text-[#111] ${wishlist.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
+            {wishlist.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{wishlist.length}</span>
+            )}
           </button>
 
-          <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"><Menu className="w-6 h-6 text-[#111]" strokeWidth={2} /></button>
+          <button 
+            onClick={addToCart}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+          >
+            <ShoppingBag className="w-6 h-6 text-[#111]" strokeWidth={2} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+            )}
+          </button>
+
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6 text-[#111]" strokeWidth={2} /> : <Menu className="w-6 h-6 text-[#111]" strokeWidth={2} />}
+          </button>
         </div>
       </header>
 
@@ -134,8 +177,8 @@ export default function BoldAthleteTemplate({ data }: { data: StoreData }) {
 
           {/* Scrollable container with snap */}
           <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer shrink-0 w-[80vw] sm:w-[350px] md:w-[400px] lg:w-[450px] snap-center">
+            {data.products.map((product, idx) => (
+              <div key={`boldathlete-scroll-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer shrink-0 w-[80vw] sm:w-[350px] md:w-[400px] lg:w-[450px] snap-center">
                 <div className="bg-[#f5f5f5] aspect-[4/5] mb-4 overflow-hidden relative">
                   <Image
                     src={product.imageUrl}
@@ -215,6 +258,55 @@ export default function BoldAthleteTemplate({ data }: { data: StoreData }) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ─── ALL PRODUCTS GRID WITH PAGINATION ─── */}
+        <div className="mt-20 md:mt-24 w-full max-w-[1920px] mx-auto px-4 md:px-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[24px] font-medium">All Products ({totalItems})</h2>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={`boldathlete-grid-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer">
+                <div className="bg-[#f5f5f5] aspect-square mb-3 overflow-hidden relative">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.title}
+                    fill
+                    className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                  />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                    className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 right-2 bg-black text-white px-3 py-1.5 rounded-full text-[12px] font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+                <h3 className="font-medium text-[#111] text-[14px] line-clamp-1">{product.title}</h3>
+                <p className="text-[#707070] text-[14px]">{product.category || "Men's Shoes"}</p>
+                <p className="font-medium text-[14px] mt-1">${product.price}</p>
+              </div>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── CATEGORY LINKS CAROUSEL ─── */}

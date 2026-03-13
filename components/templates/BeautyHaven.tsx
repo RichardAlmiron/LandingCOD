@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin, Star, Gift, ChevronRight } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, Star, Gift, ChevronRight, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#1a1a1a] selection:bg-[#f26b21] selection:text-white pb-0 overflow-x-hidden">
@@ -24,11 +50,18 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 h-[72px] lg:h-[88px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6">
-            <div className="lg:hidden flex flex-col space-y-1 cursor-pointer p-2">
-              <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
-              <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
-              <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
-            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex flex-col space-y-1 cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+                <>
+                  <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
+                  <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
+                  <span className="w-6 h-0.5 bg-[#1a1a1a] block rounded-full"></span>
+                </>
+              )}
+            </button>
 
             <div className="flex flex-col items-center justify-center cursor-pointer">
               <span className="font-sans text-[32px] md:text-[42px] font-black tracking-tighter leading-none text-[#1a1a1a]">
@@ -56,10 +89,15 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
               <span className="text-[10px] font-bold uppercase tracking-wider hidden xl:block group-hover:underline">Sign In</span>
             </div>
 
-            <div className="relative cursor-pointer hover:text-[#f26b21] transition-colors group flex flex-col items-center">
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#f26b21] transition-colors group flex flex-col items-center"
+            >
               <div className="relative">
                 <ShoppingBag className="w-6 h-6 mb-1" strokeWidth={1.5} />
-                <span className="absolute -top-1.5 -right-2 bg-[#df2e82] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none shadow-sm">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#df2e82] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none shadow-sm">{cartCount}</span>
+                )}
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider hidden xl:block group-hover:underline">Bag</span>
             </div>
@@ -155,15 +193,15 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
         <section className="max-w-[1440px] mx-auto px-4 md:px-6 py-16">
           <div className="flex items-end justify-between mb-8 border-b-2 border-gray-100 pb-3">
             <h2 className="text-[28px] md:text-[36px] font-black tracking-tighter text-[#1a1a1a] leading-none">
-              New Arrivals
+              New Arrivals ({totalItems})
             </h2>
             <a href="#" className="text-[14px] font-bold text-[#f26b21] hover:text-[#d95918] hover:underline transition-colors hidden sm:flex items-center">
               Shop All New <ChevronRight className="w-4 h-4 ml-1" />
             </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {products.map((product, idx) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 md:gap-6">
+            {paginatedItems.map((product, idx) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-gray-100 p-4 rounded-xl hover:shadow-xl transition-shadow duration-300 relative h-full">
 
                 {/* Sale / GWP Bagdes */}
@@ -175,14 +213,17 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
                   )}
                   {idx % 3 === 0 && (
                     <span className="bg-[#f26b21] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
-                      Gift with Purchase
+                      Gift
                     </span>
                   )}
                 </div>
 
                 {/* Favorite Button */}
-                <button className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-[#df2e82] hover:bg-white shadow-sm transition-all md:opacity-0 group-hover:opacity-100">
-                  <Heart className="w-4 h-4 fill-transparent hover:fill-current" />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm transition-all md:opacity-0 group-hover:opacity-100"
+                >
+                  <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-[#df2e82] text-[#df2e82]' : 'text-gray-400 hover:text-[#df2e82]'}`} />
                 </button>
 
                 <div className="relative w-full aspect-square mb-4 bg-white flex items-center justify-center overflow-hidden rounded-lg">
@@ -194,12 +235,13 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
                     referrerPolicy="no-referrer"
                   />
 
-                  {/* Quick Look Overlay */}
-                  <div className="absolute bottom-2 inset-x-2 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:block">
-                    <button className="w-full bg-black/80 backdrop-blur-md text-white font-bold text-[12px] py-2.5 rounded hover:bg-black transition-colors">
-                      Quick Look
-                    </button>
-                  </div>
+                  {/* Add to Bag Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 inset-x-2 bg-black/80 backdrop-blur-md text-white font-bold text-[12px] py-2.5 rounded hover:bg-black transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    Add to Bag
+                  </button>
                 </div>
 
                 <div className="flex flex-col flex-1">
@@ -216,7 +258,7 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
                         <Star key={i} className="w-3.5 h-3.5 fill-current" />
                       ))}
                     </div>
-                    <span className="text-[12px] text-gray-500 font-medium ml-1">(12{idx}4)</span>
+                    <span className="text-[12px] text-gray-500 font-medium ml-1">({product.reviews || 100 + idx})</span>
                   </div>
 
                   <div className="flex flex-col items-start gap-0.5">
@@ -230,13 +272,22 @@ export default function BeautyHavenTemplate({ data }: { data: StoreData }) {
                     )}
                   </div>
                 </div>
-
-                <button className="w-full mt-4 bg-white border-2 border-[#1a1a1a] text-[#1a1a1a] font-black text-[13px] py-2 rounded-[8px] hover:bg-[#1a1a1a] hover:text-white transition-colors lg:hidden group-hover:flex justify-center items-center">
-                  Add to Bag
-                </button>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
 
           <div className="mt-12 flex justify-center lg:hidden">
             <button className="bg-white border-2 border-[#f26b21] text-[#f26b21] px-10 py-3.5 rounded-full font-black text-[14px] w-full">

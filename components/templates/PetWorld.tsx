@@ -1,9 +1,37 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, MapPin, Bone, ArrowRight, Shield, Syringe, Scissors, Smartphone, Facebook, Twitter, Instagram, Youtube, HelpCircle, Phone, Clock, CreditCard, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, MapPin, Bone, ArrowRight, Shield, Syringe, Scissors, Smartphone, Facebook, Twitter, Instagram, Youtube, HelpCircle, Phone, Clock, CreditCard, ChevronDown, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function PetWorldTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
   const topCategories = ['Dog', 'Cat', 'Fish', 'Small Pet', 'Reptile', 'Bird', 'Pharmacy', 'Services', 'Deals'];
   const topProducts = data.products.slice(0, 5);
 
@@ -31,8 +59,11 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 lg:px-8 py-4 flex items-center justify-between gap-4 lg:gap-8 bg-white relative z-20">
 
           <div className="flex items-center gap-4 shrink-0">
-            <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors text-[#001952]">
-              <Menu className="w-[28px] h-[28px]" strokeWidth={2.5} />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors text-[#001952]"
+            >
+              {mobileMenuOpen ? <X className="w-[28px] h-[28px]" strokeWidth={2.5} /> : <Menu className="w-[28px] h-[28px]" strokeWidth={2.5} />}
             </button>
             <div className="cursor-pointer flex items-center">
               <span className="font-black text-[32px] md:text-[44px] tracking-tighter text-[#001952] lowercase leading-none select-none">
@@ -62,13 +93,28 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
               <User className="w-6 h-6 mb-1 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2} />
               <span className="text-[12px] font-bold tracking-tight flex items-center">Sign In <ChevronDown className="w-3 h-3 ml-0.5" /></span>
             </button>
-            <button className="flex flex-col items-center cursor-pointer hover:text-[#e31837] transition-colors p-1 group relative">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative hidden md:flex flex-col items-center cursor-pointer hover:text-[#e31837] transition-colors p-1 group"
+            >
+              <Heart className={`w-6 h-6 mb-1 group-hover:-translate-y-0.5 transition-transform ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
+              <span className="text-[12px] font-bold tracking-tight">Favorites</span>
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center cursor-pointer hover:text-[#e31837] transition-colors p-1 group relative"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[26px] h-[26px] mb-1 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2} />
-                <span className="absolute -top-1.5 -right-2 bg-[#e31837] text-white text-[11px] font-black w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#e31837] text-white text-[11px] font-black w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white shadow-sm">{cartCount}</span>
+                )}
               </div>
               <span className="text-[12px] font-bold tracking-tight hidden sm:block">Cart</span>
-            </button>
+            </div>
           </div>
         </div>
 
@@ -148,11 +194,11 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
         </div>
 
         {/* ─── TOP PICKS CAROUSEL ─── */}
-        {topProducts.length > 0 && (
+        {paginatedItems.length > 0 && (
           <div className="mb-16 md:mb-20">
             <div className="flex items-center justify-between mb-8 pb-3 border-b-2 border-gray-100">
               <h2 className="text-[24px] md:text-[32px] font-black text-[#001952] tracking-tight flex items-center">
-                <Bone className="w-[32px] h-[32px] mr-3 text-[#e31837] fill-[#e31837] hidden sm:block" /> Top Picks for You
+                <Bone className="w-[32px] h-[32px] mr-3 text-[#e31837] fill-[#e31837] hidden sm:block" /> Top Picks for You ({totalItems})
               </h2>
               <a href="#" className="font-bold text-[15px] text-[#001952] hover:text-[#e31837] hover:underline flex items-center">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
@@ -160,7 +206,7 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
-              {topProducts.map((product, idx) => {
+              {paginatedItems.map((product: any, idx: number) => {
                 const isSale = idx % 2 === 0;
                 return (
                   <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-gray-200 rounded-[12px] overflow-hidden hover:border-[#001952] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all relative pb-4">
@@ -175,6 +221,12 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
                         className="object-contain p-4 group-hover:scale-[1.05] transition-transform duration-500 mix-blend-multiply"
                         referrerPolicy="no-referrer"
                       />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                        className="absolute top-2 right-2 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                      </button>
                     </div>
 
                     {/* Content */}
@@ -192,7 +244,10 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
                           </span>
                           {product.originalPrice && <span className="text-[13px] text-gray-400 line-through font-bold">${product.originalPrice}</span>}
                         </div>
-                        <button className="w-full bg-white border-2 border-[#001952] text-[#001952] py-2.5 rounded-full font-black text-[14px] group-hover:bg-[#001952] group-hover:text-white transition-all active:scale-95 shadow-sm">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                          className="w-full bg-white border-2 border-[#001952] text-[#001952] py-2.5 rounded-full font-black text-[14px] group-hover:bg-[#001952] group-hover:text-white transition-all active:scale-95 shadow-sm"
+                        >
                           Add to Cart
                         </button>
                       </div>
@@ -201,6 +256,19 @@ export default function PetWorldTemplate({ data }: { data: StoreData }) {
                 )
               })}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <ProductPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
           </div>
         )}
 

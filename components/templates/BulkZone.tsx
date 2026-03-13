@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, MapPin, Menu, ChevronDown, Phone, CreditCard, Truck, Shield, Tag, Heart, Star, Info, Mail, Facebook, Instagram, Twitter, Youtube, CheckCircle, Package, Clock, ShieldCheck, Zap, Scissors, Eye, PlusCircle, ArrowRight } from 'lucide-react';
+import { Search, ShoppingCart, User, MapPin, Menu, ChevronDown, Phone, CreditCard, Truck, Shield, Tag, Heart, Star, Info, Mail, Facebook, Instagram, Twitter, Youtube, CheckCircle, Package, Clock, ShieldCheck, Zap, Scissors, Eye, PlusCircle, ArrowRight, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BulkZoneTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-[#f2f2f2] font-sans text-stone-800">
       {/* Utility Bar */}
@@ -45,7 +72,13 @@ export default function BulkZoneTemplate({ data }: { data: StoreData }) {
           </div>
 
           {/* Global Actions */}
-          <div className="flex items-center gap-8 font-extrabold text-[#005daa]">
+          <div className="flex items-center gap-6 lg:gap-8 font-extrabold text-[#005daa]">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#e31837] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
             <div className="flex flex-col items-start cursor-pointer group">
               <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider group-hover:text-[#e31837]">Hello, Sign In</span>
               <div className="flex items-center gap-1">
@@ -54,9 +87,24 @@ export default function BulkZoneTemplate({ data }: { data: StoreData }) {
               </div>
             </div>
             <div className="h-10 w-px bg-stone-200" />
-            <div className="flex flex-col items-center cursor-pointer group relative">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:flex flex-col items-center cursor-pointer group relative"
+            >
+              <Heart className={`w-7 h-7 ${favorites.length > 0 ? 'fill-[#e31837] text-[#e31837]' : 'text-[#005daa]'}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#e31837] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{favorites.length}</span>
+              )}
+              <span className="text-[10px] mt-0.5 uppercase tracking-tighter">Lists</span>
+            </div>
+            <div 
+              onClick={addToCart}
+              className="flex flex-col items-center cursor-pointer group relative"
+            >
               <ShoppingCart className="w-8 h-8 text-[#005daa] group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-1 -right-2 bg-[#e31837] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-[#e31837] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white">{cartCount}</span>
+              )}
               <span className="text-[10px] mt-0.5 uppercase tracking-tighter">Cart</span>
             </div>
           </div>
@@ -169,13 +217,16 @@ export default function BulkZoneTemplate({ data }: { data: StoreData }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 border-t border-stone-200">
-            {data.products.map((product, i) => (
-              <div key={product.id} data-product-id={product.id} className="p-6 border-r border-b border-stone-100 hover:bg-stone-50 transition-colors group cursor-pointer relative">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 border-t border-stone-200">
+            {paginatedItems.map((product, i) => (
+              <div key={product.id || i} data-product-id={product.id} className="p-4 border-r border-b border-stone-100 hover:bg-stone-50 transition-colors group cursor-pointer relative">
                 {i < 3 && (
-                  <div className="absolute top-4 right-4 text-[#e31837]">
-                    <Heart className="w-4 h-4 hover:fill-[#e31837]" />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 text-[#e31837] hover:scale-110 transition-transform"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-[#e31837]' : ''}`} />
+                  </button>
                 )}
                 <div className="aspect-[4/3] mb-6 flex items-center justify-center relative">
                   <img src={product.imageUrl} alt={product.title} className="max-w-full max-h-full object-contain mix-blend-multiply" />
@@ -216,7 +267,10 @@ export default function BulkZoneTemplate({ data }: { data: StoreData }) {
                     </div>
                   </div>
 
-                  <button className="w-full bg-[#005daa] text-white py-3 font-black text-[11px] uppercase tracking-widest hover:bg-[#004d8a] transition-all rounded shadow-sm">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="w-full bg-[#005daa] text-white py-2 font-black text-[11px] uppercase tracking-widest hover:bg-[#004d8a] transition-all rounded shadow-sm"
+                  >
                     Add to Cart
                   </button>
 
@@ -228,6 +282,19 @@ export default function BulkZoneTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 p-4">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Global Warehouse Services - 3D Card Style */}

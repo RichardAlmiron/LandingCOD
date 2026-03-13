@@ -1,10 +1,27 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, MapPin, ChevronDown, Heart, Store, Truck, ShieldCheck, Tag, Star, Home, Shirt, Sparkles, Smartphone, Plus, Monitor, Coffee } from 'lucide-react';
+import { Search, ShoppingCart, User, MapPin, ChevronDown, Heart, Store, Truck, ShieldCheck, Tag, Star, Home, Shirt, Sparkles, Smartphone, Plus, Monitor, Coffee, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BullseyeTemplate({ data }: { data: StoreData }) {
-  // Use recommendations logic
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const topDeals = data.products.slice(0, 6);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#333] overflow-x-hidden">
@@ -33,8 +50,11 @@ export default function BullseyeTemplate({ data }: { data: StoreData }) {
 
           {/* Logo & Main Nav */}
           <div className="flex items-center gap-6 shrink-0 h-full">
-            <button className="lg:hidden text-[#333] hover:bg-gray-100 p-2 rounded-full transition-colors">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden text-[#333] hover:bg-gray-100 p-2 rounded-full transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
             <div className="w-10 h-10 rounded-full bg-[#cc0000] flex items-center justify-center text-white font-black text-2xl shadow-sm shrink-0 mt-[-2px] cursor-pointer hover:scale-105 transition-transform">
               ◎
@@ -66,10 +86,15 @@ export default function BullseyeTemplate({ data }: { data: StoreData }) {
               <span className="text-[14px] font-bold hidden xl:block">Sign in</span>
               <ChevronDown className="w-[14px] h-[14px] hidden lg:block text-gray-400" />
             </button>
-            <button className="flex items-center px-3 py-2 hover:bg-[#f4f4f4] rounded-[8px] transition-colors cursor-pointer gap-2 relative">
+            <button 
+              onClick={addToCart}
+              className="flex items-center px-3 py-2 hover:bg-[#f4f4f4] rounded-[8px] transition-colors cursor-pointer gap-2 relative"
+            >
               <div className="relative">
                 <ShoppingCart className="w-[24px] h-[24px]" strokeWidth={2} />
-                <span className="absolute -top-1.5 -right-2 bg-[#cc0000] text-white text-[11px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#cc0000] text-white text-[11px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white">{cartCount}</span>
+                )}
               </div>
             </button>
           </div>
@@ -205,6 +230,65 @@ export default function BullseyeTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* All Products Grid with Pagination */}
+        <div className="mb-14">
+          <div className="flex justify-between items-end mb-6">
+            <h2 className="text-[22px] font-bold tracking-tight">All Products ({totalItems})</h2>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 lg:gap-4">
+            {paginatedItems.map((product, i) => (
+              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col h-full rounded-[8px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-shadow p-2 -m-2">
+                <div className="relative aspect-square mb-3 bg-[#f4f4f4] rounded-[8px] overflow-hidden">
+                  <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 active:scale-95"
+                  >
+                    <Plus className="w-6 h-6 text-[#333]" />
+                  </button>
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                  {/* Price Block */}
+                  <div className="mb-1">
+                    <span className="text-[18px] font-bold text-[#333] leading-tight mr-2">${product.price}</span>
+                    {product.originalPrice && <span className="text-[12px] text-gray-500 line-through">Reg ${product.originalPrice}</span>}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-[13px] text-[#333] font-normal line-clamp-2 leading-snug hover:underline mb-2">{product.title}</h3>
+
+                  {/* Reviews */}
+                  <div className="flex items-center space-x-1 mb-3 mt-auto">
+                    <div className="flex text-[#333]">
+                      <Star className="w-3 h-3 fill-current" />
+                      <Star className="w-3 h-3 fill-current" />
+                      <Star className="w-3 h-3 fill-current" />
+                      <Star className="w-3 h-3 fill-current" />
+                      <Star className="w-3 h-3 text-gray-300" />
+                    </div>
+                    <span className="text-[11px] text-gray-600">({product.reviews || Math.floor(Math.random() * 500)})</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Feature Grid: Fulfillment Methods */}

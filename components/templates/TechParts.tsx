@@ -1,11 +1,37 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Cpu, Monitor, Zap, ChevronDown, Wrench, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, ShieldCheck, Truck, Microchip, HardDrive, Box, Activity, Layers, Settings, Globe, Clock, ChevronRight, Star, AlertCircle } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Cpu, Monitor, Zap, ChevronDown, Wrench, Smartphone, ArrowRight, Facebook, Twitter, Instagram, Youtube, ShieldCheck, Truck, Microchip, HardDrive, Box, Activity, Layers, Settings, Globe, Clock, ChevronRight, Star, AlertCircle, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function TechPartsTemplate({ data }: { data: StoreData }) {
   const [activeCategory, setActiveCategory] = useState('Components');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -75,13 +101,34 @@ export default function TechPartsTemplate({ data }: { data: StoreData }) {
                 <User className="w-6 h-6 text-white/60 group-hover:text-[#ff6600] transition-colors" />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-widest opacity-40 group-hover:opacity-100">Sign In</span>
               </div>
-              <div className="relative cursor-pointer group bg-white/5 p-3 rounded-lg hover:bg-[#ff6600] transition-all border border-white/10">
-                <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-2 -right-2 bg-[#ff6600] text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#003366] shadow-xl">
-                  0
-                </span>
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="relative cursor-pointer group hidden sm:block"
+              >
+                <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#003366] shadow-xl">
+                    {favorites.length}
+                  </span>
+                )}
               </div>
-              <Menu className="w-7 h-7 md:hidden cursor-pointer" />
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group bg-white/5 p-3 rounded-lg hover:bg-[#ff6600] transition-all border border-white/10"
+              >
+                <ShoppingCart className="w-6 h-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#ff6600] text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#003366] shadow-xl">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+              </button>
             </div>
           </div>
         </div>
@@ -171,8 +218,8 @@ export default function TechPartsTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-slate-200 hover:border-[#ff6600] hover:shadow-[0_40px_80px_-15px_rgba(0,51,102,0.15)] transition-all duration-500 rounded-2xl overflow-hidden">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-slate-200 hover:border-[#ff6600] hover:shadow-[0_40px_80px_-15px_rgba(0,51,102,0.15)] transition-all duration-500 rounded-2xl overflow-hidden">
                 <div className="relative aspect-square overflow-hidden bg-white p-10 flex items-center justify-center">
                   <img
                     src={product.imageUrl}
@@ -192,8 +239,16 @@ export default function TechPartsTemplate({ data }: { data: StoreData }) {
                     )}
                   </div>
 
+                  {/* Wishlist Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-4 right-4 p-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
+
                   {/* Subtle Grid Pattern Overlay */}
-                  <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+                  <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]}" />
                 </div>
 
                 <div className="p-8 space-y-4 flex-1 flex flex-col border-t border-slate-100">
@@ -224,7 +279,10 @@ export default function TechPartsTemplate({ data }: { data: StoreData }) {
                       </div>
                     </div>
 
-                    <button className="w-full bg-[#003366] text-white py-4 rounded font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#ff6600] transition-all shadow-xl flex items-center justify-center gap-3">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-[#003366] text-white py-4 rounded font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#ff6600] transition-all shadow-xl flex items-center justify-center gap-3"
+                    >
                       <ShoppingCart className="w-4 h-4" /> Add to Workshop
                     </button>
                   </div>
@@ -232,6 +290,19 @@ export default function TechPartsTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
 
           <div className="flex justify-center mt-20">
             <button className="border-2 border-[#003366] px-20 py-5 font-black uppercase text-[12px] tracking-[0.4em] hover:bg-[#003366] hover:text-white transition-all text-[#003366]">

@@ -1,11 +1,36 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Heart, User, Menu, Zap, ShieldCheck, Gamepad2, Monitor, Smartphone, Gift, ArrowRight, Facebook, Twitter, Instagram, Youtube, Twitch, Lock, Globe, ChevronRight, Star, AlertTriangle, Key, Download, Wallet, Clock } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Menu, Zap, ShieldCheck, Gamepad2, Monitor, Smartphone, Gift, ArrowRight, Facebook, Twitter, Instagram, Youtube, Twitch, Lock, Globe, ChevronRight, Star, AlertTriangle, Key, Download, Wallet, Clock, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function KeyMarketTemplate({ data }: { data: StoreData }) {
   const [activeTab, setActiveTab] = useState('Trending');
   const [timer, setTimer] = useState('02:45:12');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   useEffect(() => {
     // Simple countdown simulation
@@ -73,17 +98,37 @@ export default function KeyMarketTemplate({ data }: { data: StoreData }) {
 
             {/* Global Actions */}
             <div className="flex items-center gap-8">
+              <div 
+                onClick={() => toggleFavorite('header')}
+                className="hidden md:flex flex-col items-center cursor-pointer group hover:text-orange-500 transition-colors"
+              >
+                <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-orange-500 text-orange-500' : ''}`} />
+                <span className="text-[9px] font-black uppercase mt-1 tracking-widest text-stone-500 group-hover:text-orange-500">Wishlist</span>
+                {favorites.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-orange-500 text-white text-[8px] font-black px-1.5 rounded-full">{favorites.length}</span>
+                )}
+              </div>
               <div className="hidden md:flex flex-col items-center cursor-pointer group hover:text-orange-500 transition-colors">
                 <User className="w-6 h-6" />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-widest text-stone-500 group-hover:text-orange-500">Account</span>
               </div>
-              <div className="relative cursor-pointer group bg-stone-100 p-3.5 rounded-2xl hover:bg-orange-500 transition-all">
+              <div 
+                onClick={addToCart}
+                className="relative cursor-pointer group bg-stone-100 p-3.5 rounded-2xl hover:bg-orange-500 transition-all"
+              >
                 <ShoppingCart className="w-6 h-6 group-hover:text-white transition-colors" />
-                <span className="absolute -top-2 -right-2 bg-black text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg">
-                  0
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-black text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-lg">
+                    {cartCount}
+                  </span>
+                )}
               </div>
-              <Menu className="w-7 h-7 xl:hidden cursor-pointer" />
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="xl:hidden p-2 hover:text-orange-500 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+              </button>
             </div>
           </div>
         </div>
@@ -155,8 +200,8 @@ export default function KeyMarketTemplate({ data }: { data: StoreData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-stone-100 rounded-[2rem] overflow-hidden hover:border-orange-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white border border-stone-100 rounded-[2rem] overflow-hidden hover:border-orange-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
                 <div className="relative aspect-video overflow-hidden bg-black">
                   <img
                     src={product.imageUrl}
@@ -179,6 +224,14 @@ export default function KeyMarketTemplate({ data }: { data: StoreData }) {
                   )}
 
                   <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                  
+                  {/* Interactive buttons */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-4 right-4 p-2 bg-black/60 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-orange-500 text-orange-500' : 'text-white'}`} />
+                  </button>
                 </div>
 
                 <div className="p-6 space-y-4 flex-1 flex flex-col">
@@ -206,14 +259,30 @@ export default function KeyMarketTemplate({ data }: { data: StoreData }) {
                         )}
                       </div>
                     </div>
-                    <div className="bg-orange-500 p-3 rounded-xl hover:bg-black transition-all">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="bg-orange-500 p-3 rounded-xl hover:bg-black transition-all"
+                    >
                       <ShoppingCart className="w-5 h-5 text-white" />
-                    </div>
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* Marketplace Assurance System */}

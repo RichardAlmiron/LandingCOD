@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, User, MapPin, Eye, Calendar, ShieldCheck, BookOpen, ArrowRight, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, MapPin, Eye, Calendar, ShieldCheck, BookOpen, ArrowRight, Facebook, Twitter, Instagram, Youtube, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function OpticalRetailTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#333333]">
       <div className="bg-[#005a9c] text-white text-[12px] py-2 px-6 flex justify-center font-bold tracking-wide">
@@ -24,11 +51,32 @@ export default function OpticalRetailTemplate({ data }: { data: StoreData }) {
             </span>
           </div>
           <div className="flex items-center space-x-6 text-[#005a9c]">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#003d6b] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
             <Search className="w-5 h-5 cursor-pointer hover:text-[#003d6b] transition-colors" />
             <MapPin className="w-5 h-5 cursor-pointer hover:text-[#003d6b] transition-colors" />
             <User className="w-5 h-5 cursor-pointer hover:text-[#003d6b] transition-colors" />
-            <div className="relative cursor-pointer hover:text-[#003d6b] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="relative cursor-pointer hover:text-[#003d6b] transition-colors hidden md:block"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#003d6b] transition-colors"
+            >
               <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#005a9c] text-white text-[9px] font-bold px-1.5 rounded-full">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -47,25 +95,48 @@ export default function OpticalRetailTemplate({ data }: { data: StoreData }) {
         </div>
         <div className="mb-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-[#333333] mb-2">Featured Brands</h2>
+            <h2 className="text-3xl font-black text-[#333333] mb-2">Featured Brands ({totalItems})</h2>
             <p className="text-sm font-sans text-gray-500">Explore top designers.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
+            {paginatedItems.map((product: any, idx: number) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
                 <div className="relative aspect-[4/3] mb-4 overflow-hidden w-full bg-[#f4f4f4] rounded-lg">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-[1500ms]" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </button>
                 </div>
                 <div className="flex flex-col space-y-1">
                   <h3 className="text-sm font-bold text-[#333333]">{product.title}</h3>
                   <div className="text-[12px] font-sans text-gray-500">{product.category}</div>
-                  <div className="pt-2">
+                  <div className="pt-2 flex items-center justify-center space-x-2">
                     <span className="font-sans font-bold text-[14px] text-[#005a9c]">${product.price}</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="text-[10px] bg-[#005a9c] text-white px-2 py-1 rounded hover:bg-[#003d6b] transition-colors"
+                    >
+                      Add
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Shop by Category */}

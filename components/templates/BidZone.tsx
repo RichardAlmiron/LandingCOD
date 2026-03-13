@@ -1,8 +1,35 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingCart, Bell, ChevronDown, CheckCircle, ShieldCheck, ArrowRight, Facebook, Twitter, Smartphone, Monitor, Watch, Shirt, Heart, Tag } from 'lucide-react';
+import { Search, ShoppingCart, Bell, ChevronDown, CheckCircle, ShieldCheck, ArrowRight, Facebook, Twitter, Smartphone, Monitor, Watch, Shirt, Heart, Tag, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BidZoneTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleWatchlist = (productId: string) => {
+    setWatchlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-white font-sans text-[#191919] overflow-x-hidden">
 
@@ -23,7 +50,15 @@ export default function BidZoneTemplate({ data }: { data: StoreData }) {
             <a href="#" className="hover:underline hidden sm:flex items-center gap-1">Watchlist <ChevronDown className="w-3 h-3 pt-[2px]" /></a>
             <a href="#" className="hover:underline hidden sm:flex items-center gap-1">My BidZone <ChevronDown className="w-3 h-3 pt-[2px]" /></a>
             <Bell className="w-5 h-5 cursor-pointer hover:text-[#0654ba]" strokeWidth={1.5} />
-            <ShoppingCart className="w-5 h-5 cursor-pointer hover:text-[#0654ba]" strokeWidth={1.5} />
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#0654ba]"
+            >
+              <ShoppingCart className="w-5 h-5" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#dd1e31] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -136,73 +171,77 @@ export default function BidZoneTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* Daily Deals Header */}
+        {/* Main Product Grid WITH PAGINATION (3x5 = 15 products) */}
         <div className="flex items-end space-x-4 mb-6">
-          <h3 className="text-[24px] font-bold leading-none tracking-tight">Today's Deals – All With Free Shipping</h3>
-          <a href="#" className="text-[#0654ba] hover:underline flex items-center text-[14px] leading-none mb-1">
-            See all <ArrowRight className="w-4 h-4 ml-0.5 -mt-0.5" />
-          </a>
+          <h3 className="text-[24px] font-bold leading-none tracking-tight">Today's Deals – All With Free Shipping ({totalItems} items)</h3>
         </div>
-
-        {/* Main Product Grid (BidZone Style Square Cards) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10 mb-16">
-          {data.products.map(product => {
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-4 gap-y-8 mb-8">
+          {paginatedItems.map((product, idx) => {
             const price = parseFloat(product.price.replace(/,/g, ''));
             const originalPrice = product.originalPrice ? parseFloat(product.originalPrice.replace(/,/g, '')) : 0;
             const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
 
             return (
-              <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
+              <div key={`bidzone-${idx}-${product.id}`} data-product-id={product.id} className="group cursor-pointer flex flex-col">
                 <div className="bg-[#f7f7f7] aspect-square mb-2 flex items-center justify-center overflow-hidden rounded-[8px] relative z-0">
                   <img src={product.imageUrl} alt={product.title} className="max-w-[85%] max-h-[85%] object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
 
-                  {/* BidZone Top Rated Seller Overlay (Randomized for realism) */}
+                  {/* Watchlist Heart */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleWatchlist(product.id); }}
+                    className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors"
+                  >
+                    <Heart className={`w-4 h-4 ${watchlist.includes(product.id) ? 'fill-[#dd1e31] text-[#dd1e31]' : 'text-gray-500'}`} />
+                  </button>
+                  
+                  {/* Top Rated Seller */}
                   {Math.random() > 0.7 && (
-                    <div className="absolute top-0 right-0 p-2">
-                      <ShieldCheck className="w-5 h-5 text-[#f5af02] fill-white" />
-                    </div>
-                  )}
-                  {/* Sponsor tag */}
-                  {Math.random() > 0.8 && (
-                    <div className="absolute top-2 left-2 text-[10px] text-gray-500 uppercase tracking-wider bg-white/80 px-1 rounded-[2px]">
-                      Sponsored
+                    <div className="absolute bottom-2 left-2">
+                      <ShieldCheck className="w-4 h-4 text-[#f5af02] fill-white" />
                     </div>
                   )}
                 </div>
 
-                <h4 className="text-[14px] text-[#191919] line-clamp-2 leading-snug mb-1 font-normal group-hover:underline">{product.title}</h4>
+                <h4 className="text-[13px] text-[#191919] line-clamp-2 leading-snug mb-1 font-normal group-hover:underline">{product.title}</h4>
 
                 <div className="flex flex-col mt-auto pt-1">
-                  <div className="text-[20px] font-bold text-[#191919] mb-0.5 leading-none">${product.price}</div>
+                  <div className="text-[18px] font-bold text-[#191919] mb-0.5 leading-none">${product.price}</div>
 
                   {discount > 0 && (
-                    <div className="text-[12px] text-[#555] flex items-center mb-0.5">
+                    <div className="text-[11px] text-[#555] flex items-center mb-0.5">
                       <span className="line-through mr-1.5">${product.originalPrice}</span>
                       <span className="text-[#191919] font-bold">{discount}% OFF</span>
                     </div>
                   )}
-                  {!product.originalPrice && <div className="h-[18px]"></div>}
 
-                  <div className="text-[12px] text-[#555] font-normal mb-1">
+                  <div className="text-[11px] text-[#555] font-normal mb-1">
                     <span className="font-bold text-[#191919]">Free shipping</span>
                   </div>
 
-                  {/* Almost gone / Sold info */}
-                  {Math.random() > 0.5 ? (
-                    <div className="text-[12px] text-[#dd1e31] font-bold flex items-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#dd1e31] mr-1.5"></span>
-                      Almost gone
-                    </div>
-                  ) : (
-                    <div className="text-[12px] text-[#555] flex items-center">
-                      {Math.floor(Math.random() * 900) + 10} sold
-                    </div>
-                  )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="bg-[#3665f3] text-white text-[12px] font-bold py-1.5 rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mb-12">
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
+          </div>
+        )}
 
         {/* Authenticity Guarantee Banner */}
         <div className="bg-[#f7f7f7] rounded-[16px] p-8 md:p-10 mb-16 flex flex-col md:flex-row items-center border border-gray-200 overflow-hidden relative cursor-pointer group">

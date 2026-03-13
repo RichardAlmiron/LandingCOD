@@ -1,11 +1,38 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, User, Menu, MapPin, ChevronDown, ArrowRight, Star, Leaf, CreditCard, Facebook, Twitter, Instagram, Youtube, Heart } from 'lucide-react';
+import { Search, ShoppingBag, User, Menu, MapPin, ChevronDown, ArrowRight, Star, Leaf, CreditCard, Facebook, Twitter, Instagram, Youtube, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ClassicWearTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
   const gapBlue = "#002868";
-  const products = data.products;
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111] selection:bg-[#002868] selection:text-white pb-0 overflow-x-hidden">
@@ -44,7 +71,12 @@ export default function ClassicWearTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-full flex items-center justify-between">
 
           <div className="flex items-center">
-            <Menu className="w-7 h-7 lg:hidden mr-4 cursor-pointer text-[#002868]" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 mr-2 hover:text-[#002868] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            </button>
 
             <div className="hidden lg:flex items-center cursor-pointer mr-10 bg-[#002868] text-white px-3 py-1.5 h-full">
               <span className="font-serif font-black text-[38px] tracking-tighter leading-none mb-1">
@@ -83,9 +115,24 @@ export default function ClassicWearTemplate({ data }: { data: StoreData }) {
               <User className="w-6 h-6" />
             </div>
 
-            <div className="relative cursor-pointer hover:opacity-70 transition-opacity">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
+              <Heart className={`w-6 h-6 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{favorites.length}</span>
+              )}
+            </div>
+
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:opacity-70 transition-opacity"
+            >
               <ShoppingBag className="w-6 h-6" />
-              <span className="absolute -bottom-2 -right-2 bg-[#002868] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -bottom-2 -right-2 bg-[#002868] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -141,19 +188,19 @@ export default function ClassicWearTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── NEW ARRIVALS GRID ─── */}
+        {/* ─── NEW ARRIVALS GRID (Paginated) ─── */}
         <section className="px-4 md:px-8 max-w-[1600px] mx-auto mb-20">
           <div className="text-center mb-10">
-            <h2 className="text-[32px] md:text-[44px] font-serif text-[#002868] leading-none mb-4">Trending Now</h2>
+            <h2 className="text-[32px] md:text-[44px] font-serif text-[#002868] leading-none mb-4">Trending Now ({totalItems})</h2>
             <a href="#" className="text-[13px] font-bold uppercase tracking-widest text-gray-500 hover:text-[#002868] hover:underline underline-offset-4 transition-colors">
               Shop New Arrivals
             </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-x-6 gap-y-12">
-            {products.map((product, idx) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-x-4 gap-y-8">
+            {paginatedItems.map((product, idx) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col">
-                <div className="relative aspect-[3/4] mb-4 bg-gray-100 overflow-hidden">
+                <div className="relative aspect-[3/4] mb-3 bg-gray-100 overflow-hidden">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
@@ -162,58 +209,77 @@ export default function ClassicWearTemplate({ data }: { data: StoreData }) {
                     referrerPolicy="no-referrer"
                   />
                   {idx % 3 === 0 && (
-                    <div className="absolute top-0 left-0 bg-white text-[#002868] text-[10px] font-bold px-3 py-1.5 uppercase tracking-widest shadow-sm">
-                      New Arrival
+                    <div className="absolute top-0 left-0 bg-white text-[#002868] text-[9px] font-bold px-2 py-1 uppercase tracking-widest shadow-sm">
+                      New
                     </div>
                   )}
                   {idx % 4 === 1 && (
-                    <div className="absolute top-0 left-0 bg-red-700 text-white text-[10px] font-bold px-3 py-1.5 uppercase tracking-widest shadow-sm">
-                      Best Seller
+                    <div className="absolute top-0 left-0 bg-red-700 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest shadow-sm">
+                      Best
                     </div>
                   )}
                   {/* Quick Shop Overlay */}
-                  <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <button className="w-full bg-white/95 backdrop-blur-md text-[#002868] py-3 text-center text-[12px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#002868] hover:text-white border border-gray-200 transition-colors">
-                      Quick Shop
+                  <div className="absolute bottom-0 left-0 w-full p-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="w-full bg-white/95 backdrop-blur-md text-[#002868] py-2 text-center text-[11px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#002868] hover:text-white border border-gray-200 transition-colors"
+                    >
+                      Add
                     </button>
                   </div>
-                  <div className="absolute top-3 right-3 bg-white/80 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500 hidden md:block">
-                    <Heart className="w-4 h-4" strokeWidth={2} />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-2 right-2 bg-white/80 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:text-red-500"
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
+                  </button>
                 </div>
 
                 <div className="flex flex-col flex-1">
                   {/* Swatches (Heritage Style) */}
-                  <div className="flex gap-1.5 mb-3">
-                    <div className="w-5 h-5 bg-[#002868] rounded-full border border-gray-300 shadow-sm"></div>
-                    <div className="w-5 h-5 bg-stone-300 rounded-full border border-gray-300 shadow-sm"></div>
-                    <div className="w-5 h-5 bg-white rounded-full border border-gray-300 shadow-sm"></div>
-                    {idx % 2 === 0 && <span className="text-[11px] font-medium text-gray-500 flex items-center ml-1">+2 colors</span>}
+                  <div className="flex gap-1 mb-2">
+                    <div className="w-4 h-4 bg-[#002868] rounded-full border border-gray-300 shadow-sm"></div>
+                    <div className="w-4 h-4 bg-stone-300 rounded-full border border-gray-300 shadow-sm"></div>
+                    <div className="w-4 h-4 bg-white rounded-full border border-gray-300 shadow-sm"></div>
+                    {idx % 2 === 0 && <span className="text-[10px] font-medium text-gray-500 flex items-center ml-1">+2</span>}
                   </div>
 
-                  <h3 className="text-[14px] md:text-[15px] font-medium text-gray-800 line-clamp-2 leading-tight mb-2 group-hover:text-[#002868] transition-colors">
+                  <h3 className="text-[12px] font-medium text-gray-800 line-clamp-2 leading-tight mb-1 group-hover:text-[#002868] transition-colors">
                     {product.title}
                   </h3>
 
                   <div className="flex flex-col mb-1 mt-auto">
                     <div className="flex items-baseline space-x-2">
-                      <span className="text-[16px] md:text-[18px] font-bold text-[#002868]">
+                      <span className="text-[14px] font-bold text-[#002868]">
                         ${product.price}
                       </span>
                       {product.originalPrice && (
-                        <span className="text-[13px] font-medium text-gray-500 line-through">
+                        <span className="text-[11px] font-medium text-gray-500 line-through">
                           ${product.originalPrice}
                         </span>
                       )}
                     </div>
-                    <span className="text-[12px] font-bold text-red-700 uppercase tracking-widest mt-1">
-                      Extra 20% Off at checkout
+                    <span className="text-[10px] font-bold text-red-700 uppercase tracking-widest mt-1">
+                      Extra 20% Off
                     </span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── THE DENIM SHOP ─── */}

@@ -1,9 +1,16 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, Menu, User, Truck, ArrowRight, Sofa, Bed, Utensils, Wrench, Leaf, ShieldCheck, ChevronRight, Facebook, Instagram, Twitter, Youtube, Linkedin, Info, Star } from 'lucide-react';
+import { Search, ShoppingBag, Heart, Menu, User, Truck, ArrowRight, Sofa, Bed, Utensils, Wrench, Leaf, ShieldCheck, ChevronRight, Facebook, Instagram, Twitter, Youtube, Linkedin, Info, Star, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function NordicHomeTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
   const categories = [
     { name: 'Products', href: '#' },
     { name: 'Rooms', href: '#' },
@@ -21,7 +28,26 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
     { name: 'Workspace', icon: Wrench },
   ];
 
-  const topSellers = data.products.slice(0, 8); // Showing up to 8 if available
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#111111] overflow-x-hidden selection:bg-[#0058a3] selection:text-white pb-10">
@@ -31,8 +57,11 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
 
         {/* Left: Menu + Logo */}
         <div className="flex items-center space-x-3 md:space-x-6">
-          <button className="p-2 hover:bg-[#f5f5f5] rounded-full transition-colors cursor-pointer group">
-            <Menu className="w-6 h-6 md:w-7 md:h-7 group-hover:scale-110 transition-transform" strokeWidth={2} />
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 hover:bg-[#f5f5f5] rounded-full transition-colors cursor-pointer group"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6 md:w-7 md:h-7" strokeWidth={2} /> : <Menu className="w-6 h-6 md:w-7 md:h-7 group-hover:scale-110 transition-transform" strokeWidth={2} />}
           </button>
           {/* NordicHome Logo proxy: thick blue text on yellow block or just iconic blue */}
           <div className="font-sans font-black text-[28px] md:text-[36px] tracking-tight md:tracking-tighter bg-[#fbd914] text-[#0058a3] px-3 py-1 rounded-[2px] leading-none shrink-0 uppercase select-none cursor-pointer hover:opacity-90 transition-opacity">
@@ -64,15 +93,26 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
             <span className="text-[11px] font-bold hidden md:block tracking-wide">Hej! Log in</span>
           </button>
 
-          <button className="flex flex-col items-center justify-center cursor-pointer hover:bg-[#f5f5f5] p-2 md:p-3 rounded-full md:rounded-lg transition-colors min-w-[60px]">
-            <Heart className="w-[22px] h-[22px] md:mb-1" strokeWidth={2} />
+          <button 
+            onClick={() => toggleFavorite('header')}
+            className="flex flex-col items-center justify-center cursor-pointer hover:bg-[#f5f5f5] p-2 md:p-3 rounded-full md:rounded-lg transition-colors min-w-[60px]"
+          >
+            <Heart className={`w-[22px] h-[22px] md:mb-1 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={2} />
+            {favorites.length > 0 && (
+              <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+            )}
             <span className="text-[11px] font-bold hidden md:block tracking-wide">Favorites</span>
           </button>
 
-          <button className="flex flex-col items-center justify-center cursor-pointer hover:bg-[#f5f5f5] p-2 md:p-3 rounded-full md:rounded-lg transition-colors min-w-[60px] relative">
+          <button 
+            onClick={addToCart}
+            className="flex flex-col items-center justify-center cursor-pointer hover:bg-[#f5f5f5] p-2 md:p-3 rounded-full md:rounded-lg transition-colors min-w-[60px] relative"
+          >
             <div className="relative">
               <ShoppingBag className="w-[22px] h-[22px] md:mb-1" strokeWidth={2} />
-              <span className="absolute -top-1.5 -right-2 md:top-[2px] md:-right-2.5 bg-[#0058a3] text-white text-[10px] md:text-[11px] font-bold w-[18px] h-[18px] md:w-[20px] md:h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 md:top-[2px] md:-right-2.5 bg-[#0058a3] text-white text-[10px] md:text-[11px] font-bold w-[18px] h-[18px] md:w-[20px] md:h-[20px] flex items-center justify-center rounded-full leading-none border-2 border-white">{cartCount}</span>
+              )}
             </div>
             <span className="text-[11px] font-bold hidden md:block tracking-wide">Cart</span>
           </button>
@@ -133,11 +173,13 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
           </div>
         </div>
 
-        {/* ─── TOP SELLERS GRID ─── */}
+        {/* ─── TOP SELLERS GRID WITH PAGINATION ─── */}
         <div className="mb-16 md:mb-24">
-          <h3 className="text-[24px] md:text-[28px] font-bold mb-8 tracking-tight">Top sellers</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {topSellers.map((product, idx) => {
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-[24px] md:text-[28px] font-bold tracking-tight">Top sellers ({totalItems})</h3>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {paginatedItems.map((product, idx) => {
               const [dollars, cents] = product.price.split('.');
               return (
                 <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col relative h-full">
@@ -150,8 +192,18 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
                       referrerPolicy="no-referrer"
                     />
                     {/* Floating Add to Cart Button */}
-                    <button className="absolute bottom-3 right-3 bg-[#0058a3] text-white p-3 md:p-3.5 rounded-full shadow-lg hover:bg-[#004a89] hover:scale-105 transition-all opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 active:scale-95 z-10">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                      className="absolute bottom-3 right-3 bg-[#0058a3] text-white p-3 md:p-3.5 rounded-full shadow-lg hover:bg-[#004a89] hover:scale-105 transition-all opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 active:scale-95 z-10"
+                    >
                       <ShoppingBag className="w-[18px] h-[18px] md:w-5 md:h-5" strokeWidth={2.5} />
+                    </button>
+                    {/* Favorite Button */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-3 right-3 p-2 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
+                    >
+                      <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
                     </button>
                   </div>
                   <div className="flex-1 flex flex-col px-1">
@@ -165,7 +217,7 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
                     <div className="flex items-center space-x-1.5 mt-2">
                       <div className="flex text-[#FFCE00]">
                         {[1, 2, 3, 4].map(s => <Star key={s} className="w-[14px] h-[14px] fill-current" />)}
-                        <Heart className="w-[14px] h-[14px] text-[#FFCE00] fill-current clip-half" />
+                        <Star className="w-[14px] h-[14px] text-gray-300" />
                       </div>
                       <span className="text-[12px] text-gray-500 font-medium">({product.reviews || Math.floor(Math.random() * 500) + 50})</span>
                     </div>
@@ -174,6 +226,19 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
               )
             })}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── NEW LOWER PRICE PROMO ─── */}

@@ -1,10 +1,27 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Search, MapPin, ShoppingCart, CreditCard, Shield, Truck, Smartphone, Monitor, Car, Home, Shirt, ChevronRight, Bell, Menu, Zap } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, CreditCard, Shield, Truck, Smartphone, Monitor, Car, Home, Shirt, ChevronRight, Bell, Menu, Zap, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function MercadoCODTemplate({ data }: { data: StoreData }) {
-  // Use recommendations logic
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const topProducts = data.products.slice(0, 5);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-full bg-[#ebebeb] font-sans text-[#333] overflow-x-hidden">
@@ -42,8 +59,11 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
             </div>
 
             {/* Mobile Menu Right */}
-            <button className="md:hidden text-[#333]">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-[#333]"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
 
@@ -76,8 +96,11 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
               <a href="#" className="text-[#333] hover:text-[#000] font-normal">Crea tu cuenta</a>
               <a href="#" className="text-[#333] hover:text-[#000] font-normal">Ingresa</a>
               <a href="#" className="text-[#333] hover:text-[#000] font-normal">Mis compras</a>
-              <a href="#" className="relative group">
+              <a href="#" className="relative group" onClick={addToCart}>
                 <Bell className="w-[18px] h-[18px] text-[#333] opacity-80" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#3483fa] text-white text-[10px] rounded-full flex items-center justify-center font-bold">{cartCount}</span>
+                )}
               </a>
               <a href="#" className="relative">
                 <ShoppingCart className="w-[20px] h-[20px] text-[#333] opacity-80" />
@@ -156,13 +179,19 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
             <a href="#" className="text-[15px] font-normal text-[#3483fa] hover:text-[#1259c3]">Ver historial</a>
           </div>
 
-          {/* Grid View of Products (Meli Card Style) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-10">
-            {data.products.map(product => (
-              <div key={product.id} data-product-id={product.id} className="bg-white rounded-[4px] shadow-[0_1px_1px_0_rgba(0,0,0,.1)] hover:shadow-[0_4px_8px_0_rgba(0,0,0,.15)] transition-all cursor-pointer group flex flex-col h-full border border-transparent">
+          {/* Grid View of Products WITH PAGINATION (3x5 = 15 products) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            {paginatedItems.map((product, idx) => (
+              <div key={`mercadocod-${idx}-${product.id}`} data-product-id={product.id} className="bg-white rounded-[4px] shadow-[0_1px_1px_0_rgba(0,0,0,.1)] hover:shadow-[0_4px_8px_0_rgba(0,0,0,.15)] transition-all cursor-pointer group flex flex-col h-full border border-transparent">
                 {/* Envio Gratis Badge Overlay Meli */}
                 <div className="relative w-full overflow-hidden border-b border-gray-100 flex items-center justify-center bg-white aspect-square p-4">
                   <img src={product.imageUrl} alt={product.title} className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:opacity-90" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 right-2 bg-[#3483fa] text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <div className="p-[14px] flex flex-col flex-1 bg-white border-t border-gray-100">
@@ -175,7 +204,7 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
                     )}
                   </div>
 
-                  {/* Discount old price - hidden normally on Meli unless hovered or originalPrice exists, showing fixed if there */}
+                  {/* Discount old price */}
                   {product.originalPrice && (
                     <span className="text-[12px] text-gray-400 line-through mb-1 block">$ {product.originalPrice}</span>
                   )}
@@ -192,6 +221,17 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
               </div>
             ))}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
 
           {/* Meli+ Subscription Banner */}
           <div className="bg-gradient-to-r from-[#170e30] via-[#2f195f] to-[#170e30] rounded-[6px] shadow-[0_1px_1px_0_rgba(0,0,0,.1)] px-5 py-4 mb-10 text-white flex flex-col md:flex-row items-center justify-between cursor-pointer group">

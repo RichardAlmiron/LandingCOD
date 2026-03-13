@@ -1,11 +1,38 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, MapPin, ChevronRight, Phone } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, MapPin, ChevronRight, Phone, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function BlueClassicTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
   const brandBlue = "#81d8d0";
-  const products = data.products;
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-white font-sans text-[#333333] selection:bg-[#81d8d0] selection:text-white pb-0 overflow-x-hidden">
@@ -54,9 +81,12 @@ export default function BlueClassicTemplate({ data }: { data: StoreData }) {
               <div className="py-8"><a href="#" className="hover:text-[#81d8d0] transition-colors">Home & Accessories</a></div>
               <div className="py-8"><a href="#" className="hover:text-[#81d8d0] transition-colors">Love & Engagement</a></div>
             </nav>
-            <div className="lg:hidden">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </div>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#81d8d0] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
 
           <div className="flex items-center justify-center cursor-pointer absolute left-1/2 -translate-x-1/2">
@@ -68,9 +98,23 @@ export default function BlueClassicTemplate({ data }: { data: StoreData }) {
           <div className="flex items-center space-x-6 text-[#333333]">
             <Search className="w-5 h-5 cursor-pointer hover:text-[#81d8d0] transition-colors" strokeWidth={1.5} />
             <User className="hidden md:block w-5 h-5 cursor-pointer hover:text-[#81d8d0] transition-colors" strokeWidth={1.5} />
-            <Heart className="hidden md:block w-5 h-5 cursor-pointer hover:text-[#81d8d0] transition-colors" strokeWidth={1.5} />
-            <div className="relative cursor-pointer hover:text-[#81d8d0] transition-colors">
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden md:block relative cursor-pointer hover:text-[#81d8d0] transition-colors"
+            >
+              <Heart className={`w-5 h-5 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </div>
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#81d8d0] transition-colors"
+            >
               <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#81d8d0] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -125,35 +169,44 @@ export default function BlueClassicTemplate({ data }: { data: StoreData }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-            {products.map((product, idx) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-4 gap-y-8">
+            {paginatedItems.map((product, idx) => (
               <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col items-center text-center">
-                <div className="relative aspect-[4/5] overflow-hidden w-full bg-[#fdfdfd] border border-gray-100 mb-8 transition-shadow group-hover:shadow-[0_20px_40px_rgba(129,216,208,0.1)]">
+                <div className="relative aspect-[4/5] overflow-hidden w-full bg-[#fdfdfd] border border-gray-100 mb-4 transition-shadow group-hover:shadow-[0_20px_40px_rgba(129,216,208,0.1)]">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-10 group-hover:scale-110 transition-transform duration-[2000ms] ease-out"
+                    className="object-contain p-4 group-hover:scale-110 transition-transform duration-[2000ms] ease-out"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-4 right-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <Heart className="w-5 h-5 hover:text-[#81d8d0]" strokeWidth={1} />
-                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 text-gray-400 hover:text-[#81d8d0] opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-0 left-0 right-0 bg-[#333] text-white py-2 text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
 
-                <div className="flex flex-col w-full px-4">
-                  <div className="text-[10px] font-sans font-medium uppercase tracking-[0.2em] text-gray-400 mb-3">
+                <div className="flex flex-col w-full px-2">
+                  <div className="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-gray-400 mb-2">
                     {product.category || 'Jewelry'}
                   </div>
-                  <h3 className="text-[15px] font-serif text-[#333333] mb-3 line-clamp-2 leading-relaxed h-[44px]">
+                  <h3 className="text-[13px] font-serif text-[#333333] mb-2 line-clamp-2 leading-relaxed">
                     {product.title}
                   </h3>
-                  <div className="flex items-center justify-center space-x-3 mt-4">
-                    <span className="font-sans font-medium text-[13px] tracking-widest text-[#333333]">
+                  <div className="flex items-center justify-center space-x-2 mt-2">
+                    <span className="font-sans font-medium text-[12px] tracking-widest text-[#333333]">
                       ${product.price}
                     </span>
                     {product.originalPrice && (
-                      <span className="font-sans font-medium text-[11px] tracking-widest text-[#81d8d0] line-through">
+                      <span className="font-sans font-medium text-[10px] tracking-widest text-[#81d8d0] line-through">
                         ${product.originalPrice}
                       </span>
                     )}
@@ -163,11 +216,18 @@ export default function BlueClassicTemplate({ data }: { data: StoreData }) {
             ))}
           </div>
 
-          <div className="mt-20 flex justify-center">
-            <button className="bg-transparent border border-[#333] text-[#333] px-14 py-4 font-sans font-medium uppercase text-[11px] tracking-[0.25em] hover:bg-[#333] hover:text-white transition-all">
-              View All Jewelry
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </section>
 
         {/* ─── FEATURE STORY ─── */}

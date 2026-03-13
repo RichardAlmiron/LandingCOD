@@ -1,9 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Menu, ArrowRight, MapPin, Phone, Mail, Instagram, Twitter, Youtube, Facebook, ChevronDown, Heart } from 'lucide-react';
+import { Search, ShoppingBag, Menu, ArrowRight, MapPin, Phone, Mail, Instagram, Twitter, Youtube, Facebook, ChevronDown, Heart, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function ItalianCraftTemplate({ data }: { data: StoreData }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
   return (
     <div className="min-h-full bg-[#f4f2eb] font-sans text-[#1a1a1a] overflow-x-hidden selection:bg-[#1b3c35] selection:text-[#f4f2eb]">
 
@@ -17,10 +44,17 @@ export default function ItalianCraftTemplate({ data }: { data: StoreData }) {
         <div className="w-full mx-auto px-4 md:px-8 h-[60px] md:h-[80px] flex items-center justify-between">
 
           <div className="flex items-center space-x-6 w-1/3">
-            <button className="flex flex-col space-y-[4px] hover:opacity-70 transition-opacity">
-              <span className="block h-[1.5px] bg-black w-6"></span>
-              <span className="block h-[1.5px] bg-black w-6"></span>
-              <span className="block h-[1.5px] bg-black w-6"></span>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex flex-col space-y-[4px] hover:opacity-70 transition-opacity"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : (
+                <>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                  <span className="block h-[1.5px] bg-black w-6"></span>
+                </>
+              )}
             </button>
             <button className="hidden md:block hover:opacity-70 transition-opacity">
               <Search className="w-[22px] h-[22px]" strokeWidth={1.5} />
@@ -36,9 +70,23 @@ export default function ItalianCraftTemplate({ data }: { data: StoreData }) {
 
           <div className="flex items-center justify-end space-x-6 w-1/3">
             <a href="#" className="text-[12px] hidden md:block hover:underline underline-offset-4 uppercase tracking-widest font-medium">Sign In</a>
-            <button className="hidden sm:block hover:opacity-70 transition-opacity"><Heart className="w-[22px] h-[22px]" strokeWidth={1.5} /></button>
-            <button className="hover:opacity-70 transition-opacity relative">
+            <button 
+              onClick={() => toggleFavorite('header')}
+              className="hidden sm:block hover:opacity-70 transition-opacity relative"
+            >
+              <Heart className={`w-[22px] h-[22px] ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favorites.length}</span>
+              )}
+            </button>
+            <button 
+              onClick={addToCart}
+              className="hover:opacity-70 transition-opacity relative"
+            >
               <ShoppingBag className="w-[22px] h-[22px]" strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#1b3c35] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -84,24 +132,33 @@ export default function ItalianCraftTemplate({ data }: { data: StoreData }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 md:gap-x-4 gap-y-16">
             {data.products.map((product) => (
               <div key={product.id} data-product-id={product.id} className="group cursor-pointer flex flex-col">
-                <div className="relative aspect-[3/4] overflow-hidden bg-[#e8e6e1] mb-6 shadow-sm">
+                <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-[#f4f2eb]">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-1000 ease-out mix-blend-darken"
+                    className="object-cover group-hover:scale-105 transition-transform duration-[1000ms]"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-sm hover:scale-110 transition-transform">
-                      <ShoppingBag className="w-4 h-4 text-black" strokeWidth={1.5} />
-                    </button>
-                  </div>
+                  {/* Favorite Button */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                    className="absolute top-3 right-3 p-2 bg-white/80 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-black'}`} strokeWidth={1.5} />
+                  </button>
+                  {/* Add to Cart */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-3 left-3 right-3 bg-[#1b3c35] text-[#f4f2eb] py-2 text-[11px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add to Bag
+                  </button>
                 </div>
-                <div className="text-center flex-1 flex flex-col px-2">
-                  <span className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-gray-500 mb-2">{product.category || "Women's Collection"}</span>
-                  <h4 className="text-[14px] md:text-[16px] font-sans font-medium mb-2 group-hover:underline underline-offset-4">{product.title}</h4>
-                  <div className="mt-auto pt-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-gray-500 mb-1">{product.category || "Women's Collection"}</span>
+                  <h4 className="text-[13px] md:text-[14px] font-sans font-medium mb-1 group-hover:underline underline-offset-4">{product.title}</h4>
+                  <div className="flex items-center justify-between mt-auto pt-2">
                     <span className="text-[13px] font-sans tracking-wide text-[#666]">
                       ${product.price}
                     </span>
@@ -111,11 +168,18 @@ export default function ItalianCraftTemplate({ data }: { data: StoreData }) {
             ))}
           </div>
 
-          <div className="flex justify-center mt-16">
-            <button className="border border-[#1a1a1a] text-[#1a1a1a] px-10 py-3.5 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-[#1a1a1a] hover:text-[#f4f2eb] transition-colors duration-300">
-              View All
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* ─── ASYMMETRIC EDITORIAL BLOCK ─── */}

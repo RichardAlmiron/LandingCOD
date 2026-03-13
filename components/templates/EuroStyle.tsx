@@ -1,10 +1,36 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
-import { Search, ShoppingBag, Heart, User, Globe, HelpCircle, ChevronRight, Leaf } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Globe, HelpCircle, ChevronRight, Leaf, Menu, X } from 'lucide-react';
+import { usePagination, ProductPagination } from './shared/Pagination';
 
 export default function EuroStyleTemplate({ data }: { data: StoreData }) {
-  const products = data.products;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  const itemsPerPage = 15; // 3 rows x 5 columns
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    handlePageChange,
+    totalItems,
+  } = usePagination(data.products, itemsPerPage);
+
+  const addToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   return (
     <div className="min-h-full bg-[#f4f4f4] font-sans text-[#1a1a1a] selection:bg-[#ff6900] selection:text-white pb-0 overflow-x-hidden">
@@ -33,6 +59,12 @@ export default function EuroStyleTemplate({ data }: { data: StoreData }) {
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-[72px] flex items-center justify-between">
 
           <div className="flex items-center space-x-8 lg:space-x-12">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:text-[#ff6900] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
 
             {/* Logo */}
             <div className="flex items-center cursor-pointer shrink-0">
@@ -61,11 +93,24 @@ export default function EuroStyleTemplate({ data }: { data: StoreData }) {
 
             <Search className="md:hidden w-6 h-6 cursor-pointer hover:text-[#ff6900] transition-colors" strokeWidth={2} />
             <User className="w-6 h-6 lg:w-7 lg:h-7 cursor-pointer hover:text-[#ff6900] transition-colors" strokeWidth={1.5} />
-            <Heart className="hidden sm:block w-6 h-6 lg:w-7 lg:h-7 cursor-pointer hover:text-[#ff6900] transition-colors" strokeWidth={1.5} />
+            <div 
+              onClick={() => toggleFavorite('header')}
+              className="hidden sm:block relative cursor-pointer hover:text-[#ff6900] transition-colors"
+            >
+              <Heart className={`w-6 h-6 lg:w-7 lg:h-7 ${favorites.length > 0 ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.5} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm leading-none">{favorites.length}</span>
+              )}
+            </div>
 
-            <div className="relative cursor-pointer hover:text-[#ff6900] transition-colors group">
+            <div 
+              onClick={addToCart}
+              className="relative cursor-pointer hover:text-[#ff6900] transition-colors group"
+            >
               <ShoppingBag className="w-6 h-6 lg:w-7 lg:h-7" strokeWidth={1.5} />
-              <span className="absolute -top-1.5 -right-2 bg-[#ff6900] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full shadow-sm leading-none">0</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[#ff6900] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full shadow-sm leading-none">{cartCount}</span>
+              )}
             </div>
           </div>
         </div>
@@ -153,70 +198,92 @@ export default function EuroStyleTemplate({ data }: { data: StoreData }) {
           </div>
         </section>
 
-        {/* ─── PRODUCT GRID ─── */}
+        {/* ─── PRODUCT GRID (Paginated) ─── */}
         <section className="mb-20">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-[28px] font-black tracking-tight">Just dropped</h2>
+            <h2 className="text-[28px] font-black tracking-tight">Just dropped ({totalItems})</h2>
             <a href="#" className="hidden sm:flex items-center text-[15px] font-bold text-[#1a1a1a] hover:text-[#ff6900] transition-colors">
               See all <ChevronRight className="w-5 h-5 ml-1" />
             </a>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {products.map((product, idx) => (
-              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white p-3 rounded-lg border border-gray-200 hover:shadow-lg transition-all relative">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {paginatedItems.map((product, idx) => (
+              <div key={product.id || idx} data-product-id={product.id} className="group cursor-pointer flex flex-col bg-white p-2 rounded-lg border border-gray-200 hover:shadow-lg transition-all relative">
 
                 {/* Save Heart */}
-                <button className="absolute top-5 right-5 z-10 w-8 h-8 bg-white/90 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:text-[#ff6900] hover:bg-white transition-colors">
-                  <Heart className="w-4 h-4 fill-transparent hover:fill-current" />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-3 right-3 z-10 w-7 h-7 bg-white/90 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:text-[#ff6900] hover:bg-white transition-colors"
+                >
+                  <Heart className={`w-3.5 h-3.5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
 
                 {/* Tags */}
-                <div className="absolute top-5 left-5 z-10 flex flex-col gap-1.5 align-start">
+                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 align-start">
                   {product.originalPrice && (
-                    <span className="bg-[#d70032] text-white text-[11px] font-bold px-2 py-0.5 rounded-sm">
+                    <span className="bg-[#d70032] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
                       -{Math.round((1 - parseFloat(product.price.replace(/,/g, '')) / parseFloat(product.originalPrice.replace(/,/g, ''))) * 100)}%
                     </span>
                   )}
                   {idx % 3 === 0 && (
-                    <span className="bg-green-700 text-white text-[11px] font-bold px-2 py-0.5 rounded-sm flex items-center gap-1 shadow-sm">
-                      <Leaf className="w-3 h-3" /> Sustainable
+                    <span className="bg-green-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm flex items-center gap-1 shadow-sm">
+                      <Leaf className="w-2.5 h-2.5" /> Eco
                     </span>
                   )}
                 </div>
 
-                <div className="relative aspect-[3/4] mb-3 overflow-hidden bg-gray-50 flex items-center justify-center rounded-md">
+                <div className="relative aspect-[3/4] mb-2 overflow-hidden bg-gray-50 flex items-center justify-center rounded-md">
                   <Image
                     src={product.imageUrl}
                     alt={product.title}
                     fill
-                    className="object-contain p-2 mix-blend-multiply group-hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                    className="object-contain p-1 mix-blend-multiply group-hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
                     referrerPolicy="no-referrer"
                   />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(); }}
+                    className="absolute bottom-2 left-2 right-2 bg-[#1a1a1a] text-white py-1.5 text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Add
+                  </button>
                 </div>
 
                 <div className="flex flex-col flex-1 px-1">
-                  <div className="font-bold text-[14px] text-[#1a1a1a] mb-[2px] line-clamp-1 group-hover:underline decoration-2">
+                  <div className="font-bold text-[12px] text-[#1a1a1a] mb-[2px] line-clamp-1 group-hover:underline decoration-2">
                     {product.category || 'Premium Brand'}
                   </div>
-                  <h3 className="text-[14px] text-gray-600 font-normal leading-snug line-clamp-1 mb-2">
+                  <h3 className="text-[12px] text-gray-600 font-normal leading-snug line-clamp-1 mb-1">
                     {product.title}
                   </h3>
 
                   <div className="flex items-center space-x-2 mt-auto pt-1">
                     {product.originalPrice ? (
                       <>
-                        <span className="font-bold text-[16px] text-[#d70032]">${product.price}</span>
-                        <span className="text-[13px] text-gray-500 line-through">${product.originalPrice}</span>
+                        <span className="font-bold text-[14px] text-[#d70032]">${product.price}</span>
+                        <span className="text-[11px] text-gray-500 line-through">${product.originalPrice}</span>
                       </>
                     ) : (
-                      <span className="font-bold text-[16px] text-[#1a1a1a]">${product.price}</span>
+                      <span className="font-bold text-[14px] text-[#1a1a1a]">${product.price}</span>
                     )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
 
           <div className="mt-8 flex justify-center sm:hidden">
             <button className="bg-white border border-gray-300 text-[#1a1a1a] px-8 py-3.5 font-bold text-[15px] hover:bg-gray-50 transition-colors w-full rounded-sm">
