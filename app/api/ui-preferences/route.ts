@@ -52,18 +52,38 @@ export async function POST(request: Request) {
     }
 
     // Guardar como global (is_global = TRUE, user_id = NULL)
-    const { data, error } = await supabase
+    // Primero intentar update, si no existe hacer insert
+    const { data: existing } = await supabase
       .from('ui_preferences')
-      .upsert({
-        user_id: null,
-        is_global: true,
-        entity_type,
-        selected_mode
-      }, {
-        onConflict: 'is_global,entity_type'
-      })
-      .select()
+      .select('id')
+      .eq('is_global', true)
+      .eq('entity_type', entity_type)
       .single();
+    
+    let result;
+    if (existing) {
+      // Update existing
+      result = await supabase
+        .from('ui_preferences')
+        .update({ selected_mode })
+        .eq('id', existing.id)
+        .select()
+        .single();
+    } else {
+      // Insert new
+      result = await supabase
+        .from('ui_preferences')
+        .insert({
+          user_id: null,
+          is_global: true,
+          entity_type,
+          selected_mode
+        })
+        .select()
+        .single();
+    }
+    
+    const { data, error } = result;
 
     if (error) {
       console.error('Error saving preference:', error);
