@@ -6,6 +6,7 @@ import RecycleBin from '@/components/saas/RecycleBin';
 import AutoCaptureButton from '@/components/admin/AutoCaptureButton';
 import DisplayModeSelector, { DisplayMode } from '@/components/admin/DisplayModeSelector';
 import DynamicPDPDisplay from '@/components/admin/DynamicPDPDisplay';
+import StoreDynamicDisplay from '@/components/visualization/StoreDynamicDisplay';
 import { X, Globe, Link as LinkIcon, ExternalLink, CheckCircle2, Loader2, Trash2, Store, LayoutTemplate, MousePointerClick } from 'lucide-react';
 
 type FlowType = 'store' | 'pdp' | null;
@@ -176,7 +177,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
         try {
             const res = await fetch(`/api/templates/stores?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
-                setStoreTemplates(prev => prev.filter(t => t.id !== id));
+                setStoreTemplates(prev => prev.filter((t: any) => t.id !== id));
             } else {
                 alert('No se pudo eliminar el template.');
             }
@@ -191,7 +192,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
         try {
             const res = await fetch(`/api/templates/pdp?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
-                setPdpTemplates(prev => prev.filter(t => t.id !== id));
+                setPdpTemplates(prev => prev.filter((t: any) => t.id !== id));
             } else {
                 alert('No se pudo eliminar la página de producto.');
             }
@@ -243,7 +244,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
         }
     };
 
-    const filteredTemplates = storeTemplates.filter(t =>
+    const filteredTemplates = storeTemplates.filter((t: any) =>
         (catFilter === 'Todos' || t.category === catFilter) &&
         (search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.desc.toLowerCase().includes(search.toLowerCase()))
     );
@@ -257,40 +258,6 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
 
     return (
         <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 0, height: 'calc(100vh - var(--topbar-height) - 56px)', minHeight: 600 }}>
-            {/* Step Progress Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', padding: '16px 28px', flexShrink: 0 }}>
-                {steps.map((s, i) => (
-                    <React.Fragment key={s.n}>
-                        <button
-                            onClick={() => step > s.n && setStep(s.n as Step)}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                background: 'none', border: 'none', cursor: step > s.n ? 'pointer' : 'default',
-                                padding: 0, opacity: step < s.n ? 0.4 : 1,
-                            }}
-                        >
-                            <div style={{
-                                width: 32, height: 32, borderRadius: '50%',
-                                background: step >= s.n ? 'linear-gradient(135deg, var(--accent-primary), #4f46e5)' : 'var(--bg-elevated)',
-                                border: `2px solid ${step >= s.n ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: step >= s.n ? '#fff' : 'var(--text-muted)',
-                                fontSize: 13, fontWeight: 700,
-                                boxShadow: step === s.n ? '0 0 16px var(--accent-glow)' : 'none',
-                                transition: 'all 0.3s',
-                            }}>
-                                {step > s.n ? (
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7 L6 10.5 L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                ) : s.n}
-                            </div>
-                            <span style={{ fontSize: 14, fontWeight: step === s.n ? 700 : 500, color: step === s.n ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{s.label}</span>
-                        </button>
-                        {i < steps.length - 1 && (
-                            <div style={{ flex: 1, height: 2, margin: '0 16px', background: step > s.n ? 'var(--accent-primary)' : 'var(--border-subtle)', borderRadius: 2, transition: 'background 0.4s' }} />
-                        )}
-                    </React.Fragment>
-                ))}
-            </div>
 
             {/* ── STEP 1: Elige el Tipo de Proyecto ── */}
             {step === 1 && (
@@ -355,19 +322,69 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                     {flowType === 'store' ? (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', margin: 0 }}>Diseño de Tienda</h2>
-                                <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Buscar..."
-                                    className="input-dark"
-                                    style={{ width: 150, padding: '6px 12px', fontSize: 12 }}
-                                />
-                                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', flex: 1 }}>
+                            {/* Header unificado compacto con steps y categorías */}
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 12, 
+                                marginBottom: 12, 
+                                flexShrink: 0, 
+                                padding: '8px 16px', 
+                                background: 'var(--bg-surface)', 
+                                borderRadius: 'var(--radius-lg)', 
+                                border: '1px solid var(--border-subtle)',
+                                height: 48
+                            }}>
+                                {/* Steps compactos */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                    {steps.map((s, i) => (
+                                        <React.Fragment key={s.n}>
+                                            <button
+                                                onClick={() => step > s.n && setStep(s.n as Step)}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: 6,
+                                                    background: 'none', border: 'none', cursor: step > s.n ? 'pointer' : 'default',
+                                                    padding: 0, opacity: step < s.n ? 0.4 : 1,
+                                                }}
+                                            >
+                                                <div style={{
+                                                    width: 24, height: 24, borderRadius: '50%',
+                                                    background: step >= s.n ? 'linear-gradient(135deg, var(--accent-primary), #4f46e5)' : 'var(--bg-elevated)',
+                                                    border: `2px solid ${step >= s.n ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    color: step >= s.n ? '#fff' : 'var(--text-muted)',
+                                                    fontSize: 11, fontWeight: 700,
+                                                    boxShadow: step === s.n ? '0 0 8px var(--accent-glow)' : 'none',
+                                                }}>
+                                                    {s.n}
+                                                </div>
+                                                <span style={{ 
+                                                    fontSize: 12, 
+                                                    fontWeight: step === s.n ? 700 : 500, 
+                                                    color: step === s.n ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                    whiteSpace: 'nowrap'
+                                                }}>{s.label}</span>
+                                            </button>
+                                            {i < steps.length - 1 && (
+                                                <div style={{ width: 16, height: 2, background: step > s.n ? 'var(--accent-primary)' : 'var(--border-subtle)', borderRadius: 1 }} />
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+
+                                <div style={{ width: 1, height: 24, background: 'var(--border-subtle)', margin: '0 4px' }} />
+                                
+                                {/* Título y contador */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                    <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Diseño de Tienda</h2>
+                                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({storeTemplates.length})</span>
+                                </div>
+                                
+                                {/* Categorías en header - una línea */}
+                                <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap', overflowX: 'auto', flex: 1 }}>
                                     {STORE_CATEGORIES.map(c => (
                                         <button key={c} onClick={() => setCatFilter(c)} style={{
-                                            padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                                            padding: '4px 10px', borderRadius: 16, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                                             background: catFilter === c ? 'var(--accent-primary)' : 'var(--bg-elevated)',
                                             color: catFilter === c ? '#fff' : 'var(--text-secondary)',
                                             border: `1px solid ${catFilter === c ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
@@ -375,54 +392,80 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                         }}>{c}</button>
                                     ))}
                                 </div>
-                                {isAdmin && (
-                                    <button
-                                        onClick={() => setIsRecycleBinOpen(true)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: 6,
-                                            padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-                                            background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
-                                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                                            cursor: 'pointer', transition: 'all 0.2s',
-                                            marginLeft: 'auto'
-                                        }}
-                                        className="hover:bg-red-500 hover:text-white"
-                                    >
-                                        <Trash2 size={14} />
-                                        Papelera
-                                    </button>
-                                )}
+                                
+                                {/* Botones admin */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => setShowDisplayModeSelector(!showDisplayModeSelector)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: 4,
+                                                padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                                background: showDisplayModeSelector ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-elevated)',
+                                                color: showDisplayModeSelector ? '#6366f1' : 'var(--text-secondary)',
+                                                border: `1px solid ${showDisplayModeSelector ? 'rgba(99, 102, 241, 0.3)' : 'var(--border-subtle)'}`,
+                                                cursor: 'pointer', transition: 'all 0.2s',
+                                            }}
+                                        >
+                                            <LayoutTemplate size={12} />
+                                            Modo
+                                        </button>
+                                    )}
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => setIsRecycleBinOpen(true)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: 4,
+                                                padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                                background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                cursor: 'pointer', transition: 'all 0.2s',
+                                            }}
+                                        >
+                                            <Trash2 size={12} />
+                                            Papelera
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: 8, paddingBottom: 60 }} className="custom-scrollbar">
+                            
+                            {/* Display Mode Selector Panel */}
+                            {isAdmin && showDisplayModeSelector && (
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    top: 70, 
+                                    right: 20, 
+                                    width: 320, 
+                                    zIndex: 50,
+                                    maxHeight: 'calc(100vh - 200px)',
+                                    overflowY: 'auto'
+                                }} className="custom-scrollbar">
+                                    <DisplayModeSelector 
+                                        currentMode={displayMode}
+                                        onModeChange={(mode) => {
+                                            setDisplayMode(mode);
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            
+                            {/* Visualization Area - Extended to footer */}
+                            <div style={{ flex: 1, overflow: 'hidden', position: 'relative', minHeight: 0, marginTop: -12 }}>
                                 {isLoadingTemplates ? (
                                     <div className="flex items-center justify-center h-full">
                                         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                                     </div>
                                 ) : (
-                                    (catFilter === 'Todos' ? STORE_CATEGORIES.filter(c => c !== 'Todos') : [catFilter])
-                                        .map(cat => {
-                                            const items = storeTemplates.filter(t =>
-                                                t.category === cat &&
-                                                (search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.desc.toLowerCase().includes(search.toLowerCase()))
-                                            );
-                                            if (items.length === 0) return null;
-                                            return (
-                                                <DynamicPDPDisplay
-                                                    key={cat}
-                                                    mode={displayMode}
-                                                    items={items}
-                                                    selectedId={template}
-                                                    onSelect={(id) => { setTemplate(id); }}
-                                                    onConfirmSelect={(id) => {
-                                                        setTemplate(id);
-                                                        setStep(3);
-                                                    }}
-                                                    isAdmin={isAdmin}
-                                                    onDeleteTemplate={handleDeleteTemplate}
-                                                    templateType="store"
-                                                />
-                                            );
-                                        })
+                                    <StoreDynamicDisplay
+                                        mode={displayMode}
+                                        items={catFilter === 'Todos' ? storeTemplates : storeTemplates.filter((t: any) => t.category === catFilter)}
+                                        selectedId={template}
+                                        onSelect={(id) => { setTemplate(id as TemplateType); }}
+                                        onConfirmSelect={(id) => {
+                                            setTemplate(id as TemplateType);
+                                            setStep(3);
+                                        }}
+                                    />
                                 )}
                             </div>
                         </>
@@ -491,7 +534,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                     // Render PDP templates using the selected display mode
                                     (() => {
                                         // Flatten all PDP templates into a single array for non-carousel modes
-                                        const allItems = pdpTemplates.map(t => ({
+                                        const allItems = pdpTemplates.map((t: any) => ({
                                             id: t.id,
                                             name: t.name,
                                             description: t.description,

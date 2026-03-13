@@ -1,19 +1,17 @@
 'use client';
 import React, { useState } from 'react';
-import LivePDPPreview from '@/components/admin/LivePDPPreview';
-import { PdpTemplate } from '@/lib/types';
+import LiveStorePreview from '@/components/admin/LiveStorePreview';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface FullscreenSliderProps {
-  items: PdpTemplate[];
+interface StoreFullscreenSliderProps {
+  items: any[];
   selectedId: string;
   onSelect: (id: string) => void;
   onConfirmSelect?: (id: string) => void;
 }
 
-export default function FullscreenSlider({ items, selectedId, onSelect, onConfirmSelect }: FullscreenSliderProps) {
+export default function StoreFullscreenSlider({ items, selectedId, onSelect, onConfirmSelect }: StoreFullscreenSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const selectedIndex = items.findIndex(item => item.id === selectedId);
   const currentItem = items[currentIndex];
 
   const goToPrev = () => {
@@ -47,20 +45,21 @@ export default function FullscreenSlider({ items, selectedId, onSelect, onConfir
           <ChevronRight className="w-6 h-6 text-white" />
         </button>
 
-        {/* Current PDP */}
+        {/* Current Template */}
         <div 
-          className={`relative transition-all duration-500 ${
+          className={`relative transition-all duration-500 cursor-pointer ${
             selectedId === currentItem.id ? 'scale-105 ring-4 ring-indigo-500' : 'scale-100'
           }`}
           onClick={selectCurrent}
         >
-          <LivePDPPreview 
-            templateId={currentItem.id}
-            category={currentItem.category}
-            width={500}
-            height={500}
-            className="rounded-xl shadow-2xl cursor-pointer"
-          />
+          <div className="w-[500px] h-[500px] rounded-xl overflow-hidden shadow-2xl relative bg-zinc-900">
+            <LiveStorePreview
+              templateId={currentItem.id}
+              width={500}
+              height={500}
+              className="w-full h-full"
+            />
+          </div>
           
           {/* Info overlay */}
           <div className="absolute bottom-4 left-4 right-4">
@@ -97,12 +96,14 @@ export default function FullscreenSlider({ items, selectedId, onSelect, onConfir
                 : 'opacity-60 hover:opacity-100'
             }`}
           >
-            <LivePDPPreview 
-              templateId={item.id}
-              category={item.category}
-              width={80}
-              height={80}
-            />
+            <div className="w-full h-full bg-zinc-900">
+              <LiveStorePreview
+                templateId={item.id}
+                width={80}
+                height={80}
+                className="w-full h-full"
+              />
+            </div>
           </div>
         ))}
       </div>
