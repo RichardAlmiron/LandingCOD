@@ -1,91 +1,50 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { verifyAccessToken } from '@/lib/auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// GET - Retrieve user preference
+// GLOBAL key for admin-controlled display mode
+const GLOBAL_DISPLAY_MODE_KEY = 'global_display_mode';
+
+// GET - Retrieve display mode (global for all users)
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('accessToken')?.value;
-    
-    // Si no hay token, retornar modo por defecto para demo
-    if (!accessToken) {
-      return NextResponse.json({
-        success: true,
-        selected_mode: 'fullscreenslider'
-      });
-    }
-
-    const payload = verifyAccessToken(accessToken);
-    if (!payload) {
-      return NextResponse.json({
-        success: true,
-        selected_mode: 'fullscreenslider'
-      });
-    }
-
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get('entity_type') || 'pdp_display_mode';
 
+    // Buscar el modo global guardado por el admin
     const { data, error } = await supabase
       .from('ui_preferences')
       .select('selected_mode')
-      .eq('user_id', payload.sub)
+      .eq('user_id', GLOBAL_DISPLAY_MODE_KEY)
       .eq('entity_type', entityType)
       .single();
 
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching preference:', error);
-      return NextResponse.json({
-        success: true,
-        selected_mode: 'fullscreenslider' // Fallback a modo por defecto
-      });
     }
 
+    // Retornar el modo global o el default
     return NextResponse.json({
       success: true,
-      selected_mode: data?.selected_mode || 'fullscreenslider'
+      selected_mode: data?.selected_mode || 'filmstrip'
     });
 
   } catch (error) {
     console.error('GET preference error:', error);
     return NextResponse.json({
       success: true,
-      selected_mode: 'fullscreenslider' // Fallback a modo por defecto
+      selected_mode: 'filmstrip'
     });
   }
 }
 
-// POST - Save or update user preference
+// POST - Save display mode (admin only, global for all users)
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('accessToken')?.value;
-    
-    // Si no hay token, solo retornar success para demo (no guardar en BD)
-    if (!accessToken) {
-      const body = await request.json();
-      return NextResponse.json({
-        success: true,
-        message: 'Demo mode - preference not saved'
-      });
-    }
-
-    const payload = verifyAccessToken(accessToken);
-    if (!payload) {
-      const body = await request.json();
-      return NextResponse.json({
-        success: true,
-        message: 'Demo mode - preference not saved'
-      });
-    }
-
     const body = await request.json();
     const { entity_type, selected_mode } = body;
 
@@ -95,11 +54,11 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Upsert preference
+    // Guardar como global (usando key especial en user_id)
     const { data, error } = await supabase
       .from('ui_preferences')
       .upsert({
-        user_id: payload.sub,
+        user_id: GLOBAL_DISPLAY_MODE_KEY,
         entity_type,
         selected_mode
       }, {
