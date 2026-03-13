@@ -30,8 +30,21 @@ const STORE_CATEGORIES = ['Todos', 'Marketplace', 'Tech', 'Moda', 'Belleza', 'Re
 type Step = 1 | 2 | 3 | 4;
 
 export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
-    const [step, setStep] = useState<Step>(1);
-    const [flowType, setFlowType] = useState<FlowType>(null);
+    // Load saved step from localStorage on mount
+    const [step, setStep] = useState<Step>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('builderFlow_step');
+            return saved ? (parseInt(saved, 10) as Step) : 1;
+        }
+        return 1;
+    });
+    
+    const [flowType, setFlowType] = useState<FlowType>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('builderFlow_flowType') as FlowType || null;
+        }
+        return null;
+    });
     const [template, setTemplate] = useState<TemplateType>('megamarket');
     const [pdpCategory, setPdpCategory] = useState<string | null>(null);
     const [storeData, setStoreData] = useState<StoreData>({ ...defaultStore, products: [] });
@@ -65,6 +78,18 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [useLivePreview, setUseLivePreview] = useState(false);
     const [displayMode, setDisplayMode] = useState<DisplayMode>('filmstrip');
     const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
+
+    // Save step to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('builderFlow_step', String(step));
+    }, [step]);
+
+    // Save flowType to localStorage whenever it changes
+    useEffect(() => {
+        if (flowType) {
+            localStorage.setItem('builderFlow_flowType', flowType);
+        }
+    }, [flowType]);
 
     // Load display mode preference from API
     useEffect(() => {
