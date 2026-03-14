@@ -111,6 +111,66 @@ export const translations: Translations = {
     es: 'Envíos a',
     pt: 'Envios para'
   },
+  'common.electronics': {
+    es: 'Electrónicos',
+    pt: 'Eletrônicos'
+  },
+  'common.homeKitchen': {
+    es: 'Hogar y Cocina',
+    pt: 'Casa e Cozinha'
+  },
+  'common.beauty': {
+    es: 'Belleza y Cuidado',
+    pt: 'Beleza e Cuidados'
+  },
+  'common.sports': {
+    es: 'Deportes',
+    pt: 'Esportes'
+  },
+  'common.toys': {
+    es: 'Juguetes',
+    pt: 'Brinquedos'
+  },
+  'common.account': {
+    es: 'Cuenta',
+    pt: 'Conta'
+  },
+  'common.orders': {
+    es: 'Pedidos',
+    pt: 'Pedidos'
+  },
+  'common.deals': {
+    es: 'Ofertas',
+    pt: 'Ofertas'
+  },
+  'common.flashDeals': {
+    es: 'Ofertas Relámpago',
+    pt: 'Ofertas Relâmpago'
+  },
+  'common.viewAll': {
+    es: 'Ver todo',
+    pt: 'Ver tudo'
+  },
+  'common.shippingTo': {
+    es: 'Enviar a',
+    pt: 'Enviar para'
+  },
+  'common.searchPlaceholder': {
+    es: 'Buscar productos, marcas y más...',
+    pt: 'Buscar produtos, marcas e mais...'
+  },
+  'common.allCategories': {
+    es: 'Todas las categorías',
+    pt: 'Todas as categorias'
+  },
+  'common.languageSelector': {
+    es: 'Selector de idioma',
+    pt: 'Seletor de idioma'
+  },
+  'common.selectLanguage': {
+    es: 'Selecciona tu idioma',
+    pt: 'Selecione seu idioma'
+  },
   
   // Product related
   'product.originalPrice': {
@@ -216,7 +276,6 @@ export const translations: Translations = {
     pt: 'Garantia de Devolução'
   },
   
-  // Scarcity/Urgency
   'urgency.limitedStock': {
     es: 'Stock limitado',
     pt: 'Estoque limitado'

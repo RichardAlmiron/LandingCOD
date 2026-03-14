@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { StoreData } from '@/lib/types';
+import { useLanguage } from '@/components/builder/LanguageContext';
 import { Search, ShoppingCart, Menu, MapPin, Star, ChevronRight, Globe, ChevronDown, Heart, X } from 'lucide-react';
 import { usePagination, ProductPagination } from './shared/Pagination';
 
@@ -10,6 +11,9 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  
+  // Hook de traducciones
+  const { t, lang } = useLanguage();
   
   const itemsPerPage = 15; // 3 rows x 5 columns
   
@@ -23,7 +27,14 @@ export default function MegaMarketTemplate({ data }: { data: StoreData }) {
 
   // Use data products or default
   const flashDeals = data.products.slice(0, 5);
-  const categories = ['Electrónicos', 'Hogar y Cocina', 'Moda', 'Belleza y Cuidado', 'Deportes', 'Juguetes'];
+  const categories = [
+    t('common.electronics') || 'Electrónicos', 
+    t('common.homeKitchen') || 'Hogar y Cocina', 
+    t('common.fashion') || 'Moda', 
+    t('common.beauty') || 'Belleza y Cuidado', 
+    t('common.sports') || 'Deportes', 
+    t('common.toys') || 'Juguetes'
+  ];
 
   const toggleWishlist = (productId: string) => {
     setWishlist(prev => 
