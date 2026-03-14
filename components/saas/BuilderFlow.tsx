@@ -64,7 +64,10 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
     const [productPage, setProductPage] = useState(1);
     const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
     const ITEMS_PER_PAGE = 24;
-    const [useLivePreview, setUseLivePreview] = useState(false);
+    // Database persistence state
+    const [isSavingToDB, setIsSavingToDB] = useState(false);
+    const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const [hasLoadedFromDB, setHasLoadedFromDB] = useState(false);
     const [displayMode, setDisplayMode] = useState<DisplayMode>('filmstrip');
     const [showDisplayModeSelector, setShowDisplayModeSelector] = useState(false);
 
@@ -160,29 +163,110 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
         }
     }, []);
 
-    // Load display mode preference from API
+    // Load builder config from database on mount
     useEffect(() => {
-        const loadDisplayMode = async () => {
+        const loadFromDB = async () => {
             try {
-                const response = await fetch('/api/ui-preferences?entity_type=pdp_display_mode');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.selected_mode) {
-                        setDisplayMode(data.selected_mode);
+                const res = await fetch('/api/builder-config');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.config) {
+                        // Merge DB config with localStorage (localStorage takes precedence for recent changes)
+                        const savedStep = localStorage.getItem('builderFlow_step');
+                        const savedFlowType = localStorage.getItem('builderFlow_flowType');
+                        const savedTemplate = localStorage.getItem('builderFlow_template');
+                        const savedStoreData = localStorage.getItem('builderFlow_storeData');
+                        
+                        // Only use DB data if no recent localStorage data exists
+                        if (!savedStep && data.config.current_step) {
+                            setStep(data.config.current_step as Step);
+                        }
+                        if (!savedFlowType && data.config.flow_type) {
+                            setFlowType(data.config.flow_type as FlowType);
+                        }
+                        if (!savedTemplate && data.config.template) {
+                            setTemplate(data.config.template as TemplateType);
+                        }
+                        if (!savedStoreData && data.config.store_data) {
+                            setStoreData(data.config.store_data as StoreData);
+                        }
+                        if (data.config.pdp_category && !localStorage.getItem('builderFlow_pdpCategory')) {
+                            setPdpCategory(data.config.pdp_category);
+                        }
+                        if (data.config.selected_products && data.config.selected_products.length > 0) {
+                            const savedSelected = localStorage.getItem('builderFlow_selectedProducts');
+                            if (!savedSelected) {
+                                setSelectedProducts(new Set(data.config.selected_products));
+                            }
+                        }
                     }
                 }
-            } catch (error) {
-                console.error('Error loading display mode:', error);
+            } catch (err) {
+                console.error('Error loading builder config from DB:', err);
+            } finally {
+                setHasLoadedFromDB(true);
             }
         };
-        loadDisplayMode();
+        loadFromDB();
     }, []);
 
-    const toggleLivePreview = () => {
-        const newVal = !useLivePreview;
-        setUseLivePreview(newVal);
-        localStorage.setItem('useLivePreview', String(newVal));
-    };
+    // Function to save builder config to database with debounce
+    const saveToDatabase = React.useCallback(async () => {
+        if (!flowType || isSavingToDB) return;
+        
+        setIsSavingToDB(true);
+        try {
+            const res = await fetch('/api/builder-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    flowType,
+                    storeData,
+                    template,
+                    currentStep: step,
+                    selectedProducts: Array.from(selectedProducts),
+                    pdpCategory: pdpCategory || undefined
+                })
+            });
+            if (!res.ok) {
+                console.error('Error saving to DB:', await res.text());
+            }
+        } catch (err) {
+            console.error('Network error saving to DB:', err);
+        } finally {
+            setIsSavingToDB(false);
+        }
+    }, [flowType, storeData, template, step, selectedProducts, pdpCategory, isSavingToDB]);
+
+    // Debounced save effect - saves to DB 2 seconds after changes stop
+    useEffect(() => {
+        if (!hasMounted || !flowType || !hasLoadedFromDB) return;
+        
+        // Clear previous timeout
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        
+        // Set new timeout for debounced save
+        saveTimeoutRef.current = setTimeout(() => {
+            saveToDatabase();
+        }, 2000);
+        
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, [flowType, storeData, template, step, selectedProducts, pdpCategory, hasMounted, hasLoadedFromDB, saveToDatabase]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         Promise.all([
