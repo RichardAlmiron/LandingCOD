@@ -13,7 +13,6 @@ export interface Product {
 }
 
 export type StoreModel = 'marketplace' | 'hero-landing' | 'carousel-premium' | 'minimal-elegant' | 'flash-deal';
-export type Language = 'es' | 'pt';
 
 export interface StoreData {
   name: string;
@@ -24,7 +23,6 @@ export interface StoreData {
   pdpCategory: PdpCategoryType;
   pdpTemplate: string;
   model: StoreModel;
-  language: Language;
   pdpFeatures: {
     liveViewers: boolean;
     recentSales: boolean;
@@ -82,7 +80,6 @@ export const defaultStore: StoreData = {
   pdpCategory: 'health',
   pdpTemplate: 'health-1',
   model: 'marketplace',
-  language: 'es',
   pdpFeatures: {
     liveViewers: true,
     recentSales: true,

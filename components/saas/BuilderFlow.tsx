@@ -1022,37 +1022,6 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                     </div>
                                 </div>
 
-                                {/* Selector de Idioma - Configura el idioma de la tienda publicada */}
-                                <div className="section-elevated">
-                                    <div className="section-title">
-                                        Idioma de la Tienda
-                                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px', fontWeight: 'normal' }}>
-                                            (para tus clientes)
-                                        </span>
-                                    </div>
-                                    <div className="language-selector">
-                                        <button
-                                            className={`lang-option ${storeData.language === 'es' ? 'active' : ''}`}
-                                            onClick={() => setStoreData(p => ({ ...p, language: 'es' }))}
-                                        >
-                                            <span className="lang-flag">🇪🇸</span>
-                                            <span className="lang-label">Español</span>
-                                            {storeData.language === 'es' && <span className="lang-check">✓</span>}
-                                        </button>
-                                        <button
-                                            className={`lang-option ${storeData.language === 'pt' ? 'active' : ''}`}
-                                            onClick={() => setStoreData(p => ({ ...p, language: 'pt' }))}
-                                        >
-                                            <span className="lang-flag">🇧🇷</span>
-                                            <span className="lang-label">Português</span>
-                                            {storeData.language === 'pt' && <span className="lang-check">✓</span>}
-                                        </button>
-                                    </div>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', fontStyle: 'italic' }}>
-                                        Este idioma se mostrará en la tienda publicada para tus clientes
-                                    </p>
-                                </div>
-
                                 {/* Footer Configuration - Solo Contacto y Redes Sociales */}
                                 {flowType === 'store' && (
                                     <div className="footer-simple">
