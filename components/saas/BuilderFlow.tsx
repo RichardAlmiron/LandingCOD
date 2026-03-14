@@ -1038,35 +1038,49 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                     </div>
                                 </div>
 
-                                {/* Footer Configuration - Solo para Tiendas */}
+                                {/* Footer Configuration - Solo Contacto y Redes Sociales */}
                                 {flowType === 'store' && (
-                                    <div className="section-elevated">
-                                        <div className="section-title">Enlaces del Pie de Página</div>
-                                        
-                                        {/* Contacto */}
-                                        <div className="footer-config-item">
-                                            <label className="toggle-row">
-                                                <span className="toggle-label">Contacto</span>
-                                                <div 
-                                                    className={`toggle-track ${storeData.footerConfig?.contact?.enabled ? 'on' : ''}`}
-                                                    onClick={() => setStoreData(p => ({ 
-                                                        ...p, 
-                                                        footerConfig: { 
-                                                            ...p.footerConfig, 
-                                                            contact: { ...p.footerConfig?.contact, enabled: !p.footerConfig?.contact?.enabled } 
-                                                        } 
-                                                    }))}
-                                                >
-                                                    <div className="toggle-thumb" />
+                                    <div className="footer-simple">
+                                        {/* Contacto - Toggle Profesional */}
+                                        <div className="footer-contact-section">
+                                            <div 
+                                                className="contact-toggle-header"
+                                                onClick={() => setStoreData(p => ({ 
+                                                    ...p, 
+                                                    footerConfig: { 
+                                                        ...p.footerConfig, 
+                                                        contact: { ...p.footerConfig?.contact, enabled: !p.footerConfig?.contact?.enabled } 
+                                                    } 
+                                                }))}
+                                            >
+                                                <div className="contact-info">
+                                                    <div className="contact-icon">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                    </div>
+                                                    <div>
+                                                        <div className="contact-title">Contacto</div>
+                                                        <div className="contact-subtitle">
+                                                            {storeData.footerConfig?.contact?.enabled ? 'Activado' : 'Desactivado'}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </label>
+                                                <div className={`ios-toggle ${storeData.footerConfig?.contact?.enabled ? 'on' : ''}`}>
+                                                    <div className="ios-toggle-knob" />
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Formulario de Contacto - Aparece cuando está activado */}
                                             {storeData.footerConfig?.contact?.enabled && (
-                                                <div className="footer-inputs">
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m2 5 10 7 10-7"/></svg>
+                                                <div className="contact-form">
+                                                    <div className="contact-input-group">
+                                                        <label className="contact-label">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m2 5 10 7 10-7"/></svg>
+                                                            Email
+                                                        </label>
                                                         <input 
-                                                            className="input-dark" 
-                                                            placeholder="Email de contacto"
+                                                            className="contact-input"
+                                                            type="email"
+                                                            placeholder="contacto@tutienda.com"
                                                             value={storeData.footerConfig?.contact?.email || ''} 
                                                             onChange={e => setStoreData(p => ({ 
                                                                 ...p, 
@@ -1077,11 +1091,19 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                                             }))}
                                                         />
                                                     </div>
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                    
+                                                    <div className="contact-input-group">
+                                                        <label className="contact-label">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                            Teléfono
+                                                            <span className="tooltip" title="Incluye código de país. Ejemplo: +52 para México, +55 para Brasil">
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                                            </span>
+                                                        </label>
                                                         <input 
-                                                            className="input-dark" 
-                                                            placeholder="Teléfono"
+                                                            className="contact-input"
+                                                            type="tel"
+                                                            placeholder="+52 55 1234 5678"
                                                             value={storeData.footerConfig?.contact?.phone || ''} 
                                                             onChange={e => setStoreData(p => ({ 
                                                                 ...p, 
@@ -1091,143 +1113,15 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                                                 } 
                                                             }))}
                                                         />
+                                                        <span className="input-hint">Formato internacional: +código país + número</span>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Help Center */}
-                                        <div className="footer-config-item">
-                                            <label className="toggle-row">
-                                                <span className="toggle-label">Centro de Ayuda</span>
-                                                <div 
-                                                    className={`toggle-track ${storeData.footerConfig?.helpCenter?.enabled ? 'on' : ''}`}
-                                                    onClick={() => setStoreData(p => ({ 
-                                                        ...p, 
-                                                        footerConfig: { 
-                                                            ...p.footerConfig, 
-                                                            helpCenter: { ...p.footerConfig?.helpCenter, enabled: !p.footerConfig?.helpCenter?.enabled } 
-                                                        } 
-                                                    }))}
-                                                >
-                                                    <div className="toggle-thumb" />
-                                                </div>
-                                            </label>
-                                            {storeData.footerConfig?.helpCenter?.enabled && (
-                                                <div className="footer-inputs">
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                                        <input 
-                                                            className="input-dark" 
-                                                            placeholder="URL del Centro de Ayuda"
-                                                            value={storeData.footerConfig?.helpCenter?.url || ''} 
-                                                            onChange={e => setStoreData(p => ({ 
-                                                                ...p, 
-                                                                footerConfig: { 
-                                                                    ...p.footerConfig, 
-                                                                    helpCenter: { ...p.footerConfig?.helpCenter, url: e.target.value } 
-                                                                } 
-                                                            }))}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Reportar Abuso */}
-                                        <div className="footer-config-item">
-                                            <label className="toggle-row">
-                                                <span className="toggle-label">Reportar Abuso</span>
-                                                <div 
-                                                    className={`toggle-track ${storeData.footerConfig?.reportAbuse?.enabled ? 'on' : ''}`}
-                                                    onClick={() => setStoreData(p => ({ 
-                                                        ...p, 
-                                                        footerConfig: { 
-                                                            ...p.footerConfig, 
-                                                            reportAbuse: { ...p.footerConfig?.reportAbuse, enabled: !p.footerConfig?.reportAbuse?.enabled } 
-                                                        } 
-                                                    }))}
-                                                >
-                                                    <div className="toggle-thumb" />
-                                                </div>
-                                            </label>
-                                            {storeData.footerConfig?.reportAbuse?.enabled && (
-                                                <div className="footer-inputs">
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                                        <input 
-                                                            className="input-dark" 
-                                                            placeholder="URL para reportar"
-                                                            value={storeData.footerConfig?.reportAbuse?.url || ''} 
-                                                            onChange={e => setStoreData(p => ({ 
-                                                                ...p, 
-                                                                footerConfig: { 
-                                                                    ...p.footerConfig, 
-                                                                    reportAbuse: { ...p.footerConfig?.reportAbuse, url: e.target.value } 
-                                                                } 
-                                                            }))}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Ubicación / GPS */}
-                                        <div className="footer-config-item">
-                                            <label className="toggle-row">
-                                                <span className="toggle-label">Ubicación / GPS</span>
-                                                <div 
-                                                    className={`toggle-track ${storeData.footerConfig?.location?.enabled ? 'on' : ''}`}
-                                                    onClick={() => setStoreData(p => ({ 
-                                                        ...p, 
-                                                        footerConfig: { 
-                                                            ...p.footerConfig, 
-                                                            location: { ...p.footerConfig?.location, enabled: !p.footerConfig?.location?.enabled } 
-                                                        } 
-                                                    }))}
-                                                >
-                                                    <div className="toggle-thumb" />
-                                                </div>
-                                            </label>
-                                            {storeData.footerConfig?.location?.enabled && (
-                                                <div className="footer-inputs">
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                                        <input 
-                                                            className="input-dark" 
-                                                            placeholder="Dirección completa"
-                                                            value={storeData.footerConfig?.location?.address || ''} 
-                                                            onChange={e => setStoreData(p => ({ 
-                                                                ...p, 
-                                                                footerConfig: { 
-                                                                    ...p.footerConfig, 
-                                                                    location: { ...p.footerConfig?.location, address: e.target.value } 
-                                                                } 
-                                                            }))}
-                                                        />
-                                                    </div>
-                                                    <div className="input-with-icon">
-                                                        <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                                        <input 
-                                                            className="input-dark" 
-                                                            placeholder="URL de Google Maps"
-                                                            value={storeData.footerConfig?.location?.mapsUrl || ''} 
-                                                            onChange={e => setStoreData(p => ({ 
-                                                                ...p, 
-                                                                footerConfig: { 
-                                                                    ...p.footerConfig, 
-                                                                    location: { ...p.footerConfig?.location, mapsUrl: e.target.value } 
-                                                                } 
-                                                            }))}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Redes Sociales */}
-                                        <div className="footer-config-item">
-                                            <div className="subsection-title">Redes Sociales</div>
+                                        {/* Redes Sociales - Intactas */}
+                                        <div className="section-elevated">
+                                            <div className="section-title">Redes Sociales</div>
                                             <div className="social-inputs">
                                                 <div className="input-with-icon">
                                                     <svg className="input-icon social-facebook" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
