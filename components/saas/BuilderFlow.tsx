@@ -931,6 +931,53 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                     </div>
                                 </div>
 
+                                {/* Selector de Idioma */}
+                                <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, border: '1px solid var(--border-subtle)' }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Idioma</div>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                            onClick={() => setStoreData(p => ({ ...p, language: 'es' }))}
+                                            style={{ 
+                                                flex: 1, 
+                                                padding: '10px 14px', 
+                                                borderRadius: 'var(--radius-md)',
+                                                border: storeData.language === 'es' ? '2px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                                                background: storeData.language === 'es' ? 'var(--accent-primary)' : 'transparent',
+                                                color: storeData.language === 'es' ? 'white' : 'var(--text-secondary)',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 6
+                                            }}
+                                        >
+                                            <span>🇪🇸</span> Español
+                                        </button>
+                                        <button
+                                            onClick={() => setStoreData(p => ({ ...p, language: 'pt' }))}
+                                            style={{ 
+                                                flex: 1, 
+                                                padding: '10px 14px', 
+                                                borderRadius: 'var(--radius-md)',
+                                                border: storeData.language === 'pt' ? '2px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                                                background: storeData.language === 'pt' ? 'var(--accent-primary)' : 'transparent',
+                                                color: storeData.language === 'pt' ? 'white' : 'var(--text-secondary)',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 6
+                                            }}
+                                        >
+                                            <span>🇧🇷</span> Português
+                                        </button>
+                                    </div>
+                                </div>
+
                                 {/* Footer Configuration - Solo para Tiendas */}
                                 {flowType === 'store' && (
                                     <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, border: '1px solid var(--border-subtle)' }}>
