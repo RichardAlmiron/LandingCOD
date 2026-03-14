@@ -931,38 +931,240 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
                                     </div>
                                 </div>
 
-                                {/* CRO Toggles */}
-                                <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, border: '1px solid var(--border-subtle)' }}>
-                                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Herramientas CRO</div>
-                                    {([
-                                        ['liveViewers', 'Espectadores en vivo'],
-                                        ['recentSales', 'Notificaciones de ventas'],
-                                        ['scarcityTimer', 'Temporizador de escasez'],
-                                        ['stickyButton', 'Botón flotante de compra'],
-                                    ] as const).map(([key, label]) => (
-                                        <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, cursor: 'pointer' }}>
-                                            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
-                                            <div
-                                                className={`toggle-track ${storeData.pdpFeatures?.[key] ? 'on' : ''}`}
-                                                onClick={() => setStoreData(p => ({ ...p, pdpFeatures: { ...p.pdpFeatures, [key]: !p.pdpFeatures?.[key] } }))}
-                                            >
-                                                <div className="toggle-thumb" />
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
+                                {/* Footer Configuration - Solo para Tiendas */}
+                                {flowType === 'store' && (
+                                    <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, border: '1px solid var(--border-subtle)' }}>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Enlaces del Pie de Página</div>
+                                        
+                                        {/* Contacto */}
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={storeData.footerConfig?.contact?.enabled || false}
+                                                    onChange={(e) => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            contact: { ...p.footerConfig?.contact, enabled: e.target.checked } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Contacto</span>
+                                            </label>
+                                            {storeData.footerConfig?.contact?.enabled && (
+                                                <div style={{ paddingLeft: 24, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.contact?.email || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                contact: { ...p.footerConfig?.contact, email: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.contact?.phone || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                contact: { ...p.footerConfig?.contact, phone: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
 
-                                {/* Products quick add */}
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                    Productos ({storeData.products.length})
-                                </div>
-                                <button
-                                    onClick={() => setStoreData(p => ({ ...p, products: [{ id: Math.random().toString(36).slice(2), title: 'Nuevo Producto', description: 'Descripción', price: '$0', originalPrice: '$0', imageUrl: `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 999)}`, category: 'General', rating: 5, reviews: 0 }, ...p.products] }))}
-                                    style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-md)', border: '2px dashed var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1 V13 M1 7 H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                                    Añadir producto
-                                </button>
+                                        {/* Help Center */}
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={storeData.footerConfig?.helpCenter?.enabled || false}
+                                                    onChange={(e) => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            helpCenter: { ...p.footerConfig?.helpCenter, enabled: e.target.checked } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Centro de Ayuda</span>
+                                            </label>
+                                            {storeData.footerConfig?.helpCenter?.enabled && (
+                                                <div style={{ paddingLeft: 24 }}>
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.helpCenter?.url || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                helpCenter: { ...p.footerConfig?.helpCenter, url: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Reportar Abuso */}
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={storeData.footerConfig?.reportAbuse?.enabled || false}
+                                                    onChange={(e) => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            reportAbuse: { ...p.footerConfig?.reportAbuse, enabled: e.target.checked } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Reportar Abuso</span>
+                                            </label>
+                                            {storeData.footerConfig?.reportAbuse?.enabled && (
+                                                <div style={{ paddingLeft: 24 }}>
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.reportAbuse?.url || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                reportAbuse: { ...p.footerConfig?.reportAbuse, url: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Ubicación / GPS */}
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={storeData.footerConfig?.location?.enabled || false}
+                                                    onChange={(e) => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            location: { ...p.footerConfig?.location, enabled: e.target.checked } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ubicación / GPS</span>
+                                            </label>
+                                            {storeData.footerConfig?.location?.enabled && (
+                                                <div style={{ paddingLeft: 24, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.location?.address || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                location: { ...p.footerConfig?.location, address: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                    <input 
+                                                        className="input-dark" 
+                                                        value={storeData.footerConfig?.location?.mapsUrl || ''} 
+                                                        onChange={e => setStoreData(p => ({ 
+                                                            ...p, 
+                                                            footerConfig: { 
+                                                                ...p.footerConfig, 
+                                                                location: { ...p.footerConfig?.location, mapsUrl: e.target.value } 
+                                                            } 
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Redes Sociales */}
+                                        <div style={{ marginBottom: 8 }}>
+                                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Redes Sociales</div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                                <input 
+                                                    className="input-dark" 
+                                                    value={storeData.footerConfig?.socialMedia?.facebook || ''} 
+                                                    onChange={e => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            socialMedia: { ...p.footerConfig?.socialMedia, facebook: e.target.value } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <input 
+                                                    className="input-dark" 
+                                                    value={storeData.footerConfig?.socialMedia?.instagram || ''} 
+                                                    onChange={e => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            socialMedia: { ...p.footerConfig?.socialMedia, instagram: e.target.value } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <input 
+                                                    className="input-dark" 
+                                                    value={storeData.footerConfig?.socialMedia?.twitter || ''} 
+                                                    onChange={e => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            socialMedia: { ...p.footerConfig?.socialMedia, twitter: e.target.value } 
+                                                        } 
+                                                    }))}
+                                                />
+                                                <input 
+                                                    className="input-dark" 
+                                                    value={storeData.footerConfig?.socialMedia?.whatsapp || ''} 
+                                                    onChange={e => setStoreData(p => ({ 
+                                                        ...p, 
+                                                        footerConfig: { 
+                                                            ...p.footerConfig, 
+                                                            socialMedia: { ...p.footerConfig?.socialMedia, whatsapp: e.target.value } 
+                                                        } 
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Herramientas CRO - Solo para PDP */}
+                                {flowType === 'pdp' && (
+                                    <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, border: '1px solid var(--border-subtle)' }}>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Herramientas CRO</div>
+                                        {([
+                                            ['liveViewers', 'Espectadores en vivo'],
+                                            ['recentSales', 'Notificaciones de ventas'],
+                                            ['scarcityTimer', 'Temporizador de escasez'],
+                                            ['stickyButton', 'Botón flotante de compra'],
+                                        ] as const).map(([key, label]) => (
+                                            <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, cursor: 'pointer' }}>
+                                                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
+                                                <div
+                                                    className={`toggle-track ${storeData.pdpFeatures?.[key] ? 'on' : ''}`}
+                                                    onClick={() => setStoreData(p => ({ ...p, pdpFeatures: { ...p.pdpFeatures, [key]: !p.pdpFeatures?.[key] } }))}
+                                                >
+                                                    <div className="toggle-thumb" />
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {/* Actions */}

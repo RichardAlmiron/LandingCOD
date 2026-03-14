@@ -12,6 +12,9 @@ export interface Product {
   reviews: number;
 }
 
+export type StoreModel = 'marketplace' | 'hero-landing' | 'carousel-premium' | 'minimal-elegant' | 'flash-deal';
+export type Language = 'es' | 'pt';
+
 export interface StoreData {
   name: string;
   description: string;
@@ -20,11 +23,39 @@ export interface StoreData {
   products: Product[];
   pdpCategory: PdpCategoryType;
   pdpTemplate: string;
+  model: StoreModel;
+  language: Language;
   pdpFeatures: {
     liveViewers: boolean;
     recentSales: boolean;
     scarcityTimer: boolean;
     stickyButton: boolean;
+  };
+  footerConfig?: {
+    contact?: {
+      enabled: boolean;
+      email?: string;
+      phone?: string;
+    };
+    helpCenter?: {
+      enabled: boolean;
+      url?: string;
+    };
+    reportAbuse?: {
+      enabled: boolean;
+      url?: string;
+    };
+    socialMedia?: {
+      facebook?: string;
+      instagram?: string;
+      twitter?: string;
+      whatsapp?: string;
+    };
+    location?: {
+      enabled: boolean;
+      address?: string;
+      mapsUrl?: string;
+    };
   };
 }
 
@@ -63,6 +94,8 @@ export const defaultStore: StoreData = {
   bannerImage: "https://picsum.photos/1200/400?random=10",
   pdpCategory: 'health',
   pdpTemplate: 'health-1',
+  model: 'marketplace',
+  language: 'es',
   pdpFeatures: {
     liveViewers: true,
     recentSales: true,
