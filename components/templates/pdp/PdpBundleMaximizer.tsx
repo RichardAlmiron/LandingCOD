@@ -13,8 +13,8 @@ interface PDPProps {
 
 export default function PdpBundleMaximizer({ data, product, variant = 1 }: PDPProps) {
   const [selectedBundle, setSelectedBundle] = useState(3);
-  const basePrice = parseFloat(product.price.replace(/,/g, ''));
-  const originalBasePrice = parseFloat(product.originalPrice.replace(/,/g, ''));
+  const basePrice = parseFloat(product.price?.replace(/[$,]/g, '') || '0');
+  const originalBasePrice = parseFloat(product.originalPrice?.replace(/[$,]/g, '') || '0');
 
   const bundles = [
     { id: 1, qty: 1, title: 'Paquete Básico', price: basePrice, oldPrice: originalBasePrice, save: 0, tag: '', popular: false },

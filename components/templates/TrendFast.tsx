@@ -197,7 +197,7 @@ export default function TrendFastTemplate({ data }: { data: StoreData }) {
             {data.products.slice(0, 6).map((product, i) => (
               <div key={`flash-${i}`} className="group cursor-pointer relative flex flex-col">
                 <div className="absolute top-2 left-0 bg-[#fa6338] text-white text-[11px] font-bold px-2 py-0.5 z-10 lowercase">
-                  -{(100 - (parseFloat(product.price.replace(',', '')) / (parseFloat(product.originalPrice || '0') || parseFloat(product.price) * 1.5) * 100)).toFixed(0)}%
+                  -{(100 - (parseFloat(product.price.replace(/[$,]/g, '')) / (parseFloat(product.originalPrice || '0') || parseFloat(product.price) * 1.5) * 100)).toFixed(0)}%
                 </div>
                 <div className="relative aspect-[3/4] mb-2 overflow-hidden bg-[#f5f5f5] rounded-sm">
                   <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[600ms] mix-blend-multiply" />

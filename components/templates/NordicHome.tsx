@@ -266,7 +266,7 @@ export default function NordicHomeTemplate({ data }: { data: StoreData }) {
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-baseline">
                     <span className="text-[14px] font-bold text-[#e0001b] mr-0.5">$</span>
-                    <span className="text-[28px] md:text-[36px] font-black text-[#e0001b] leading-none tracking-tighter">{(parseFloat(product.price) * 0.8).toFixed(2)}</span>
+                    <span className="text-[28px] md:text-[36px] font-black text-[#e0001b] leading-none tracking-tighter">{(parseFloat(product.price.replace(/[$,]/g, '')) * 0.8).toFixed(2)}</span>
                   </div>
                   <span className="text-[12px] text-gray-500 line-through font-medium tracking-wide">Previous price: ${product.price}</span>
                 </div>

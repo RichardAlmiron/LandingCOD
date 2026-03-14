@@ -212,7 +212,7 @@ export default function TechRetailTemplate({ data }: { data: StoreData }) {
 
                     {product.originalPrice && (
                       <div className="flex flex-col mb-4">
-                        <span className="bg-[#b8281e] text-white text-[12px] font-bold px-1.5 py-0.5 w-fit rounded-[2px] mt-1 mb-0.5">Save ${(parseFloat(product.originalPrice || '0') - parseFloat(product.price)).toFixed(2)}</span>
+                        <span className="bg-[#b8281e] text-white text-[12px] font-bold px-1.5 py-0.5 w-fit rounded-[2px] mt-1 mb-0.5">Save ${(parseFloat(product.originalPrice?.replace(/[$,]/g, '') || '0') - parseFloat(product.price.replace(/[$,]/g, ''))).toFixed(2)}</span>
                         <span className="text-[12px] text-gray-500">Was ${product.originalPrice}</span>
                       </div>
                     )}

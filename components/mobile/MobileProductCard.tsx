@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Heart, Star, ShoppingCart, Share2, MoreVertical } from "lucide-react";
 import { useState } from "react";
+import { calculateDiscount } from "@/lib/utils";
 
 interface MobileProductCardProps {
   product: {
@@ -46,13 +47,7 @@ export function MobileProductCard({
     onAddToCart?.();
   };
 
-  const discount = product.originalPrice
-    ? Math.round(
-        ((parseFloat(product.originalPrice) - parseFloat(product.price)) /
-          parseFloat(product.originalPrice)) *
-          100
-      )
-    : null;
+  const discount = calculateDiscount(product.price, product.originalPrice);
 
   if (variant === "horizontal") {
     return (

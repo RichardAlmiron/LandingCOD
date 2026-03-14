@@ -190,7 +190,7 @@ export default function PdpSocialTrust({ data, product, variant = 1 }: PDPProps)
               <div className={`flex items-end space-x-3 ${variant === 2 ? 'justify-center' : ''}`}>
                 <span className={`text-5xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>${product.price}</span>
                 <span className={`text-xl ${isDark ? 'text-zinc-500' : 'text-slate-400'} line-through font-bold mb-1`}>${product.originalPrice}</span>
-                <span className={`${theme.primary} text-white text-xs font-black px-2.5 py-1 rounded-md mb-2 uppercase tracking-wider`}>Ahorras ${(parseFloat(product.originalPrice.replace(/,/g, '')) - parseFloat(product.price.replace(/,/g, ''))).toLocaleString()}</span>
+                <span className={`${theme.primary} text-white text-xs font-black px-2.5 py-1 rounded-md mb-2 uppercase tracking-wider`}>Ahorras ${(parseFloat(product.originalPrice?.replace(/[$,]/g, '') || '0') - parseFloat(product.price?.replace(/[$,]/g, '') || '0')).toLocaleString()}</span>
               </div>
               <p className={`text-sm ${theme.text} mt-3 flex items-center font-bold ${variant === 2 ? 'justify-center' : ''}`}><CheckCircle className="w-4 h-4 mr-1.5" /> Impuestos incluidos. Envío gratis.</p>
             </div>

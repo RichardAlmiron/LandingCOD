@@ -239,7 +239,7 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
           <div className="flex overflow-x-auto hide-scrollbar gap-2 sm:gap-4 pb-4 px-1" style={{ scrollSnapType: 'x mandatory' }}>
             {data.products.slice(0, 10).map((product, idx) => {
               const discount = Math.floor(Math.random() * 60) + 30; // 30-90% discount
-              const originalPrice = parseFloat(product.price) / (1 - (discount / 100));
+              const originalPrice = parseFloat(product.price.replace(/[$,]/g, '')) / (1 - (discount / 100));
 
               return (
                 <div key={idx} data-product-id={product.id} className="shrink-0 w-[140px] md:w-[180px] lg:w-[220px] bg-white rounded-[8px] p-2 md:p-3 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all cursor-pointer border border-gray-100 flex flex-col hover:border-[#ff6000]" style={{ scrollSnapAlign: 'start' }}>
@@ -275,7 +275,7 @@ export default function PriceDropTemplate({ data }: { data: StoreData }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
             {paginatedItems.map((product: any, idx: number) => {
               const discount = Math.floor(Math.random() * 50) + 40;
-              const original = parseFloat(product.price) / (1 - (discount / 100));
+              const original = parseFloat(product.price.replace(/[$,]/g, '')) / (1 - (discount / 100));
               const sold = Math.floor(Math.random() * 100) + 5;
               const reviewCount = Math.floor(Math.random() * 5000) + 100;
               return (

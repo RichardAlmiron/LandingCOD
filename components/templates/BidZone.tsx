@@ -177,8 +177,8 @@ export default function BidZoneTemplate({ data }: { data: StoreData }) {
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-4 gap-y-8 mb-8">
           {paginatedItems.map((product, idx) => {
-            const price = parseFloat(product.price.replace(/,/g, ''));
-            const originalPrice = product.originalPrice ? parseFloat(product.originalPrice.replace(/,/g, '')) : 0;
+            const price = parseFloat(product.price.replace(/[$,]/g, ''));
+            const originalPrice = product.originalPrice ? parseFloat(product.originalPrice.replace(/[$,]/g, '')) : 0;
             const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
 
             return (

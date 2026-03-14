@@ -207,7 +207,7 @@ export default function SportZoneTemplate({ data }: { data: StoreData }) {
                       </div>
                       <div className="flex items-end flex-wrap gap-2">
                         <span className="font-black text-[22px] md:text-[24px] text-[#333] leading-none">${product.price}</span>
-                        {idx === 0 && <span className="text-[13px] text-gray-400 line-through font-bold mb-0.5">${(parseFloat(product.price) * 1.25).toFixed(2)}</span>}
+                        {idx === 0 && <span className="text-[13px] text-gray-400 line-through font-bold mb-0.5">${(parseFloat(product.price.replace(/[$,]/g, '')) * 1.25).toFixed(2)}</span>}
                       </div>
                     </div>
                   </div>

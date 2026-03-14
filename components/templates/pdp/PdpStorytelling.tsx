@@ -230,7 +230,7 @@ export default function PdpStorytelling({ data, product, variant = 1 }: PDPProps
             <span className={`text-5xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${product.price}</span>
             <div className="flex flex-col items-start pb-1">
               <span className={`text-lg ${isDark ? 'text-zinc-500' : 'text-zinc-400'} line-through`}>${product.originalPrice}</span>
-              <span className={`text-sm font-bold ${theme.text}`}>Ahorras ${(parseFloat(product.originalPrice.replace(/,/g, '')) - parseFloat(product.price.replace(/,/g, ''))).toLocaleString()}</span>
+              <span className={`text-sm font-bold ${theme.text}`}>Ahorras ${(parseFloat(product.originalPrice?.replace(/[$,]/g, '') || '0') - parseFloat(product.price?.replace(/[$,]/g, '') || '0')).toLocaleString()}</span>
             </div>
           </div>
           

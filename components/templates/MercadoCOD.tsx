@@ -199,7 +199,7 @@ export default function MercadoCODTemplate({ data }: { data: StoreData }) {
                     <span className="text-[20px] font-normal text-[#333] tabular-nums tracking-tighter shrink-0">$ {product.price}</span>
                     {product.originalPrice && (
                       <span className="text-[13px] text-[#00a650] font-normal ml-2 shrink-0">
-                        {(100 - (parseFloat(product.price.replace(',', '')) / parseFloat(product.originalPrice.replace(',', '')) * 100)).toFixed(0)}% OFF
+                        {(100 - (parseFloat(product.price.replace(/[$,]/g, '')) / parseFloat(product.originalPrice.replace(/[$,]/g, '') || '1') * 100)).toFixed(0)}% OFF
                       </span>
                     )}
                   </div>

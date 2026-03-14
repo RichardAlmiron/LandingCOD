@@ -247,7 +247,13 @@ export default function FlashDealsTemplate({ data }: { data: StoreData }) {
                   <span className="text-[20px] font-bold text-[#fd384f] leading-none">{product.price.split('.')[0] || product.price}</span>
                   <span className="text-[12px] font-bold text-[#fd384f] align-top ml-0.5">.{product.price.split('.')[1] || '00'}</span>
                 </div>
-                <div className="text-[12px] text-gray-400 line-through mb-1">${product.originalPrice || (parseFloat(product.price) * 5).toFixed(2)}</div>
+                <div className="text-[12px] text-gray-400 line-through mb-1">${product.originalPrice}</div>
+                {(() => {
+                  const discount = calculateDiscount(product.price, product.originalPrice);
+                  return discount ? (
+                    <div className="text-[12px] text-[#cc0c39] font-bold mb-1">{discount}% OFF</div>
+                  ) : null;
+                })()}
               </div>
             ))}
           </div>

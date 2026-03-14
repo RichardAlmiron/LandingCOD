@@ -59,7 +59,7 @@ export const TrustBar = () => {
 // 4. Bundle Offer (AOV Maximizer)
 export const BundleOffer = ({ price, colorClass = 'border-green-500', bgClass = 'bg-green-50', textClass = 'text-green-600', theme }: any) => {
   const [selected, setSelected] = useState(2);
-  const numPrice = parseFloat(price.replace(/,/g, ''));
+  const numPrice = parseFloat(price?.replace(/[$,]/g, '') || '0');
   
   const offers = [
     { id: 1, title: '1 Unidad', subtitle: 'Para probar', price: numPrice, tag: '' },
