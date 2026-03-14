@@ -37,24 +37,11 @@ export interface StoreData {
       email?: string;
       phone?: string;
     };
-    helpCenter?: {
-      enabled: boolean;
-      url?: string;
-    };
-    reportAbuse?: {
-      enabled: boolean;
-      url?: string;
-    };
     socialMedia?: {
       facebook?: string;
       instagram?: string;
       twitter?: string;
       whatsapp?: string;
-    };
-    location?: {
-      enabled: boolean;
-      address?: string;
-      mapsUrl?: string;
     };
   };
 }

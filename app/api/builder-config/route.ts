@@ -153,7 +153,7 @@ export async function POST(request: Request) {
     }
 }
 
-// DELETE - Eliminar configuración (limpieza manual)
+// DELETE - Eliminar configuración (una o todas las no publicadas)
 export async function DELETE(request: Request) {
     try {
         const cookieStore = await cookies();
@@ -172,9 +172,50 @@ export async function DELETE(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const configId = searchParams.get('id');
+        const deleteAll = searchParams.get('all') === 'true';
 
+        // Si se solicita eliminar TODAS las configs no publicadas del usuario
+        if (deleteAll) {
+            const { data: configsToDelete, error: fetchError } = await supabase
+                .from('builder_configurations')
+                .select('id')
+                .eq('user_id', payload.sub)
+                .is('tienda_id', null);
+
+            if (fetchError) {
+                console.error('Error fetching configs to delete:', fetchError);
+                return NextResponse.json({ error: 'Error consultando configuraciones' }, { status: 500 });
+            }
+
+            if (!configsToDelete || configsToDelete.length === 0) {
+                return NextResponse.json({ 
+                    success: true, 
+                    message: 'No hay configuraciones para eliminar',
+                    deletedCount: 0 
+                });
+            }
+
+            const { error: deleteError, count } = await supabase
+                .from('builder_configurations')
+                .delete()
+                .eq('user_id', payload.sub)
+                .is('tienda_id', null);
+
+            if (deleteError) {
+                console.error('Error deleting all builder configs:', deleteError);
+                return NextResponse.json({ error: 'Error eliminando configuraciones' }, { status: 500 });
+            }
+
+            return NextResponse.json({ 
+                success: true, 
+                message: `Eliminadas ${configsToDelete.length} configuraciones`,
+                deletedCount: configsToDelete.length 
+            });
+        }
+
+        // Si se solicita eliminar UNA config específica
         if (!configId) {
-            return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+            return NextResponse.json({ error: 'ID requerido o usar ?all=true' }, { status: 400 });
         }
 
         // Verificar que la configuración pertenece al usuario
@@ -198,7 +239,11 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: 'Error eliminando' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ 
+            success: true,
+            message: 'Configuración eliminada',
+            deletedCount: 1 
+        });
 
     } catch (err) {
         console.error('DELETE /api/builder-config error:', err);

@@ -474,6 +474,100 @@ export const translations: Translations = {
   'builder.publishing': {
     es: 'Publicando...',
     pt: 'Publicando...'
+  },
+  
+  // Store Templates
+  'templates.megamarket': {
+    es: 'MegaMarket',
+    pt: 'MegaMarket'
+  },
+  'templates.megamarketDesc': {
+    es: 'El template más completo para grandes catálogos',
+    pt: 'O template mais completo para grandes catálogos'
+  },
+  'templates.flashdeals': {
+    es: 'Flash Deals',
+    pt: 'Ofertas Relâmpago'
+  },
+  'templates.flashdealsDesc': {
+    es: 'Diseño urgency-driven para conversiones rápidas',
+    pt: 'Design urgency-driven para conversões rápidas'
+  },
+  'templates.tradevault': {
+    es: 'Trade Vault',
+    pt: 'Trade Vault'
+  },
+  'templates.tradevaultDesc': {
+    es: 'Elegancia profesional para B2B',
+    pt: 'Elegância profissional para B2B'
+  },
+  'templates.mercadocod': {
+    es: 'Mercado COD',
+    pt: 'Mercado COD'
+  },
+  'templates.mercadocodDesc': {
+    es: 'Estilo marketplace latinoamericano',
+    pt: 'Estilo marketplace latino-americano'
+  },
+  'templates.trendfast': {
+    es: 'Trend Fast',
+    pt: 'Trend Fast'
+  },
+  'templates.trendfastDesc': {
+    es: 'Para productos virales y tendencias',
+    pt: 'Para produtos virais e tendências'
+  },
+  'templates.minimaltech': {
+    es: 'Minimal Tech',
+    pt: 'Minimal Tech'
+  },
+  'templates.minimaltechDesc': {
+    es: 'Limpio y moderno para tecnología',
+    pt: 'Limpo e moderno para tecnologia'
+  },
+  'templates.handcraft': {
+    es: 'Hand Craft',
+    pt: 'Hand Craft'
+  },
+  'templates.handcraftDesc': {
+    es: 'Perfecto para artesanías únicas',
+    pt: 'Perfeito para artesanatos únicos'
+  },
+  'templates.boldathlete': {
+    es: 'Bold Athlete',
+    pt: 'Bold Athlete'
+  },
+  'templates.boldathleteDesc': {
+    es: 'Energía deportiva de alto impacto',
+    pt: 'Energia esportiva de alto impacto'
+  },
+  'templates.blueretail': {
+    es: 'Blue Retail',
+    pt: 'Blue Retail'
+  },
+  'templates.blueretailDesc': {
+    es: 'Diseño corporativo confiable',
+    pt: 'Design corporativo confiável'
+  },
+  'templates.deleteAll': {
+    es: 'Eliminar Todos',
+    pt: 'Eliminar Todos'
+  },
+  'templates.deleteAllConfirm': {
+    es: '¿Estás seguro de eliminar todas las configuraciones?',
+    pt: 'Tem certeza que deseja eliminar todas as configurações?'
+  },
+  'templates.deleteSingle': {
+    es: 'Eliminar Configuración',
+    pt: 'Eliminar Configuração'
+  },
+  'templates.noConfigs': {
+    es: 'No hay configuraciones guardadas',
+    pt: 'Não há configurações salvas'
+  },
+  'templates.lastAccessed': {
+    es: 'Último acceso',
+    pt: 'Último acesso'
   }
 };
 
