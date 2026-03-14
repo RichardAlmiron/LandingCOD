@@ -1,5 +1,6 @@
 import React from 'react';
 import { StoreData, TemplateType } from '@/lib/types';
+import { LanguageProvider } from './LanguageContext';
 import MegaMarketTemplate from '@/components/templates/MegaMarket';
 import FlashDealsTemplate from '@/components/templates/FlashDeals';
 import TradeVaultTemplate from '@/components/templates/TradeVault';
@@ -276,7 +277,9 @@ export default function Preview({ data, template, device, setDevice, previewMode
           {/* Actual Template Content wrapped in Production App Shell */}
           <div className={`flex-1 overflow-y-auto relative ${device === 'mobile' ? '[&::-webkit-scrollbar]:hidden pt-12' : 'custom-scrollbar'}`}>
             <StoreAppShell isPremium={isPremium}>
-              {renderTemplate()}
+              <LanguageProvider language={data.language || 'es'}>
+                {renderTemplate()}
+              </LanguageProvider>
             </StoreAppShell>
           </div>
         </div>
