@@ -229,7 +229,7 @@ export default function FilmStrip({
                   {/* Gradient para legibilidad superior */}
                   <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
 
-                  {/* Etiqueta Código/Soporte (Visible para TODOS en Etapa 2) */}
+                  {/* Etiqueta Nombre/Soporte (Visible para TODOS en Etapa 2) */}
                   <div className="absolute top-2 left-2 z-20">
                      <button
                         onClick={(e) => handleCopyId(item.codigo || item.id, item.name, e)}
@@ -239,11 +239,11 @@ export default function FilmStrip({
                            border: '1px solid rgba(255,255,255,0.2)',
                            backdropFilter: 'blur(4px)'
                         }}
-                        title="Copiar código para soporte técnico"
+                        title={`Copiar código de "${item.name}" para soporte técnico`}
                      >
-                        <code className="text-[10px] font-mono font-bold tracking-wide">
-                           {item.codigo || item.id.substring(0, 8)}
-                        </code>
+                        <span className="text-[10px] font-bold tracking-wide uppercase">
+                           {item.name}
+                        </span>
                         {copiedId === (item.codigo || item.id) ? <CheckCircle size={11} /> : <Copy size={11} />}
                      </button>
                   </div>

@@ -211,6 +211,25 @@ export default function CoverFlow({
                   </div>
                 </div>
 
+                {/* Etiqueta Nombre/Soporte (Visible para TODOS en Etapa 2) */}
+                <div className="absolute top-7 left-2 z-20">
+                   <button
+                      onClick={(e) => handleCopyId(item.codigo || item.id, item.name, e)}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded text-white shadow-md transition-colors hover:scale-105"
+                      style={{
+                         background: copiedId === (item.codigo || item.id) ? 'rgba(34, 197, 94, 0.85)' : 'rgba(99, 102, 241, 0.85)',
+                         border: '1px solid rgba(255,255,255,0.2)',
+                         backdropFilter: 'blur(4px)'
+                      }}
+                      title={`Copiar código de "${item.name}" para soporte técnico`}
+                   >
+                      <span className="text-[10px] font-bold tracking-wide uppercase">
+                         {item.name}
+                      </span>
+                      {copiedId === (item.codigo || item.id) ? <CheckCircle size={11} /> : <Copy size={11} />}
+                   </button>
+                </div>
+
                 {/* Etiqueta Categoría - siempre visible */}
                 <div className="absolute top-0 right-0 z-20 max-w-[180px]">
                   <div
@@ -261,23 +280,7 @@ export default function CoverFlow({
                         {selectedIds.includes(item.id) && <div className="w-3 h-3 bg-white rounded-sm" />}
                       </button>
 
-                      {/* ID con botón copiar */}
-                      <div className="flex items-center gap-2">
-                        <code className="text-[10px] font-mono text-white/90 bg-black/50 px-2 py-1 rounded truncate max-w-[160px]">
-                          {item.id}
-                        </code>
-                        <button
-                          onClick={(e) => handleCopyId(item.id, item.name, e)}
-                          className="p-1 bg-white/20 hover:bg-white/30 rounded transition-colors"
-                          title="Copiar nombre + ID"
-                        >
-                          {copiedId === item.id ? (
-                            <span className="text-[10px] text-green-400 font-bold">✓</span>
-                          ) : (
-                            <Copy className="w-3 h-3 text-white" />
-                          )}
-                        </button>
-                      </div>
+
 
                       {/* Toggle de verificación */}
                       <button
