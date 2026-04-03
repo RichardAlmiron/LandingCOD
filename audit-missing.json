@@ -1,0 +1,174 @@
+[
+  {
+    "file": "components\\pdp\\belleza\\general\\PdpBellezaEstandar.tsx",
+    "count": 1
+  },
+  {
+    "file": "components\\pdp\\electrónico\\audio\\PdpAudioStudio.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\audio\\PdpTranslatorEarbuds.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\automotriz\\PdpDashCam.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\camaras\\PdpCameraPro.tsx",
+    "count": 13
+  },
+  {
+    "file": "components\\pdp\\electrónico\\celulares\\PdpCelulares.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\celulares\\PdpCelularesBusiness.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\fotografía\\PdpGimbalPro.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\gaming\\PdpGamingElite.tsx",
+    "count": 12
+  },
+  {
+    "file": "components\\pdp\\electrónico\\gaming\\PdpRetroConsole.tsx",
+    "count": 11
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCheckoutDirecto.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCroBold.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCroElegant.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCroFuturista.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCroMinimal.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpCroVisual.tsx",
+    "count": 9
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpElectronicoEstandar.tsx",
+    "count": 1
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpElectronicoPremium.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpHistoriaProducto.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpOfertaBundle.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpPremiumBundle.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpPruebaSocial.tsx",
+    "count": 1
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpUrgenciaMaxima.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\general\\PdpUrgenciaPremium.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\electrónico\\hogar-smart\\PdpSmartMirror.tsx",
+    "count": 10
+  },
+  {
+    "file": "components\\pdp\\electrónico\\hogar-smart\\PdpSmartPlanter.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\hogar-smart\\PdpStarProjector.tsx",
+    "count": 9
+  },
+  {
+    "file": "components\\pdp\\electrónico\\outdoor\\PdpPortableEspresso.tsx",
+    "count": 10
+  },
+  {
+    "file": "components\\pdp\\electrónico\\outdoor\\PdpSmartSkiGoggles.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\periféricos\\PdpMechanicalNumeric.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\salud-belleza\\PdpMiniFridge.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\salud-belleza\\PdpTheragun.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\seguridad\\PdpBiometricSafe.tsx",
+    "count": 10
+  },
+  {
+    "file": "components\\pdp\\electrónico\\seguridad\\PdpKeyFinder.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\tablets\\PdpTabletExec.tsx",
+    "count": 13
+  },
+  {
+    "file": "components\\pdp\\electrónico\\wearables\\PdpSmartRingOura.tsx",
+    "count": 8
+  },
+  {
+    "file": "components\\pdp\\electrónico\\wearables\\PdpWatchLumen.tsx",
+    "count": 13
+  },
+  {
+    "file": "components\\pdp\\herramientas\\general\\PdpHerramientasEstandar.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\hogar\\general\\PdpHogarEstandar.tsx",
+    "count": 1
+  },
+  {
+    "file": "components\\pdp\\ProductShowcase.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\salud\\general\\PdpSaludEstandar.tsx",
+    "count": 1
+  },
+  {
+    "file": "components\\pdp\\salud\\general\\PdpSaludPremium.tsx",
+    "count": 0
+  },
+  {
+    "file": "components\\pdp\\SharedCRO.tsx",
+    "count": 12
+  }
+]

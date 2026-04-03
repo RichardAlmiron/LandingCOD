@@ -1,0 +1,309 @@
+﻿commit ff3bf16ff76979ae41f3e7345d24f8c53a3cb816
+Author: nften <nften@example.com>
+Date:   Fri Mar 20 23:52:04 2026 -0300
+
+    fix: remove badge overlay div that created white transparent layer blocking editor - badges now append directly to iframe body
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 391f737..60906fb 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -165,28 +165,17 @@ export default function VisualEditorOverlay({
+     if (!iframe?.contentDocument || !iframe?.contentWindow) return;
+     const doc = iframe.contentDocument;
+ 
+-    // Remove all existing unsaved badges from the overlay container
+-    let overlay = doc.getElementById('ve-badge-overlay');
+-    if (overlay) {
+-      overlay.innerHTML = '';
+-    } else {
+-      // Create a fixed overlay container that sits above everything
+-      overlay = doc.createElement('div');
+-      overlay.id = 've-badge-overlay';
+-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;';
+-      doc.body.appendChild(overlay);
+-    }
+-
+-    // Also remove any old-style badges that were appended directly to elements
++    // Remove all existing unsaved badges
+     doc.querySelectorAll('.ve-unsaved-badge').forEach(el => el.remove());
++    // Remove old overlay container if it exists
++    doc.getElementById('ve-badge-overlay')?.remove();
+ 
+-    // Position badges using fixed coordinates from getBoundingClientRect
++    // Position badges using fixed coordinates directly on body
+     dirtyIds.forEach(veId => {
+       const el = doc.querySelector(`[data-ve-editable="${veId}"]`) as HTMLElement;
+       if (!el) return;
+ 
+       const rect = el.getBoundingClientRect();
+-      // Skip elements that are not visible
+       if (rect.width === 0 && rect.height === 0) return;
+ 
+       // Container for badge + revert button
+@@ -196,9 +185,9 @@ export default function VisualEditorOverlay({
+       container.style.cssText = `
+         position: fixed;
+         top: ${rect.top - 12}px;
+-        left: ${rect.right - 140}px;
++        left: ${Math.max(0, rect.right - 140)}px;
+         z-index: 2147483647;
+-        display: flex; align-items: center; gap: 4px;
++        display: flex; align-items: center; gap: 0px;
+         pointer-events: auto;
+         font-family: system-ui, -apple-system, sans-serif;
+         animation: veBadgePulse 2s ease-in-out infinite;
+@@ -230,18 +219,16 @@ export default function VisualEditorOverlay({
+       revertBtn.onmouseleave = () => { revertBtn.style.filter = 'brightness(1)'; };
+       revertBtn.onclick = (e) => {
+         e.stopPropagation();
+-        // Post message to parent to trigger revert
+         iframe.contentWindow!.parent.postMessage({ type: 've-revert', veId }, '*');
+       };
+       container.appendChild(revertBtn);
+ 
+-      overlay!.appendChild(container);
++      doc.body.appendChild(container);
+     });
+ 
+     // Update badge positions on scroll
+     const scrollHandler = () => {
+-      if (!overlay) return;
+-      const badges = overlay.querySelectorAll('.ve-unsaved-badge');
++      const badges = doc.querySelectorAll('.ve-unsaved-badge');
+       badges.forEach(badge => {
+         const forId = badge.getAttribute('data-ve-badge-for');
+         if (!forId) return;
+@@ -249,11 +236,10 @@ export default function VisualEditorOverlay({
+         if (!el) return;
+         const rect = el.getBoundingClientRect();
+         (badge as HTMLElement).style.top = `${rect.top - 12}px`;
+-        (badge as HTMLElement).style.left = `${rect.right - 140}px`;
++        (badge as HTMLElement).style.left = `${Math.max(0, rect.right - 140)}px`;
+       });
+     };
+ 
+-    // Remove previous scroll listener if any
+     (iframe.contentWindow as any).__veBadgeScrollHandler && iframe.contentWindow!.removeEventListener('scroll', (iframe.contentWindow as any).__veBadgeScrollHandler);
+     if (dirtyIds.size > 0) {
+       (iframe.contentWindow as any).__veBadgeScrollHandler = scrollHandler;
+
+commit 73bc2c3472ae131e6cca3b0130ac1457a0e83952
+Author: nften <nften@example.com>
+Date:   Fri Mar 20 23:38:03 2026 -0300
+
+    fix: prevent panel from closing on iframe clicks - ignore badge overlay clicks, keep panel open on deselect, single state update
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 4467007..391f737 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -498,14 +498,20 @@ export default function VisualEditorOverlay({
+ 
+     const handleClick = (e: MouseEvent) => {
+       const target = e.target as HTMLElement;
++
++      // Ignore clicks on the badge overlay or its children
++      if (target.closest('#ve-badge-overlay') || target.closest('.ve-unsaved-badge')) {
++        return;
++      }
++
+       const editable = target.closest('[data-ve-editable]') as HTMLElement;
+ 
+       if (!editable || editable.closest('[data-ve-product]')) {
+         doc.querySelectorAll('.ve-selected').forEach(el => el.classList.remove('ve-selected'));
+-        setEditorState(prev => ({ ...prev, selectedElement: null, activePanel: 'none' }));
++        // Only deselect the element, but KEEP the panel open
++        setEditorState(prev => ({ ...prev, selectedElement: null }));
+         setSelectedElementInfo(null);
+         setSelectedTextContent('');
+-        setShowComponentPicker(false);
+         return;
+       }
+ 
+@@ -523,16 +529,18 @@ export default function VisualEditorOverlay({
+ 
+       setSelectedElementInfo({ tag: tag.toUpperCase(), type: veType, label: veLabel });
+       setSelectedTextContent(textContent);
+-      setEditorState(prev => ({ ...prev, selectedElement: editable }));
+ 
+-      // Auto-open the right panel based on element type
+-      if (veType === 'text') {
+-        setEditorState(prev => ({ ...prev, selectedElement: editable, activePanel: 'text' }));
+-        setShowComponentPicker(false);
+-      } else if (veType === 'section') {
+-        setEditorState(prev => ({ ...prev, selectedElement: editable, activePanel: 'style' }));
+-        setShowComponentPicker(false);
+-      }
++      // Single state update: select element and auto-open panel if none is open
++      setEditorState(prev => {
++        let panel = prev.activePanel;
++        // Only auto-open a panel if none is currently active
++        if (panel === 'none') {
++          if (veType === 'text') panel = 'text';
++          else if (veType === 'section') panel = 'style';
++        }
++        return { ...prev, selectedElement: editable, activePanel: panel };
++      });
++      setShowComponentPicker(false);
+ 
+       // Read current styles
+       const computed = iframe.contentWindow!.getComputedStyle(editable);
+
+commit 88b6e46e0a8592d2ece690c7ecf0438306d73d30
+Author: nften <nften@example.com>
+Date:   Fri Mar 20 23:15:26 2026 -0300
+
+    fix: use fixed-position overlay for unsaved badges instead of forcing overflow on ancestors - prevents layout/click issues
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index e1fec57..2e981d8 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -162,41 +162,42 @@ export default function VisualEditorOverlay({
+   // ΓöÇΓöÇ Inject/update "unsaved" tooltips on modified elements in iframe ΓöÇΓöÇ
+   const updateUnsavedTooltips = useCallback((dirtyIds: Set<string>) => {
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument) return;
++    if (!iframe?.contentDocument || !iframe?.contentWindow) return;
+     const doc = iframe.contentDocument;
+ 
+-    // Remove all existing unsaved tooltips and clean up overflow overrides
++    // Remove all existing unsaved badges from the overlay container
++    let overlay = doc.getElementById('ve-badge-overlay');
++    if (overlay) {
++      overlay.innerHTML = '';
++    } else {
++      // Create a fixed overlay container that sits above everything
++      overlay = doc.createElement('div');
++      overlay.id = 've-badge-overlay';
++      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;';
++      doc.body.appendChild(overlay);
++    }
++
++    // Also remove any old-style badges that were appended directly to elements
+     doc.querySelectorAll('.ve-unsaved-badge').forEach(el => el.remove());
+-    doc.querySelectorAll('[data-ve-overflow-forced]').forEach(el => {
+-      (el as HTMLElement).style.overflow = '';
+-      el.removeAttribute('data-ve-overflow-forced');
+-    });
+ 
+-    // Add tooltips to dirty elements
++    // Position badges using fixed coordinates from getBoundingClientRect
+     dirtyIds.forEach(veId => {
+       const el = doc.querySelector(`[data-ve-editable="${veId}"]`) as HTMLElement;
+       if (!el) return;
+-      // Ensure position relative for badge positioning
+-      const pos = iframe.contentWindow!.getComputedStyle(el).position;
+-      if (pos === 'static') el.style.position = 'relative';
+-
+-      // Force overflow visible on the element and all ancestors up to body
+-      // so the badge is never clipped by parent containers (nav, sections, etc.)
+-      let ancestor: HTMLElement | null = el;
+-      while (ancestor && ancestor !== doc.body) {
+-        const ancestorOverflow = iframe.contentWindow!.getComputedStyle(ancestor).overflow;
+-        if (ancestorOverflow !== 'visible') {
+-          ancestor.style.overflow = 'visible';
+-          ancestor.setAttribute('data-ve-overflow-forced', 'true');
+-        }
+-        ancestor = ancestor.parentElement;
+-      }
++
++      const rect = el.getBoundingClientRect();
++      // Skip elements that are not visible
++      if (rect.width === 0 && rect.height === 0) return;
+ 
+       const badge = doc.createElement('div');
+       badge.className = 've-unsaved-badge';
++      badge.setAttribute('data-ve-badge-for', veId);
+       badge.textContent = 'ΓÜá∩╕Å Sin guardar';
+       badge.style.cssText = `
+-        position: absolute; top: -14px; right: -14px; z-index: 2147483647;
++        position: fixed;
++        top: ${rect.top - 10}px;
++        left: ${rect.right - 70}px;
++        z-index: 2147483647;
+         background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+         font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px;
+         white-space: nowrap; pointer-events: none;
+@@ -205,8 +206,30 @@ export default function VisualEditorOverlay({
+         animation: veBadgePulse 2s ease-in-out infinite;
+         line-height: 1;
+       `;
+-      el.appendChild(badge);
++      overlay!.appendChild(badge);
+     });
++
++    // Update badge positions on scroll
++    const scrollHandler = () => {
++      if (!overlay) return;
++      const badges = overlay.querySelectorAll('.ve-unsaved-badge');
++      badges.forEach(badge => {
++        const forId = badge.getAttribute('data-ve-badge-for');
++        if (!forId) return;
++        const el = doc.querySelector(`[data-ve-editable="${forId}"]`) as HTMLElement;
++        if (!el) return;
++        const rect = el.getBoundingClientRect();
++        (badge as HTMLElement).style.top = `${rect.top - 10}px`;
++        (badge as HTMLElement).style.left = `${rect.right - 70}px`;
++      });
++    };
++
++    // Remove previous scroll listener if any
++    (iframe.contentWindow as any).__veBadgeScrollHandler && iframe.contentWindow!.removeEventListener('scroll', (iframe.contentWindow as any).__veBadgeScrollHandler);
++    if (dirtyIds.size > 0) {
++      (iframe.contentWindow as any).__veBadgeScrollHandler = scrollHandler;
++      iframe.contentWindow!.addEventListener('scroll', scrollHandler, { passive: true });
++    }
+   }, []);
+ 
+   // ΓöÇΓöÇ Inject editor styles into iframe ΓöÇΓöÇ
+@@ -316,15 +339,6 @@ export default function VisualEditorOverlay({
+         0%, 100% { opacity: 1; transform: scale(1); }
+         50% { opacity: 0.8; transform: scale(1.05); }
+       }
+-      .ve-unsaved-badge {
+-        z-index: 2147483647 !important;
+-        overflow: visible !important;
+-        clip: auto !important;
+-        clip-path: none !important;
+-      }
+-      [data-ve-overflow-forced] {
+-        overflow: visible !important;
+-      }
+     `;
+     doc.head.appendChild(style);
+   }, []);
+@@ -422,23 +436,16 @@ export default function VisualEditorOverlay({
+ 
+       setSelectedElementInfo({ tag: tag.toUpperCase(), type: veType, label: veLabel });
+       setSelectedTextContent(textContent);
++      setEditorState(prev => ({ ...prev, selectedElement: editable }));
+ 
+-      // Single state update: set selectedElement and determine panel.
+-      // If user already has a panel open (text/style), keep it open.
+-      // Only auto-switch panel if no panel is currently active.
+-      setEditorState(prev => {
+-        let newPanel = prev.activePanel;
+-
+-        if (prev.activePanel === 'none') {
+-          // No panel open ΓÇö auto-open based on element type
+-          if (veType === 'text') newPanel = 'text';
+-          else if (veType === 'section') newPanel = 'style';
+-        }
+-        // If a panel IS already open (text or style), keep it as-is
+-        // so clicking another element doesn't close the editing panel
+-
+-        return { ...prev, selectedElement: editable, activePanel: newPanel };
+-      });
++      // Auto-open the right panel based on element type
++      if (veType === 'text') {
++        setEditorState(prev => ({ ...prev, selectedElement: editable, activePanel: 'text' }));
++        setShowComponentPicker(false);
++      } else if (veType === 'section') {
++        setEditorState(prev => ({ ...prev, selectedElement: editable, activePanel: 'style' }));
++        setShowComponentPicker(false);
++      }
+ 
+       // Read current styles
+       const computed = iframe.contentWindow!.getComputedStyle(editable);

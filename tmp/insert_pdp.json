@@ -1,0 +1,7 @@
+[
+  {"codigo": "pdp-cro-bold", "nombre": "CRO Bold", "descripcion": "Template PDP bold para maximo impacto", "componente": "PdpCroBold", "categoria_id": "f735a007-0c2d-474b-98ba-df4b77b10f0e", "verificada": false, "activa": true, "orden": 100},
+  {"codigo": "pdp-cro-elegant", "nombre": "CRO Elegant", "descripcion": "Template PDP elegante minimalista", "componente": "PdpCroElegant", "categoria_id": "f735a007-0c2d-474b-98ba-df4b77b10f0e", "verificada": false, "activa": true, "orden": 101},
+  {"codigo": "pdp-cro-futurista", "nombre": "CRO Futurista", "descripcion": "Template PDP con estetica futurista", "componente": "PdpCroFuturista", "categoria_id": "f735a007-0c2d-474b-98ba-df4b77b10f0e", "verificada": false, "activa": true, "orden": 102},
+  {"codigo": "pdp-cro-minimal", "nombre": "CRO Minimal", "descripcion": "Template PDP minimalista conversion", "componente": "PdpCroMinimal", "categoria_id": "f735a007-0c2d-474b-98ba-df4b77b10f0e", "verificada": false, "activa": true, "orden": 103},
+  {"codigo": "pdp-cro-visual", "nombre": "CRO Visual", "descripcion": "Template PDP con galeria visual", "componente": "PdpCroVisual", "categoria_id": "f735a007-0c2d-474b-98ba-df4b77b10f0e", "verificada": false, "activa": true, "orden": 104}
+]

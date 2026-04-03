@@ -1,0 +1,9 @@
+[phases.setup]
+nixPkgs = ["nodejs"]
+aptPkgs = []
+
+[phases.build]
+cmds = ["npm ci", "npm run build", "npm prune --omit=dev"]
+
+[start]
+cmd = "npm run start"

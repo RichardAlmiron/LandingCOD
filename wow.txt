@@ -1,0 +1,28 @@
+﻿components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(17,9): error TS2657: JSX expressions must have one parent element.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(28,31): error TS1127: Invalid character.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(35,21): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(35,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(35,25): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(36,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(40,14): error TS17008: JSX element 'header' has no corresponding closing tag.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(42,121): error TS1127: Invalid character.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(42,147): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(42,148): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(42,149): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(42,157): error TS17002: Expected corresponding JSX closing tag for 'div'.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(57,13): error TS1005: ')' expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(129,74): error TS1127: Invalid character.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(130,61): error TS1005: '}' expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(130,101): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(131,60): error TS1005: '}' expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(131,303): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(132,75): error TS1005: '}' expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(132,86): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(133,68): error TS1005: '}' expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(133,93): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(134,35): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(134,36): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(134,39): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(158,9): error TS1128: Declaration or statement expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(159,5): error TS1109: Expression expected.
+components/pdp/electr├│nico/wearables/PdpWatchLumen.tsx(160,1): error TS1128: Declaration or statement expected.

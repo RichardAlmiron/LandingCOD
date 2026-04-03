@@ -1,0 +1,390 @@
+﻿diff --git a/components/saas/BuilderFlow.tsx b/components/saas/BuilderFlow.tsx
+index 7051a05..9ed5394 100644
+--- a/components/saas/BuilderFlow.tsx
++++ b/components/saas/BuilderFlow.tsx
+@@ -461,15 +461,12 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
+         }
+     };
+ 
+-    const handleDeletePdpTemplate = async (id: string) => {
+-        if (!confirm('┬┐Seguro de que deseas mover esta p├ígina de producto a la papelera?')) return;
++    const handleDeletePdpTemplate = async (id: any) => {
++        const ids = Array.isArray(id) ? id : [id];
++        if (!confirm('┬┐Seguro de que deseas mover a la papelera?')) return;
+         try {
+-            const res = await fetch(`/api/templates/pdp?id=${id}`, { method: 'DELETE' });
+-            if (res.ok) {
+-                setPdpTemplates(prev => prev.filter((t: any) => t.id !== id));
+-            } else {
+-                alert('No se pudo eliminar la p├ígina de producto.');
+-            }
++            await Promise.all(ids.map((idToDelete: string) => fetch(`/api/templates/pdp?id=${idToDelete}`, { method: 'DELETE' })));
++            setPdpTemplates(prev => prev.filter((t: any) => !ids.includes(t.id)));
+         } catch (err) {
+             console.error(err);
+             alert('Error al intentar eliminar');
+@@ -1621,7 +1618,7 @@ export default function BuilderFlow({ isAdmin }: { isAdmin?: boolean }) {
+                     </div>
+                     <div style={{ textAlign: 'center' }}>
+                         <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
+-                            Preparando PixelForge Studio
++                            Preparando LandingCOD Studio
+                         </div>
+                         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                             {loadingProgress < 30 ? 'Cargando tu tienda...' :
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 5f686d8..28fe9ac 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -151,92 +151,16 @@ export default function VisualEditorOverlay({
+     });
+   }, []);
+ 
+-  // ΓöÇΓöÇ Inject/update "unsaved" tooltips on modified elements in iframe ΓöÇΓöÇ
+-  const updateUnsavedTooltips = useCallback((dirtyIds: Set<string>) => {
++  // ΓöÇΓöÇ Update "unsaved" tracking (state only, no DOM injection into iframe) ΓöÇΓöÇ
++  const updateUnsavedTooltips = useCallback((_dirtyIds: Set<string>) => {
++    // Clean up any leftover badges from previous versions
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument || !iframe?.contentWindow) return;
+-    const doc = iframe.contentDocument;
+-
+-    // Remove all existing unsaved badges
+-    doc.querySelectorAll('.ve-unsaved-badge').forEach(el => el.remove());
+-    // Remove old overlay container if it exists
+-    doc.getElementById('ve-badge-overlay')?.remove();
+-
+-    // Position badges using fixed coordinates directly on body
+-    dirtyIds.forEach(veId => {
+-      const el = doc.querySelector(`[data-ve-editable="${veId}"]`) as HTMLElement;
+-      if (!el) return;
+-
+-      const rect = el.getBoundingClientRect();
+-      if (rect.width === 0 && rect.height === 0) return;
+-
+-      // Container for badge + revert button
+-      const container = doc.createElement('div');
+-      container.className = 've-unsaved-badge';
+-      container.setAttribute('data-ve-badge-for', veId);
+-      container.style.cssText = `
+-        position: fixed;
+-        top: ${rect.top - 12}px;
+-        left: ${Math.max(0, rect.right - 140)}px;
+-        z-index: 2147483647;
+-        display: flex; align-items: center; gap: 0px;
+-        pointer-events: auto;
+-        font-family: system-ui, -apple-system, sans-serif;
+-        animation: veBadgePulse 2s ease-in-out infinite;
+-        line-height: 1;
+-      `;
+-
+-      // "Sin guardar" label
+-      const label = doc.createElement('span');
+-      label.textContent = 'ΓÜá∩╕Å Sin guardar';
+-      label.style.cssText = `
+-        background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+-        font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px 0 0 10px;
+-        white-space: nowrap; pointer-events: none;
+-        box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+-      `;
+-      container.appendChild(label);
+-
+-      // "Revertir" button
+-      const revertBtn = doc.createElement('button');
+-      revertBtn.textContent = 'Γå⌐ Revertir';
+-      revertBtn.style.cssText = `
+-        background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+-        font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 0 10px 10px 0;
+-        white-space: nowrap; cursor: pointer; border: none;
+-        box-shadow: 0 2px 8px rgba(239,68,68,0.4);
+-        transition: filter 0.15s;
+-      `;
+-      revertBtn.onmouseenter = () => { revertBtn.style.filter = 'brightness(1.2)'; };
+-      revertBtn.onmouseleave = () => { revertBtn.style.filter = 'brightness(1)'; };
+-      revertBtn.onclick = (e) => {
+-        e.stopPropagation();
+-        iframe.contentWindow!.parent.postMessage({ type: 've-revert', veId }, '*');
+-      };
+-      container.appendChild(revertBtn);
+-
+-      doc.body.appendChild(container);
+-    });
+-
+-    // Update badge positions on scroll
+-    const scrollHandler = () => {
+-      const badges = doc.querySelectorAll('.ve-unsaved-badge');
+-      badges.forEach(badge => {
+-        const forId = badge.getAttribute('data-ve-badge-for');
+-        if (!forId) return;
+-        const el = doc.querySelector(`[data-ve-editable="${forId}"]`) as HTMLElement;
+-        if (!el) return;
+-        const rect = el.getBoundingClientRect();
+-        (badge as HTMLElement).style.top = `${rect.top - 12}px`;
+-        (badge as HTMLElement).style.left = `${Math.max(0, rect.right - 140)}px`;
+-      });
+-    };
+-
+-    (iframe.contentWindow as any).__veBadgeScrollHandler && iframe.contentWindow!.removeEventListener('scroll', (iframe.contentWindow as any).__veBadgeScrollHandler);
+-    if (dirtyIds.size > 0) {
+-      (iframe.contentWindow as any).__veBadgeScrollHandler = scrollHandler;
+-      iframe.contentWindow!.addEventListener('scroll', scrollHandler, { passive: true });
++    if (iframe?.contentDocument) {
++      iframe.contentDocument.querySelectorAll('.ve-unsaved-badge').forEach(el => el.remove());
++      iframe.contentDocument.getElementById('ve-badge-overlay')?.remove();
+     }
++    // Unsaved state is tracked via React state (unsavedVeIds) and displayed
++    // in the side panel and bottom status bar ΓÇö no DOM injection needed.
+   }, []);
+ 
+   // ΓöÇΓöÇ Revert a single element to its original state ΓöÇΓöÇ
+@@ -297,6 +221,29 @@ export default function VisualEditorOverlay({
+     }
+   }, [editorState.selectedElement, updateUnsavedTooltips]);
+ 
++  // ΓöÇΓöÇ Add customization with undo support ΓöÇΓöÇ
++  const addCustomization = useCallback((customization: VisualCustomization) => {
++    setEditorState(prev => ({
++      ...prev,
++      undoStack: [...prev.undoStack, prev.customizations],
++      redoStack: [],
++      customizations: [
++        ...prev.customizations.filter(c => c.id !== customization.id || c.property !== customization.property),
++        customization
++      ],
++      isDirty: true,
++    }));
++  }, []);
++
++  // ΓöÇΓöÇ Stable refs for functions used inside iframe listeners ΓöÇΓöÇ
++  // This avoids stale closures in setupIframeListeners (which has [] deps to avoid re-attaching)
++  const captureOriginalSnapshotRef = useRef(captureOriginalSnapshot);
++  const addCustomizationRef = useRef(addCustomization);
++  const updateUnsavedTooltipsRef = useRef(updateUnsavedTooltips);
++  useEffect(() => { captureOriginalSnapshotRef.current = captureOriginalSnapshot; }, [captureOriginalSnapshot]);
++  useEffect(() => { addCustomizationRef.current = addCustomization; }, [addCustomization]);
++  useEffect(() => { updateUnsavedTooltipsRef.current = updateUnsavedTooltips; }, [updateUnsavedTooltips]);
++
+   // ΓöÇΓöÇ Inject editor styles into iframe ΓöÇΓöÇ
+   const injectEditorStyles = useCallback(() => {
+     const iframe = iframeRef.current;
+@@ -400,10 +347,6 @@ export default function VisualEditorOverlay({
+         background-color: rgba(245, 158, 11, 0.05) !important;
+       }
+       * { scroll-behavior: smooth; }
+-      @keyframes veBadgePulse {
+-        0%, 100% { opacity: 1; transform: scale(1); }
+-        50% { opacity: 0.8; transform: scale(1.05); }
+-      }
+     `;
+     doc.head.appendChild(style);
+   }, []);
+@@ -426,10 +369,15 @@ export default function VisualEditorOverlay({
+ 
+       const text = htmlEl.textContent?.trim() || '';
+       const children = htmlEl.children.length;
++      
++      // More careful heuristic to prevent marking entire pages as 'products'
++      const isPageWrapper = ['main', 'body', 'html', 'header', 'footer', 'section'].includes(tag);
++      const isLayoutContainer = typeof htmlEl.className === 'string' && (htmlEl.className.includes('grid') || htmlEl.className.includes('flex'));
+       const hasPricePattern = /\$[\d,.]+/.test(text) || /[\d,.]+\s*(USD|COP|MXN|EUR)/i.test(text);
+-      const hasMultipleCards = children >= 3 && htmlEl.querySelectorAll('img').length >= 3;
++      const hasMultipleCards = children >= 2 && htmlEl.querySelectorAll('img').length >= 2;
+ 
+-      if (hasPricePattern && hasMultipleCards && children >= 3) {
++      // Only mark as product container if it's a layout container, not a page wrapper, and has products
++      if (!isPageWrapper && isLayoutContainer && hasPricePattern && hasMultipleCards && text.length < 3000) {
+         htmlEl.setAttribute('data-ve-product', 'true');
+         return;
+       }
+@@ -487,11 +435,6 @@ export default function VisualEditorOverlay({
+       const target = e.target as HTMLElement;
+       console.log('[VE] iframe click detected on:', target.tagName, target.className?.toString().slice(0, 50));
+ 
+-      // Ignore clicks on the badge overlay or its children
+-      if (target.closest('#ve-badge-overlay') || target.closest('.ve-unsaved-badge')) {
+-        return;
+-      }
+-
+       const editable = target.closest('[data-ve-editable]') as HTMLElement;
+ 
+       if (!editable || editable.closest('[data-ve-product]')) {
+@@ -585,41 +528,11 @@ export default function VisualEditorOverlay({
+     };
+ 
+     const handleDblClick = (e: MouseEvent) => {
+-      const target = e.target as HTMLElement;
+-      const editable = target.closest('[data-ve-editable]') as HTMLElement;
+-      if (!editable || editable.closest('[data-ve-product]')) return;
+-
+-      const veType = editable.getAttribute('data-ve-type');
+-      if (veType === 'text') {
+-        e.preventDefault();
+-        const veId = editable.getAttribute('data-ve-editable') || '';
+-        captureOriginalSnapshot(editable, veId);
+-        editable.setAttribute('contenteditable', 'true');
+-        editable.focus();
+-        setEditingText(true);
+-
+-        const handleBlur = () => {
+-          editable.removeAttribute('contenteditable');
+-          setEditingText(false);
+-          const newText = editable.innerHTML;
+-          setSelectedTextContent(editable.textContent?.trim().slice(0, 200) || '');
+-          addCustomization({
+-            id: veId,
+-            selector: `[data-ve-editable="${veId}"]`,
+-            type: 'text',
+-            newValue: newText,
+-            timestamp: Date.now(),
+-          });
+-          setUnsavedVeIds(prev => {
+-            const next = new Set(prev);
+-            next.add(veId);
+-            updateUnsavedTooltips(next);
+-            return next;
+-          });
+-          editable.removeEventListener('blur', handleBlur);
+-        };
+-        editable.addEventListener('blur', handleBlur);
+-      }
++      // Double click text editing (contenteditable) is disabled because it directly
++      // mutates React-managed DOM nodes, causing fatal NotFoundError hydration 
++      // crashes (the "manto blanco" Next.js error overlay). Users use the sidebar text area instead.
++      e.preventDefault();
++      e.stopPropagation();
+     };
+ 
+     doc.addEventListener('click', handleClick, true);
+@@ -637,20 +550,6 @@ export default function VisualEditorOverlay({
+     };
+   }, []);
+ 
+-  // ΓöÇΓöÇ Add customization with undo support ΓöÇΓöÇ
+-  const addCustomization = useCallback((customization: VisualCustomization) => {
+-    setEditorState(prev => ({
+-      ...prev,
+-      undoStack: [...prev.undoStack, prev.customizations],
+-      redoStack: [],
+-      customizations: [
+-        ...prev.customizations.filter(c => c.id !== customization.id || c.property !== customization.property),
+-        customization
+-      ],
+-      isDirty: true,
+-    }));
+-  }, []);
+-
+   // ΓöÇΓöÇ Undo / Redo ΓöÇΓöÇ
+   const handleUndo = useCallback(() => {
+     setEditorState(prev => {
+@@ -808,26 +707,37 @@ export default function VisualEditorOverlay({
+   // ΓöÇΓöÇ Full editor setup (inject styles, mark elements, attach listeners) ΓöÇΓöÇ
+   const performEditorSetup = useCallback(() => {
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument?.body) return false;
++    if (!iframe?.contentDocument?.body) {
++      console.log('[VE] performEditorSetup: no contentDocument or body');
++      return false;
++    }
+     
+-    // Check if the iframe body has real content (not just loading spinners)
+-    const bodyText = iframe.contentDocument.body.innerText?.trim() || '';
+-    const hasImages = iframe.contentDocument.body.querySelectorAll('img').length > 0;
+-    const hasRealContent = bodyText.length > 50 || hasImages;
++    const doc = iframe.contentDocument;
++    const body = doc.body;
++    
++    // Check if the iframe body has real content (not just a loading spinner)
++    const bodyChildren = body.children.length;
++    const bodyText = body.innerText?.trim() || '';
++    const hasImages = body.querySelectorAll('img').length > 0;
++    const hasRealContent = bodyChildren > 2 || bodyText.length > 30 || hasImages;
+     
+     if (!hasRealContent) {
+-      console.log('[VE] performEditorSetup: body has no real content yet (text length:', bodyText.length, ')');
++      console.log('[VE] performEditorSetup: no real content yet (children:', bodyChildren, 'text:', bodyText.length, ')');
+       return false;
+     }
+     
++    console.log('[VE] performEditorSetup: content found, setting up editor...');
+     injectEditorStyles();
+     markEditableElements();
+-    const editableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
+-    console.log('[VE] performEditorSetup: done, editables:', editableCount);
++    const editableCount = doc.querySelectorAll('[data-ve-editable]').length;
++    console.log('[VE] performEditorSetup: editables:', editableCount, 'children:', bodyChildren);
++    
++    // ALWAYS attach listeners ΓÇö even if no editables found yet
+     setupIframeListeners();
+     applyExistingCustomizations();
+     applyExistingInjectedComponents();
+-    return editableCount > 0;
++    
++    return true;
+   }, [injectEditorStyles, markEditableElements, setupIframeListeners]);
+ 
+   // ΓöÇΓöÇ MutationObserver ref to watch for iframe DOM changes ΓöÇΓöÇ
+@@ -888,15 +798,22 @@ export default function VisualEditorOverlay({
+           let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+           const observer = new MutationObserver((mutations) => {
+             const significant = mutations.some(m =>
+-              m.type === 'childList' && (m.target === doc.body || (m.target as HTMLElement).parentElement === doc.body) && m.addedNodes.length > 0
++              m.type === 'childList' && m.addedNodes.length > 0
+             );
+             if (!significant) return;
+-            const hasEditables = doc.querySelectorAll('[data-ve-editable]').length > 0;
+-            if (!hasEditables) {
+-              console.log('[VE] DOM rebuilt detected ΓÇö re-injecting');
+-              if (debounceTimer) clearTimeout(debounceTimer);
+-              debounceTimer = setTimeout(() => performEditorSetup(), 300);
+-            }
++            
++            // Re-mark editable elements whenever DOM changes significantly
++            if (debounceTimer) clearTimeout(debounceTimer);
++            debounceTimer = setTimeout(() => {
++              const hasEditables = doc.querySelectorAll('[data-ve-editable]').length > 0;
++              if (!hasEditables) {
++                console.log('[VE] DOM rebuilt detected ΓÇö re-injecting');
++                performEditorSetup();
++              } else {
++                // Even if editables exist, re-mark new elements that may have been added
++                markEditableElements();
++              }
++            }, 400);
+           });
+           observer.observe(doc.body, { childList: true, subtree: true });
+           mutationObserverRef.current = observer;
+@@ -914,7 +831,7 @@ export default function VisualEditorOverlay({
+         mutationObserverRef.current = null;
+       }
+     };
+-  }, [performEditorSetup, storeData, template]);
++  }, [performEditorSetup, markEditableElements, storeData, template]);
+ 
+   const applyExistingCustomizations = useCallback(() => {
+     const iframe = iframeRef.current;
+@@ -998,7 +915,7 @@ export default function VisualEditorOverlay({
+   return (
+     <div style={{
+       position: 'fixed', inset: 0, zIndex: 99999,
+-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
++      background: '#0d0d12',
+       display: 'flex', flexDirection: 'column',
+       animation: 'veSlideIn 0.3s ease-out',
+     }}>
+@@ -1025,13 +942,14 @@ export default function VisualEditorOverlay({
+           <div>
+             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+               <Sparkles size={14} style={{ color: '#a78bfa' }} />
+-              PixelForge Studio
++              <span style={{ fontSize: 10, fontWeight: 600, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 8px', borderRadius: 6, letterSpacing: '0.04em' }}>ETAPA 4</span>
++              LandingCOD Studio
+               {editorState.isDirty && (
+                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+               )}
+             </div>
+             <div style={{ fontSize: 11, color: '#71717a' }}>
+-              Haz clic en cualquier elemento de tu tienda para editarlo
++              Editor visual ΓÇö haz clic en cualquier elemento para editarlo
+             </div>
+           </div>
+         </div>

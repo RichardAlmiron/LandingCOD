@@ -1,0 +1,334 @@
+'use client';
+
+import React, { useState } from 'react';
+import { X, MapPin, Phone, User, Navigation, Check, AlertCircle, Send } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
+import { OrderFormType } from '@/lib/types';
+
+interface OrderFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  formType: OrderFormType;
+  storeName: string;
+  whatsappNumber: string;
+  onSubmit: (data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    city: string;
+    neighborhood: string;
+    address: string;
+    locationUrl?: string;
+    referencePoints: string;
+  }) => void;
+}
+
+export default function OrderForm({ isOpen, onClose, formType, storeName, whatsappNumber, onSubmit }: OrderFormProps) {
+  const { items, total, clearCart } = useCart();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    city: '',
+    neighborhood: '',
+    address: '',
+    locationUrl: '',
+    referencePoints: ''
+  });
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [showLocationConfirm, setShowLocationConfirm] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleGetLocation = () => {
+    setIsGettingLocation(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          setFormData(prev => ({ ...prev, locationUrl: mapsUrl }));
+          setIsGettingLocation(false);
+          setShowLocationConfirm(true);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('No se pudo obtener tu ubicación. Por favor, permite el acceso a la ubicación o ingresa la dirección manualmente.');
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      alert('Tu navegador no soporta geolocalización.');
+      setIsGettingLocation(false);
+    }
+  };
+
+  const confirmLocation = () => {
+    setLocationConfirmed(true);
+    setShowLocationConfirm(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const getFormStyles = () => {
+    switch (formType) {
+      case 'modern':
+        return {
+          container: 'bg-gradient-to-br from-slate-900 to-slate-800 text-white',
+          input: 'bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500',
+          button: 'bg-blue-600 hover:bg-blue-700 text-white',
+          accent: 'text-blue-400'
+        };
+      case 'minimal':
+        return {
+          container: 'bg-white text-gray-900',
+          input: 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-black',
+          button: 'bg-black hover:bg-gray-800 text-white',
+          accent: 'text-gray-600'
+        };
+      case 'classic':
+        return {
+          container: 'bg-amber-50 text-amber-900',
+          input: 'bg-white border-amber-200 text-amber-900 placeholder-amber-400 focus:border-amber-600',
+          button: 'bg-amber-700 hover:bg-amber-800 text-white',
+          accent: 'text-amber-700'
+        };
+      default:
+        return {
+          container: 'bg-white text-gray-900',
+          input: 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-500',
+          button: 'bg-blue-600 hover:bg-blue-700 text-white',
+          accent: 'text-blue-600'
+        };
+    }
+  };
+
+  const styles = getFormStyles();
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${styles.container}`}>
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-current border-opacity-20 bg-inherit rounded-t-2xl">
+          <div>
+            <h2 className="text-2xl font-bold">Completa tu Pedido</h2>
+            <p className={`text-sm mt-1 ${styles.accent}`}>Cash on Delivery - Pago contra entrega</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-black/10 rounded-full transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Order Summary */}
+        <div className="p-6 border-b border-current border-opacity-10">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-current bg-opacity-20 flex items-center justify-center text-sm">
+              {items.length}
+            </span>
+            Productos en tu pedido
+          </h3>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {items.map(item => (
+              <div key={item.id} className="flex justify-between text-sm opacity-90">
+                <span>{item.quantity}x {item.title}</span>
+                <span className="font-medium">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-current border-opacity-20 flex justify-between items-center">
+            <span className="font-medium">Total a pagar</span>
+            <span className="text-2xl font-bold">${total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5 opacity-80">Nombre</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+                <input
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 outline-none transition-all ${styles.input}`}
+                  placeholder="Tu nombre"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5 opacity-80">Apellido</label>
+              <input
+                type="text"
+                required
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${styles.input}`}
+                placeholder="Tu apellido"
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5 opacity-80">Teléfono de contacto</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+              <input
+                type="tel"
+                required
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 outline-none transition-all ${styles.input}`}
+                placeholder="Ej: 0981 123 456"
+              />
+            </div>
+          </div>
+
+          {/* City & Neighborhood */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5 opacity-80">Ciudad</label>
+              <input
+                type="text"
+                required
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${styles.input}`}
+                placeholder="Ciudad"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5 opacity-80">Barrio</label>
+              <input
+                type="text"
+                required
+                value={formData.neighborhood}
+                onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${styles.input}`}
+                placeholder="Barrio"
+              />
+            </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5 opacity-80">Dirección exacta</label>
+            <textarea
+              required
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all resize-none h-20 ${styles.input}`}
+              placeholder="Calle, número, departamento, etc."
+            />
+          </div>
+
+          {/* GPS Location */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium opacity-80 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Ubicación GPS (opcional pero recomendado)
+            </label>
+            
+            {!locationConfirmed ? (
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={isGettingLocation}
+                className={`w-full py-3 px-4 rounded-xl border-2 border-dashed border-current border-opacity-30 
+                  hover:border-opacity-60 transition-all flex items-center justify-center gap-2
+                  ${isGettingLocation ? 'opacity-70' : ''}`}
+              >
+                <Navigation className={`w-4 h-4 ${isGettingLocation ? 'animate-pulse' : ''}`} />
+                {isGettingLocation ? 'Obteniendo ubicación...' : 'Obtener mi ubicación exacta'}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 text-green-500 bg-green-500/10 p-3 rounded-xl">
+                <Check className="w-5 h-5" />
+                <span className="text-sm">Ubicación confirmada</span>
+              </div>
+            )}
+
+            {formData.locationUrl && (
+              <a 
+                href={formData.locationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline opacity-70 hover:opacity-100 block"
+              >
+                Ver ubicación en Google Maps
+              </a>
+            )}
+          </div>
+
+          {/* Reference Points */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5 opacity-80">
+              Puntos de referencia cercanos
+            </label>
+            <textarea
+              value={formData.referencePoints}
+              onChange={(e) => setFormData({ ...formData, referencePoints: e.target.value })}
+              className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all resize-none h-20 ${styles.input}`}
+              placeholder="Ej: Cerca del supermercado, frente a la farmacia, etc."
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 
+              transition-all transform hover:scale-[1.02] active:scale-[0.98] ${styles.button}`}
+          >
+            <Send className="w-5 h-5" />
+            Enviar Pedido por WhatsApp
+          </button>
+
+          <p className="text-center text-xs opacity-60">
+            Recibirás la confirmación en: {whatsappNumber}
+          </p>
+        </form>
+
+        {/* Location Confirmation Modal */}
+        {showLocationConfirm && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-6 rounded-2xl">
+            <div className="bg-white text-gray-900 p-6 rounded-xl max-w-sm text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                <MapPin className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold">¿Estás en el lugar correcto?</h3>
+              <p className="text-gray-600">
+                Por favor, confirma que estás en la ubicación donde deseas recibir tu pedido.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLocationConfirm(false)}
+                  className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-xl font-medium hover:bg-gray-50"
+                >
+                  No, corregir
+                </button>
+                <button
+                  onClick={confirmLocation}
+                  className="flex-1 py-3 px-4 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700"
+                >
+                  Sí, confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

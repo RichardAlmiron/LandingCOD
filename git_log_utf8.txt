@@ -1,0 +1,389 @@
+﻿commit 6aa761e929dc63748f3cdb2368f832653a9433f3
+Author: nften <nften@example.com>
+Date:   Sat Mar 21 01:09:31 2026 -0300
+
+    feat: eliminar panel de configuraci├│n step 4 para tiendas, flujo directo al editor visual
+    
+    - Eliminado completamente el panel de configuraci├│n (step 4) para flujo de tiendas
+    - Desde step 3 (productos) se pasa directamente al editor visual con animaci├│n de carga
+    - Step 4 se mantiene solo para flujo PDP con herramientas CRO
+    - Agregado bot├│n Publicar dentro del editor visual (VisualEditorOverlay)
+    - Limpieza de c├│digo muerto: isContactFormExpanded, selectedCountry, showCountryDropdown, showProductDiscounts, productDiscounts, saveProductDiscount, saveGlobalDiscount, saveAllProductDiscounts, loadDiscounts, COUNTRY_CODES, hoveredProductId, isSavingToDB
+    - Limpieza de imports: countryCodes, Facebook, Instagram, Twitter, MessageCircle, ChevronDown, useDebounce
+    - Fix iframe VE: nunca cambiar template en modo VE para evitar re-mount del componente din├ímico
+    - Build verificado sin errores
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 68624ef..5f686d8 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -18,6 +18,7 @@ interface VisualEditorOverlayProps {
+   storeData: StoreData;
+   template: TemplateType;
+   onSave: (customizations: VisualCustomization[], injectedComponents: string[]) => Promise<void>;
++  onPublish?: () => void;
+   existingCustomizations?: VisualCustomization[];
+   existingInjectedComponents?: string[];
+ }
+@@ -86,7 +87,7 @@ function Tooltip({ children, text, description, position = 'bottom' }: {
+ }
+ 
+ export default function VisualEditorOverlay({
+-  isOpen, onClose, storeData, template, onSave,
++  isOpen, onClose, storeData, template, onSave, onPublish,
+   existingCustomizations = [], existingInjectedComponents = []
+ }: VisualEditorOverlayProps) {
+   // ΓöÇΓöÇ State ΓöÇΓöÇ
+@@ -1098,6 +1099,24 @@ export default function VisualEditorOverlay({
+               {editorState.isSaving ? 'Guardando...' : 'Guardar'}
+             </button>
+           </Tooltip>
++          {onPublish && (
++            <Tooltip text="≡ƒÜÇ Publicar tienda" description="Publica tu tienda con todos los cambios para que est├⌐ en vivo" position="bottom">
++              <button
++                onClick={onPublish}
++                style={{
++                  background: 'linear-gradient(135deg, #10b981, #059669)',
++                  border: 'none', borderRadius: 10, padding: '8px 20px',
++                  color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
++                  display: 'flex', alignItems: 'center', gap: 6,
++                  transition: 'all 0.2s',
++                  boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
++                }}
++              >
++                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
++                Publicar
++              </button>
++            </Tooltip>
++          )}
+         </div>
+       </div>
+ 
+
+commit 37b1f8d42af66c6a79286268fa318c48a70f6cb7
+Author: nften <nften@example.com>
+Date:   Sat Mar 21 00:48:20 2026 -0300
+
+    fix: replace ve-ready handshake with content polling - editor waits for real content in iframe before setup
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 0e88642..68624ef 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -807,42 +807,37 @@ export default function VisualEditorOverlay({
+   // ΓöÇΓöÇ Full editor setup (inject styles, mark elements, attach listeners) ΓöÇΓöÇ
+   const performEditorSetup = useCallback(() => {
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument?.body) {
+-      console.warn('[VE] performEditorSetup: iframe contentDocument not available, retrying in 500ms');
+-      setTimeout(() => {
+-        const retry = iframeRef.current;
+-        if (retry?.contentDocument?.body) {
+-          console.log('[VE] performEditorSetup RETRY: now available');
+-          injectEditorStyles();
+-          markEditableElements();
+-          setupIframeListeners();
+-          applyExistingCustomizations();
+-          applyExistingInjectedComponents();
+-        } else {
+-          console.error('[VE] performEditorSetup RETRY: still not available');
+-        }
+-      }, 500);
+-      return;
++    if (!iframe?.contentDocument?.body) return false;
++    
++    // Check if the iframe body has real content (not just loading spinners)
++    const bodyText = iframe.contentDocument.body.innerText?.trim() || '';
++    const hasImages = iframe.contentDocument.body.querySelectorAll('img').length > 0;
++    const hasRealContent = bodyText.length > 50 || hasImages;
++    
++    if (!hasRealContent) {
++      console.log('[VE] performEditorSetup: body has no real content yet (text length:', bodyText.length, ')');
++      return false;
+     }
+-    const editableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
+-    console.log('[VE] performEditorSetup: body exists, current editables:', editableCount);
++    
+     injectEditorStyles();
+     markEditableElements();
+-    const newEditableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
+-    console.log('[VE] performEditorSetup: after marking, editables:', newEditableCount);
++    const editableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
++    console.log('[VE] performEditorSetup: done, editables:', editableCount);
+     setupIframeListeners();
+-    console.log('[VE] performEditorSetup: listeners attached');
+     applyExistingCustomizations();
+     applyExistingInjectedComponents();
++    return editableCount > 0;
+   }, [injectEditorStyles, markEditableElements, setupIframeListeners]);
+ 
+   // ΓöÇΓöÇ MutationObserver ref to watch for iframe DOM changes ΓöÇΓöÇ
+   const mutationObserverRef = useRef<MutationObserver | null>(null);
++  const setupCompleteRef = useRef(false);
+ 
+   // ΓöÇΓöÇ Iframe load handler ΓöÇΓöÇ
+   const handleIframeLoad = useCallback(() => {
+     const iframe = iframeRef.current;
+     if (!iframe?.contentWindow) return;
++    setupCompleteRef.current = false;
+ 
+     // Clean up previous MutationObserver
+     if (mutationObserverRef.current) {
+@@ -850,12 +845,11 @@ export default function VisualEditorOverlay({
+       mutationObserverRef.current = null;
+     }
+ 
++    // Send store data to iframe via postMessage (retry until received)
+     let retryCount = 0;
+     const maxRetries = 15;
+-    let confirmed = false;
+-
+     const sendData = () => {
+-      if (confirmed || retryCount >= maxRetries) return;
++      if (retryCount >= maxRetries) return;
+       iframe.contentWindow?.postMessage({
+         type: 've-init-data',
+         store: storeData,
+@@ -863,92 +857,57 @@ export default function VisualEditorOverlay({
+       }, '*');
+       retryCount++;
+     };
+-
+-    // Once confirmed, set up editor + MutationObserver for resilience
+-    const finalizeSetup = () => {
+-      setIframeLoaded(true);
+-      // Initial setup with delay to let React finish rendering
+-      setTimeout(() => {
+-        performEditorSetup();
+-
+-        // Watch for major DOM changes (React re-renders from dynamic imports)
+-        // and re-inject editor setup if the DOM gets rebuilt
++    sendData();
++    const retryInterval = setInterval(sendData, 200);
++    setTimeout(() => clearInterval(retryInterval), 4000);
++
++    // Instead of waiting for ve-ready, poll the iframe until it has real content
++    // This is more reliable than postMessage handshakes which can fail in React Strict Mode
++    setIframeLoaded(true);
++    
++    let pollCount = 0;
++    const maxPolls = 60; // 60 * 300ms = 18 seconds max
++    const pollInterval = setInterval(() => {
++      pollCount++;
++      if (pollCount > maxPolls || setupCompleteRef.current) {
++        clearInterval(pollInterval);
++        return;
++      }
++      
++      const success = performEditorSetup();
++      if (success) {
++        setupCompleteRef.current = true;
++        clearInterval(pollInterval);
++        console.log('[VE] Editor setup complete after', pollCount, 'polls');
++        
++        // Set up MutationObserver for resilience after successful setup
+         try {
+           const doc = iframe.contentDocument;
+           if (!doc?.body) return;
+           let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+           const observer = new MutationObserver((mutations) => {
+-            // Only react to significant changes (childList on body or direct children)
+             const significant = mutations.some(m =>
+               m.type === 'childList' && (m.target === doc.body || (m.target as HTMLElement).parentElement === doc.body) && m.addedNodes.length > 0
+             );
+             if (!significant) return;
+-            // Check if our editor styles or editable markers are gone
+-            const hasStyles = !!doc.getElementById('ve-styles');
+             const hasEditables = doc.querySelectorAll('[data-ve-editable]').length > 0;
+-            if (!hasStyles || !hasEditables) {
+-              console.log('[VE] DOM rebuilt detected ΓÇö styles:', hasStyles, 'editables:', hasEditables, 'ΓÇö re-injecting');
++            if (!hasEditables) {
++              console.log('[VE] DOM rebuilt detected ΓÇö re-injecting');
+               if (debounceTimer) clearTimeout(debounceTimer);
+-              debounceTimer = setTimeout(() => {
+-                performEditorSetup();
+-              }, 300);
++              debounceTimer = setTimeout(() => performEditorSetup(), 300);
+             }
+           });
+           observer.observe(doc.body, { childList: true, subtree: true });
+           mutationObserverRef.current = observer;
+-
+-          // Safety net: periodically check if editables exist for the first 10 seconds
+-          // This covers cases where MutationObserver misses a React re-render
+-          let checkCount = 0;
+-          const safetyInterval = setInterval(() => {
+-            checkCount++;
+-            if (checkCount > 20) { // 20 * 500ms = 10 seconds
+-              clearInterval(safetyInterval);
+-              return;
+-            }
+-            const iframeDoc = iframe.contentDocument;
+-            if (!iframeDoc?.body) return;
+-            const editables = iframeDoc.querySelectorAll('[data-ve-editable]').length;
+-            if (editables === 0) {
+-              console.log('[VE] Safety net: no editables found, re-injecting (check #' + checkCount + ')');
+-              performEditorSetup();
+-            }
+-          }, 500);
+         } catch (e) {
+           console.warn('[VE] Could not set up MutationObserver:', e);
+         }
+-      }, 600);
+-    };
+-
+-    const onReady = (e: MessageEvent) => {
+-      if (e.data?.type === 've-ready') {
+-        confirmed = true;
+-        window.removeEventListener('message', onReady);
+-        clearInterval(retryInterval);
+-        console.log('[VE] ve-ready received from iframe');
+-        finalizeSetup();
+-      }
+-    };
+-    window.addEventListener('message', onReady);
+-
+-    sendData();
+-    const retryInterval = setInterval(sendData, 200);
+-
+-    // Fallback: if iframe never sends ve-ready after 5 seconds, set up anyway
+-    const fallbackTimer = setTimeout(() => {
+-      if (!confirmed) {
+-        confirmed = true;
+-        window.removeEventListener('message', onReady);
+-        clearInterval(retryInterval);
+-        console.log('[VE] Fallback: ve-ready never received, setting up anyway');
+-        finalizeSetup();
+       }
+-    }, 5000);
++    }, 300);
+ 
+     return () => {
+-      window.removeEventListener('message', onReady);
+       clearInterval(retryInterval);
+-      clearTimeout(fallbackTimer);
++      clearInterval(pollInterval);
+       if (mutationObserverRef.current) {
+         mutationObserverRef.current.disconnect();
+         mutationObserverRef.current = null;
+
+commit 66719103a65fcd5a39df03226b308bdc3d719cc5
+Author: nften <nften@example.com>
+Date:   Sat Mar 21 00:39:26 2026 -0300
+
+    fix: add detailed VE debug logs + safety net interval to re-inject editables if DOM rebuilds after dynamic imports
+
+diff --git a/components/visual-editor/VisualEditorOverlay.tsx b/components/visual-editor/VisualEditorOverlay.tsx
+index 0f75dde..0e88642 100644
+--- a/components/visual-editor/VisualEditorOverlay.tsx
++++ b/components/visual-editor/VisualEditorOverlay.tsx
+@@ -470,11 +470,21 @@ export default function VisualEditorOverlay({
+   // ΓöÇΓöÇ Handle element click in iframe ΓöÇΓöÇ
+   const setupIframeListeners = useCallback(() => {
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument) return;
++    if (!iframe?.contentDocument) {
++      console.warn('[VE] setupIframeListeners: contentDocument is null!');
++      return;
++    }
+     const doc = iframe.contentDocument;
+ 
++    // Remove any previously attached VE listeners to avoid duplicates
++    if ((doc as any).__veClickHandler) {
++      doc.removeEventListener('click', (doc as any).__veClickHandler, true);
++      doc.removeEventListener('dblclick', (doc as any).__veDblClickHandler, true);
++    }
++
+     const handleClick = (e: MouseEvent) => {
+       const target = e.target as HTMLElement;
++      console.log('[VE] iframe click detected on:', target.tagName, target.className?.toString().slice(0, 50));
+ 
+       // Ignore clicks on the badge overlay or its children
+       if (target.closest('#ve-badge-overlay') || target.closest('.ve-unsaved-badge')) {
+@@ -614,6 +624,12 @@ export default function VisualEditorOverlay({
+     doc.addEventListener('click', handleClick, true);
+     doc.addEventListener('dblclick', handleDblClick, true);
+ 
++    // Store references for cleanup on re-setup
++    (doc as any).__veClickHandler = handleClick;
++    (doc as any).__veDblClickHandler = handleDblClick;
++
++    console.log('[VE] setupIframeListeners: click + dblclick listeners attached to iframe document');
++
+     return () => {
+       doc.removeEventListener('click', handleClick, true);
+       doc.removeEventListener('dblclick', handleDblClick, true);
+@@ -791,11 +807,31 @@ export default function VisualEditorOverlay({
+   // ΓöÇΓöÇ Full editor setup (inject styles, mark elements, attach listeners) ΓöÇΓöÇ
+   const performEditorSetup = useCallback(() => {
+     const iframe = iframeRef.current;
+-    if (!iframe?.contentDocument?.body) return;
+-    console.log('[VE] performEditorSetup: injecting styles, marking elements, attaching listeners');
++    if (!iframe?.contentDocument?.body) {
++      console.warn('[VE] performEditorSetup: iframe contentDocument not available, retrying in 500ms');
++      setTimeout(() => {
++        const retry = iframeRef.current;
++        if (retry?.contentDocument?.body) {
++          console.log('[VE] performEditorSetup RETRY: now available');
++          injectEditorStyles();
++          markEditableElements();
++          setupIframeListeners();
++          applyExistingCustomizations();
++          applyExistingInjectedComponents();
++        } else {
++          console.error('[VE] performEditorSetup RETRY: still not available');
++        }
++      }, 500);
++      return;
++    }
++    const editableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
++    console.log('[VE] performEditorSetup: body exists, current editables:', editableCount);
+     injectEditorStyles();
+     markEditableElements();
++    const newEditableCount = iframe.contentDocument.querySelectorAll('[data-ve-editable]').length;
++    console.log('[VE] performEditorSetup: after marking, editables:', newEditableCount);
+     setupIframeListeners();
++    console.log('[VE] performEditorSetup: listeners attached');
+     applyExistingCustomizations();
+     applyExistingInjectedComponents();
+   }, [injectEditorStyles, markEditableElements, setupIframeListeners]);
+@@ -847,9 +883,11 @@ export default function VisualEditorOverlay({
+               m.type === 'childList' && (m.target === doc.body || (m.target as HTMLElement).parentElement === doc.body) && m.addedNodes.length > 0
+             );
+             if (!significant) return;
+-            // Check if our editor styles are still present
+-            if (!doc.getElementById('ve-styles')) {
+-              console.log('[VE] DOM rebuilt detected ΓÇö re-injecting editor setup');
++            // Check if our editor styles or editable markers are gone
++            const hasStyles = !!doc.getElementById('ve-styles');
++            const hasEditables = doc.querySelectorAll('[data-ve-editable]').length > 0;
++            if (!hasStyles || !hasEditables) {
++              console.log('[VE] DOM rebuilt detected ΓÇö styles:', hasStyles, 'editables:', hasEditables, 'ΓÇö re-injecting');
+               if (debounceTimer) clearTimeout(debounceTimer);
+               debounceTimer = setTimeout(() => {
+                 performEditorSetup();
+@@ -858,6 +896,24 @@ export default function VisualEditorOverlay({
+           });
+           observer.observe(doc.body, { childList: true, subtree: true });
+           mutationObserverRef.current = observer;
++
++          // Safety net: periodically check if editables exist for the first 10 seconds
++          // This covers cases where MutationObserver misses a React re-render
++          let checkCount = 0;
++          const safetyInterval = setInterval(() => {
++            checkCount++;
++            if (checkCount > 20) { // 20 * 500ms = 10 seconds
++              clearInterval(safetyInterval);
++              return;
++            }
++            const iframeDoc = iframe.contentDocument;
++            if (!iframeDoc?.body) return;
++            const editables = iframeDoc.querySelectorAll('[data-ve-editable]').length;
++            if (editables === 0) {
++              console.log('[VE] Safety net: no editables found, re-injecting (check #' + checkCount + ')');
++              performEditorSetup();
++            }
++          }, 500);
+         } catch (e) {
+           console.warn('[VE] Could not set up MutationObserver:', e);
+         }
