@@ -1,7 +1,7 @@
-﻿﻿'use client';
+'use client';
 import React, { useEffect, useState } from 'react';
 import { StoreData } from '@/lib/types';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Copy, Check } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import VerifiedBadge from '@/components/componentes-compartidos/VerifiedBadge';
@@ -119,11 +119,17 @@ function resolvePdpVariant(templateId: string): number {
 // Esto permite que PDP use EXACTAMENTE el mismo rendering path que Store en el VE.
 function PdpTemplateWrapper({ data, templateId }: { data: StoreData; templateId: string }) {
     const PdpComponent = resolvePdpComponent(templateId);
-    const product = data.products?.[0] || {
-        id: 'demo', title: 'Producto Demo', description: 'Descripción del producto',
-        price: '$999', originalPrice: '$1,999', imageUrl: 'https://picsum.photos/seed/demo/800/800',
-        category: 'General', rating: 4.8, reviews: 1245
-    };
+    
+    // Obtenemos un producto falso contextual en vez de usar siempre los auriculares genéricos
+    // Para que una plantilla de cámara muestre una cámara en la previsualización
+    const contextualDemo = obtenerDemoParaTemplate(templateId).product;
+    
+    // Si estamos en el constructor visual usaremos los productos reales si ya no son el default.
+    // Asumimos que si no es "TechStore" ni otra de demoData, tiene productos reales.
+    const isGenericDemo = data.name === 'TechStore' || data.products?.[0]?.id === 'demo-elec';
+    const product = (data.products && data.products.length > 0 && !isGenericDemo) 
+        ? data.products[0] 
+        : contextualDemo;
     const variant = resolvePdpVariant(templateId);
     return <PdpComponent data={data} product={product} variant={variant} />;
 }
@@ -135,7 +141,7 @@ import { obtenerDemoParaTemplate } from '@/lib/demo-productos';
 
 export default function FullscreenPreview() {
     const [data, setData] = useState<{ store: StoreData, template: string } | null>(null);
-    const [pdpMode, setPdpMode] = useState<{ templateId: string } | null>(null);
+    const [pdpMode, setPdpMode] = useState<{ templateId: string, category?: string, subcategory?: string } | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isVisualEditorMode, setIsVisualEditorMode] = useState(false);
@@ -146,6 +152,8 @@ export default function FullscreenPreview() {
         const templateParam = params.get('template');
         const typeParam = params.get('type');
         const veParam = params.get('ve');
+        const catParam = params.get('cat');
+        const subcatParam = params.get('subcat');
         
         if (veParam === '1') {
             setIsVisualEditorMode(true);
@@ -218,9 +226,19 @@ export default function FullscreenPreview() {
             return messageCleanup;
         }
 
+        // Check if user is admin independently to avoid early returns skipping it
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.user && data.user.role === 'admin') {
+                    setIsAdmin(true);
+                }
+            })
+            .catch(console.error);
+
         // PDP preview: resolve directly by template ID
         if (templateParam && typeParam === 'pdp') {
-            setPdpMode({ templateId: templateParam });
+            setPdpMode({ templateId: templateParam, category: catParam || undefined, subcategory: subcatParam || undefined });
             setData({ store: defaultPreviewStore, template: templateParam });
             return;
         }
@@ -244,7 +262,7 @@ export default function FullscreenPreview() {
                 
                 // Detectar si es modo PDP desde datos guardados
                 if (parsed.store?.pdpTemplate) {
-                    setPdpMode({ templateId: parsed.store.pdpTemplate });
+                    setPdpMode({ templateId: parsed.store.pdpTemplate, category: parsed.store.category, subcategory: parsed.store.subcategory });
                 }
             } catch (e) {
                 console.error(e);
@@ -253,17 +271,6 @@ export default function FullscreenPreview() {
         } else {
             setData({ store: defaultPreviewStore, template: 'megamarket' });
         }
-
-        // Check if user is admin
-        fetch('/api/auth/me')
-            .then(res => res.json())
-            .then(data => {
-                if (data.user && data.user.role === 'admin') {
-                    setIsAdmin(true);
-                }
-            })
-            .catch(console.error);
-
     }, []);
 
     const handleDeleteTemplate = async () => {
@@ -313,6 +320,9 @@ export default function FullscreenPreview() {
 
         return (
             <div suppressHydrationWarning className="min-h-screen bg-white relative">
+                {!isVisualEditorMode && pdpMode && (
+                    <SupportPdpHeader pdpMode={pdpMode} />
+                )}
                 <PdpComponent data={data.store} product={product} variant={variant} />
                 {isAdmin && !isVisualEditorMode && (
                     <div className="fixed bottom-6 right-6 z-[9999]">
@@ -371,6 +381,85 @@ export default function FullscreenPreview() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+import { TEMPLATE_SUGGESTIONS } from '@/lib/template-suggestions';
+
+function SupportPdpHeader({ pdpMode }: { pdpMode: { templateId: string, category?: string } }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(pdpMode.templateId);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const suggestion = TEMPLATE_SUGGESTIONS[pdpMode.templateId];
+
+    return (
+        <div style={{
+            position: 'fixed', top: 16, left: 16, zIndex: 99999,
+            display: 'flex', flexDirection: 'column', gap: 6,
+            fontFamily: 'Inter, sans-serif'
+        }}>
+            <div style={{
+                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)',
+                borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16,
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+                <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                        ID DE PLANTILLA (SOPORTE)
+                    </div>
+                    <button 
+                        onClick={handleCopy}
+                        style={{
+                            background: copied ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                            padding: '6px 12px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8,
+                            color: copied ? '#10b981' : '#a78bfa', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                            fontFamily: 'monospace', transition: 'all 0.2s ease', border: copied ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
+                        }}
+                        title="Da clic para copiar y mandar un reporte a soporte técnico si notas algún error."
+                    >
+                        {pdpMode.templateId}
+                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                </div>
+                <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)' }} />
+                <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                        DEPARTAMENTO
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                        <span style={{ 
+                            background: pdpMode.category ? 'rgba(255,255,255,0.06)' : 'rgba(239, 68, 68, 0.1)', 
+                            color: pdpMode.category ? '#fff' : '#ef4444', 
+                            padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600,
+                            border: pdpMode.category ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(239, 68, 68, 0.2)'
+                        }}>
+                            {pdpMode.category || 'Categoría General'}
+                        </span>
+                    </div>
+                </div>
+                {suggestion && (
+                    <>
+                        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)' }} />
+                        <div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                🎯 CÓDIGO FUENTE (SUGERENCIA)
+                            </div>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                                <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                    {suggestion.cat.toUpperCase()} / {suggestion.subcat.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
         </div>
     );
 }

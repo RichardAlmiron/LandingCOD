@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import LivePDPPreview from '@/components/panel-de-administracion/LivePDPPreview';
 import { PdpTemplate } from '@/lib/types';
@@ -212,7 +212,7 @@ export default function CoverFlow({
                 </div>
 
                 {/* Etiqueta Categoría */}
-                {(item.categoria_nombre || item.subcategoria_nombre) && (
+                {item.categoria_nombre && (
                   <div className="absolute top-0 right-0 z-20 max-w-[180px]">
                     <div
                       className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
@@ -220,9 +220,9 @@ export default function CoverFlow({
                         background: item.categoria_color ? `${item.categoria_color}e6` : (isVerified ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'),
                         textShadow: '0 0 4px rgba(0,0,0,0.3)',
                       }}
-                      title={`${item.categoria_nombre || ''}${item.subcategoria_nombre ? ' → ' + item.subcategoria_nombre : ''}`}
+                      title={item.categoria_nombre}
                     >
-                      {item.categoria_nombre}{item.subcategoria_nombre ? ` · ${item.subcategoria_nombre}` : ''}
+                      {item.categoria_nombre}
                     </div>
                   </div>
                 )}

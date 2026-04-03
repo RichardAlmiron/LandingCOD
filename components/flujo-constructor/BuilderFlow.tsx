@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 // ── Responsabilidad única: orquestar el flujo del builder ──
 // Este componente NO contiene lógica de negocio. Solo compone hooks y componentes.
 
@@ -51,7 +51,6 @@ export default function BuilderFlow() {
     const [useLivePreview, setUseLivePreview] = useState(false);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
     const [selectedCategoria, setSelectedCategoria] = useState<string>('');
-    const [selectedSubcategoria, setSelectedSubcategoria] = useState<string>('');
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiProgress, setAiProgress] = useState('');
 
@@ -431,7 +430,7 @@ export default function BuilderFlow() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 12 }}>
                                     <select 
                                         value={selectedCategoria}
-                                        onChange={(e) => { setSelectedCategoria(e.target.value); setSelectedSubcategoria(''); }}
+                                        onChange={(e) => { setSelectedCategoria(e.target.value); }}
                                         style={{
                                             padding: '6px 12px',
                                             borderRadius: 8,
@@ -448,33 +447,6 @@ export default function BuilderFlow() {
                                             <option key={cat.id} value={cat.nombre}>{cat.icono} {cat.nombre}</option>
                                         ))}
                                     </select>
-                                    
-                                    {selectedCategoria && (() => {
-                                        const catObj = categoriasPDP.find((c: any) => c.nombre === selectedCategoria);
-                                        const subs = catObj?.subcategorias || [];
-                                        if (subs.length === 0) return null;
-                                        return (
-                                            <select 
-                                                value={selectedSubcategoria}
-                                                onChange={(e) => setSelectedSubcategoria(e.target.value)}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: 8,
-                                                    fontSize: 12,
-                                                    fontWeight: 600,
-                                                    background: 'var(--bg-elevated)',
-                                                    color: 'var(--text-primary)',
-                                                    border: '1px solid var(--border-subtle)',
-                                                    cursor: 'pointer',
-                                                }}
-                                            >
-                                                <option value="">Todas las subcategorías</option>
-                                                {subs.map((sub: any) => (
-                                                    <option key={sub.id} value={sub.nombre}>{sub.icono} {sub.nombre}</option>
-                                                ))}
-                                            </select>
-                                        );
-                                    })()}
                                 </div>
                                 
                             </div>
@@ -494,13 +466,6 @@ export default function BuilderFlow() {
                                         if (selectedCategoria) {
                                             filteredPdpTemplates = filteredPdpTemplates.filter((t: any) => 
                                                 t.categoria_nombre === selectedCategoria || !t.categoria_nombre
-                                            );
-                                        }
-                                        
-                                        // Filtro por subcategoría
-                                        if (selectedSubcategoria) {
-                                            filteredPdpTemplates = filteredPdpTemplates.filter((t: any) => 
-                                                t.subcategoria_nombre === selectedSubcategoria
                                             );
                                         }
                                         
@@ -906,13 +871,6 @@ export default function BuilderFlow() {
                                     if (selectedCategoria) {
                                         filteredPdpTemplates = filteredPdpTemplates.filter((t: any) => 
                                             t.categoria_nombre === selectedCategoria || !t.categoria_nombre
-                                        );
-                                    }
-                                    
-                                    // Filtro por subcategoría
-                                    if (selectedSubcategoria) {
-                                        filteredPdpTemplates = filteredPdpTemplates.filter((t: any) => 
-                                            t.subcategoria_nombre === selectedSubcategoria
                                         );
                                     }
                                     

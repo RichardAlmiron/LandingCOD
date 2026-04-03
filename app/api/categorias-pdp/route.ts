@@ -4,7 +4,7 @@ import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
 // ────────────────────────────────────────────────────────────
-// GET: Obtener categorías con subcategorías y plantillas
+// GET: Obtener categorías y plantillas
 // ────────────────────────────────────────────────────────────
 export async function GET(request: Request) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     if (soloPlantillas) {
       let query = supabase
         .from('Plantillas_PDP')
-        .select('*, Categorias_PDP(nombre, color), Subcategorias_PDP(nombre)')
+        .select('*, Categorias_PDP(nombre, color)')
         .is('deleted_at', null)
         .order('orden', { ascending: true });
 
@@ -32,7 +32,6 @@ export async function GET(request: Request) {
         descripcion: p.descripcion,
         componente: p.componente,
         categoria_id: p.categoria_id,
-        subcategoria_id: p.subcategoria_id,
         imagen_url: p.imagen_url,
         premium: p.premium,
         verificada: p.verificada,
@@ -41,7 +40,6 @@ export async function GET(request: Request) {
         activa: p.activa,
         categoria_nombre: p.Categorias_PDP?.nombre || null,
         categoria_color: p.Categorias_PDP?.color || null,
-        subcategoria_nombre: p.Subcategorias_PDP?.nombre || null,
       }));
 
       return NextResponse.json({ plantillas });
@@ -56,22 +54,7 @@ export async function GET(request: Request) {
     const { data: categorias, error: catError } = await catQuery;
     if (catError) throw catError;
 
-    // Obtener subcategorías
-    let subQuery = supabase
-      .from('Subcategorias_PDP')
-      .select('*')
-      .order('orden', { ascending: true });
-    if (!incluirInactivas) subQuery = subQuery.eq('activa', true);
-    const { data: subcategorias, error: subError } = await subQuery;
-    if (subError) throw subError;
-
-    // Anidar subcategorías dentro de categorías
-    const resultado = (categorias || []).map((cat: any) => ({
-      ...cat,
-      subcategorias: (subcategorias || []).filter((sub: any) => sub.categoria_id === cat.id),
-    }));
-
-    return NextResponse.json({ categorias: resultado });
+    return NextResponse.json({ categorias: categorias || [] });
   } catch (err) {
     console.error('GET /api/categorias-pdp error:', err);
     return NextResponse.json({ error: 'Error al obtener categorías' }, { status: 500 });
@@ -79,7 +62,7 @@ export async function GET(request: Request) {
 }
 
 // ────────────────────────────────────────────────────────────
-// POST: Gestionar categorías, subcategorías y plantillas
+// POST: Gestionar categorías y plantillas
 // ────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
@@ -130,42 +113,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Subcategorías ──
-    if (tabla === 'subcategoria') {
-      if (accion === 'crear') {
-        const { categoria_id, nombre, descripcion, icono, orden } = body;
-        const { data, error } = await supabase
-          .from('Subcategorias_PDP')
-          .insert({ categoria_id, nombre, descripcion, icono, orden })
-          .select()
-          .single();
-        if (error) throw error;
-        return NextResponse.json({ success: true, data });
-      }
-      if (accion === 'actualizar') {
-        const { id, ...campos } = body;
-        delete campos.accion;
-        delete campos.tabla;
-        const { error } = await supabase.from('Subcategorias_PDP').update(campos).eq('id', id);
-        if (error) throw error;
-        return NextResponse.json({ success: true });
-      }
-      if (accion === 'eliminar') {
-        const { id } = body;
-        const { error } = await supabase.from('Subcategorias_PDP').delete().eq('id', id);
-        if (error) throw error;
-        return NextResponse.json({ success: true });
-      }
-    }
-
     // ── Plantillas ──
     if (tabla === 'plantilla') {
       if (accion === 'asignar_categoria') {
-        const { id, categoria_id, subcategoria_id } = body;
-        const updateData: any = {};
-        if (categoria_id !== undefined) updateData.categoria_id = categoria_id;
-        if (subcategoria_id !== undefined) updateData.subcategoria_id = subcategoria_id;
-        const { error } = await supabase.from('Plantillas_PDP').update(updateData).eq('id', id);
+        const { id, categoria_id } = body;
+        const { error } = await supabase.from('Plantillas_PDP').update({ categoria_id }).eq('id', id);
         if (error) throw error;
         return NextResponse.json({ success: true });
       }

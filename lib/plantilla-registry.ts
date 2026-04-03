@@ -5,7 +5,7 @@
  * Todo el sistema lee de aquí: identidad, mapeo a componente, nicho.
  * 
  * FLUJO SIMPLIFICADO:
- * 1. Crear componente en components/pdp/[categoria]/[subcategoria]/
+ * 1. Crear componente en components/pdp/[categoria]/
  * 2. Registrar aquí en PLANTILLAS_REGISTRY
  * 3. Insertar en Supabase (se hace automáticamente o manual)
  * 4. Aparece en admin como "pendiente"

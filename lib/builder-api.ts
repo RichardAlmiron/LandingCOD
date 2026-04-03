@@ -20,14 +20,12 @@ export interface BuilderPdpTemplate {
     verified: boolean;
     categoria_nombre: string | null;
     categoria_color: string | null;
-    subcategoria_nombre: string | null;
 }
 
 export interface BuilderCategoria {
     id: string;
     nombre: string;
     icono: string;
-    subcategorias: { id: string; nombre: string; icono: string }[];
 }
 
 export interface PublishPayload {
@@ -65,7 +63,6 @@ export const builderApi = {
             verified: p.verificada || false,
             categoria_nombre: p.categoria_nombre || null,
             categoria_color: p.categoria_color || null,
-            subcategoria_nombre: p.subcategoria_nombre || null,
         }));
         return { templates, categorias: categoriasData.categorias || [] };
     },

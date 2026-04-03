@@ -3,19 +3,18 @@
 
 import { useState, useMemo } from 'react';
 import { TemplateRecord, TemplateType } from '@/hooks/useTemplates';
-import { CategoriaConSubcategorias } from '@/lib/types-categorias';
+import { CategoriaPDP } from '@/lib/types-categorias';
 
 export type EstadoFiltro = 'todos' | 'verificados' | 'pendientes';
 
 export function useTemplateFilters(
     list: TemplateRecord[],
     tab: TemplateType,
-    categorias: CategoriaConSubcategorias[],
+    categorias: CategoriaPDP[],
 ) {
     const [search, setSearch] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>('todos');
     const [categoriaFiltro, setCategoriaFiltro] = useState('');
-    const [subcategoriaFiltro, setSubcategoriaFiltro] = useState('');
 
     const filtered = useMemo(() => {
         let result = list;
@@ -40,27 +39,19 @@ export function useTemplateFilters(
             if (cat) result = result.filter(t => t.categoria_nombre === cat.nombre);
         }
 
-        if (tab === 'pdps' && subcategoriaFiltro) {
-            const cat = categorias.find(c => c.id === categoriaFiltro);
-            const sub = cat?.subcategorias.find(s => s.id === subcategoriaFiltro);
-            if (sub) result = result.filter(t => t.subcategoria_nombre === sub.nombre);
-        }
-
         return result;
-    }, [list, search, tab, estadoFiltro, categoriaFiltro, subcategoriaFiltro, categorias]);
+    }, [list, search, tab, estadoFiltro, categoriaFiltro, categorias]);
 
     const clearFilters = () => {
         setSearch('');
         setEstadoFiltro('todos');
         setCategoriaFiltro('');
-        setSubcategoriaFiltro('');
     };
 
     return {
         search, setSearch,
         estadoFiltro, setEstadoFiltro,
         categoriaFiltro, setCategoriaFiltro,
-        subcategoriaFiltro, setSubcategoriaFiltro,
         filtered,
         clearFilters,
     };

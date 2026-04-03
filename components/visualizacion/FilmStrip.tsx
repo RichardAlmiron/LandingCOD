@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useRef } from 'react';
 import LivePDPPreview from '@/components/panel-de-administracion/LivePDPPreview';
 import { PdpTemplate } from '@/lib/types';
@@ -113,10 +113,10 @@ export default function FilmStrip({
     onToggleSelection?.(id);
   };
 
-  const handleCopyId = (id: string, name: string, e: React.MouseEvent) => {
+  const handleCopyId = (code: string, name: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(`${name} [${id}]`);
-    setCopiedId(id);
+    navigator.clipboard.writeText(code); // Copy exact code for support
+    setCopiedId(code);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -193,7 +193,7 @@ export default function FilmStrip({
                   </div>
 
                   {/* Etiqueta Categoría */}
-                  {(item.categoria_nombre || item.subcategoria_nombre) && (
+                  {item.categoria_nombre && (
                     <div className="absolute top-0 right-0 z-20 max-w-[160px]">
                       <div
                         className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
@@ -201,9 +201,9 @@ export default function FilmStrip({
                           background: item.categoria_color ? `${item.categoria_color}e6` : (isVerified ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'),
                           textShadow: '0 0 4px rgba(0,0,0,0.3)',
                         }}
-                        title={`${item.categoria_nombre || ''}${item.subcategoria_nombre ? ' → ' + item.subcategoria_nombre : ''}`}
+                        title={item.categoria_nombre}
                       >
-                        {item.categoria_nombre}{item.subcategoria_nombre ? ` · ${item.subcategoria_nombre}` : ''}
+                        {item.categoria_nombre}
                       </div>
                     </div>
                   )}
@@ -231,11 +231,33 @@ export default function FilmStrip({
                     <Eye size={11} />
                     Previsualizar
                   </button>
+
+                  {/* Gradient para legibilidad superior */}
+                  <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
+
+                  {/* Etiqueta Código/Soporte (Visible para TODOS en Etapa 2) */}
+                  <div className="absolute top-2 left-2 z-20">
+                     <button
+                        onClick={(e) => handleCopyId(item.codigo || item.id, item.name, e)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded text-white shadow-md transition-colors hover:scale-105"
+                        style={{
+                           background: copiedId === (item.codigo || item.id) ? 'rgba(34, 197, 94, 0.85)' : 'rgba(99, 102, 241, 0.85)',
+                           border: '1px solid rgba(255,255,255,0.2)',
+                           backdropFilter: 'blur(4px)'
+                        }}
+                        title="Copiar código para soporte técnico"
+                     >
+                        <code className="text-[10px] font-mono font-bold tracking-wide">
+                           {item.codigo || item.id.substring(0, 8)}
+                        </code>
+                        {copiedId === (item.codigo || item.id) ? <CheckCircle size={11} /> : <Copy size={11} />}
+                     </button>
+                  </div>
                   
                   {/* Admin overlay con toggle de verificación y selección múltiple */}
                   {isAdmin && (
-                    <div className="absolute top-0 left-0 right-0 p-3 pt-7 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-start">
-                      <div className="flex flex-col gap-2">
+                    <div className="absolute top-8 left-0 right-0 p-3 pr-4 flex justify-between items-start z-20 pointer-events-none">
+                      <div className="flex flex-col gap-2 pointer-events-auto mt-1">
                         {/* Checkbox para selección múltiple */}
                         <button
                           onClick={(e) => handleToggleSelect(item.id, e)}
@@ -247,24 +269,6 @@ export default function FilmStrip({
                         >
                           {selectedIds.includes(item.id) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
                         </button>
-
-                        {/* ID con botón copiar */}
-                        <div className="flex items-center gap-2">
-                          <code className="text-[10px] font-mono text-white/90 bg-black/50 px-2 py-1 rounded truncate max-w-[140px]">
-                            {item.id}
-                          </code>
-                          <button
-                            onClick={(e) => handleCopyId(item.id, item.name, e)}
-                            className="p-1 bg-white/20 hover:bg-white/30 rounded transition-colors"
-                            title="Copiar nombre + ID"
-                          >
-                            {copiedId === item.id ? (
-                              <span className="text-[10px] text-green-400 font-bold">✓</span>
-                            ) : (
-                              <Copy className="w-3 h-3 text-white" />
-                            )}
-                          </button>
-                        </div>
 
                         {/* Toggle de verificación */}
                         <button

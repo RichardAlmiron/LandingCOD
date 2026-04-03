@@ -2,7 +2,7 @@
 import React from 'react';
 import { TemplateType } from '@/hooks/useTemplates';
 import { EstadoFiltro } from '@/hooks/useTemplateFilters';
-import { CategoriaConSubcategorias } from '@/lib/types-categorias';
+import { CategoriaPDP } from '@/lib/types-categorias';
 import {
     CheckCircle2, XCircle, Loader2, Search, RefreshCw,
     Store, LayoutTemplate, Trash2, ChevronLeft, ChevronRight, Filter
@@ -72,20 +72,17 @@ export function StatsBar({ verified, unverified, search, onSearch, onRefresh }: 
 /* ── Barra de filtros para PDPs ── */
 // EstadoFiltro se importa desde @/hooks/useTemplateFilters
 
-export function FilterBar({ tab, estadoFiltro, categoriaFiltro, subcategoriaFiltro, categorias, onEstadoChange, onCategoriaChange, onSubcategoriaChange }: {
+export function FilterBar({ tab, estadoFiltro, categoriaFiltro, categorias, onEstadoChange, onCategoriaChange }: {
     tab: string;
     estadoFiltro: EstadoFiltro;
     categoriaFiltro: string;
-    subcategoriaFiltro: string;
-    categorias: CategoriaConSubcategorias[];
+    categorias: CategoriaPDP[];
     onEstadoChange: (v: EstadoFiltro) => void;
     onCategoriaChange: (v: string) => void;
-    onSubcategoriaChange: (v: string) => void;
 }) {
     if (tab === 'playground') return null;
 
-    const selectedCat = categorias.find(c => c.id === categoriaFiltro);
-    const subcategorias = selectedCat?.subcategorias || [];
+
 
     const selectStyle: React.CSSProperties = {
         padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -99,7 +96,7 @@ export function FilterBar({ tab, estadoFiltro, categoriaFiltro, subcategoriaFilt
         { key: 'pendientes', label: '✗ Pendientes', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)' },
     ];
 
-    const hasActiveFilters = estadoFiltro !== 'todos' || categoriaFiltro || subcategoriaFiltro;
+    const hasActiveFilters = estadoFiltro !== 'todos' || categoriaFiltro;
 
     return (
         <div style={{
@@ -125,30 +122,22 @@ export function FilterBar({ tab, estadoFiltro, categoriaFiltro, subcategoriaFilt
                 ))}
             </div>
 
-            {/* Categoría y subcategoría — solo PDPs */}
+            {/* Categoría — solo PDPs */}
             {tab === 'pdps' && (
                 <>
                     <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.08)' }} />
-                    <select value={categoriaFiltro} onChange={e => { onCategoriaChange(e.target.value); onSubcategoriaChange(''); }} style={selectStyle}>
+                    <select value={categoriaFiltro} onChange={e => { onCategoriaChange(e.target.value); }} style={selectStyle}>
                         <option value="" style={{ background: '#1a1a2e' }}>Todas las categorías</option>
                         {categorias.map(c => (
                             <option key={c.id} value={c.id} style={{ background: '#1a1a2e' }}>{c.icono} {c.nombre}</option>
                         ))}
                     </select>
-                    {subcategorias.length > 0 && (
-                        <select value={subcategoriaFiltro} onChange={e => onSubcategoriaChange(e.target.value)} style={selectStyle}>
-                            <option value="" style={{ background: '#1a1a2e' }}>Todas las subcategorías</option>
-                            {subcategorias.map(s => (
-                                <option key={s.id} value={s.id} style={{ background: '#1a1a2e' }}>{s.icono} {s.nombre}</option>
-                            ))}
-                        </select>
-                    )}
                 </>
             )}
 
             {/* Limpiar filtros — siempre visible cuando hay filtros activos */}
             {hasActiveFilters && (
-                <button onClick={() => { onEstadoChange('todos'); onCategoriaChange(''); onSubcategoriaChange(''); }} style={{
+                <button onClick={() => { onEstadoChange('todos'); onCategoriaChange(''); }} style={{
                     padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
                     background: 'transparent', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)',
                 }}>

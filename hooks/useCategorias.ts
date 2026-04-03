@@ -2,10 +2,10 @@
 // No maneja templates, no maneja filtros, solo categorías.
 
 import { useState, useEffect } from 'react';
-import { CategoriaConSubcategorias } from '@/lib/types-categorias';
+import { CategoriaPDP } from '@/lib/types-categorias';
 
 export function useCategorias() {
-    const [categorias, setCategorias] = useState<CategoriaConSubcategorias[]>([]);
+    const [categorias, setCategorias] = useState<CategoriaPDP[]>([]);
 
     useEffect(() => {
         fetch('/api/categorias-pdp')

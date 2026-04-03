@@ -1,0 +1,110 @@
+Iniciando clasificación global automatizada...
+[OK] PDP-AUDIO-STUDIO -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] standard-prueba-social -> asignada a Electrónica / General y VERIFICADA.
+[OK] standard-bundle -> asignada a Electrónica / General y VERIFICADA.
+[OK] standard-historia -> asignada a Electrónica / General y VERIFICADA.
+[OK] standard-checkout-directo -> asignada a Electrónica / General y VERIFICADA.
+[OK] pdp-cro-bold -> asignada a Electrónica / General y VERIFICADA.
+[OK] standard-celulares -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-LUXURY -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-VINTAGE -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CAMERA-PRO -> asignada a Electrónica / Cámaras y VERIFICADA.
+[OK] PDP-BONE-COND -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] standard-urgencia -> asignada a Electrónica / General y VERIFICADA.
+[OK] standard-salud -> asignada a Salud / General y VERIFICADA.
+[OK] standard-electronico -> asignada a Electrónica / General y VERIFICADA.
+[OK] premium-salud -> asignada a Salud / General y VERIFICADA.
+[OK] PDP-GAMING-ELITE -> asignada a Electrónica / Gaming y VERIFICADA.
+[OK] PDP-BIO-RING -> asignada a Electrónica / Wearables y VERIFICADA.
+[OK] PDP-ACTION-CAM -> asignada a Electrónica / Cámaras y VERIFICADA.
+[OK] PDP-CEL-MINIMAL -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-GAMER -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-ECO -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-CREATOR -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-BUSINESS -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-OUTDOOR -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-GLASS -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-PRESTIGE -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-MECHA -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-NORDIC -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-SCIFI -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-TERMINAL -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-CEL-STREETWEAR -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] standard-herramientas -> asignada a Herramientas / General y VERIFICADA.
+[OK] standard-belleza -> asignada a Belleza / General y VERIFICADA.
+[OK] standard-hogar -> asignada a Hogar / General y VERIFICADA.
+[OK] premium-urgencia -> asignada a Electrónica / General y VERIFICADA.
+[OK] premium-bundle -> asignada a Electrónica / General y VERIFICADA.
+[OK] premium-electronico -> asignada a Electrónica / General y VERIFICADA.
+[OK] pdp-cro-elegant -> asignada a Electrónica / General y VERIFICADA.
+[OK] pdp-cro-futurista -> asignada a Electrónica / General y VERIFICADA.
+[OK] pdp-cro-minimal -> asignada a Electrónica / General y VERIFICADA.
+[OK] pdp-cro-visual -> asignada a Electrónica / General y VERIFICADA.
+[OK] PDP-DRONE-AERO -> asignada a Electrónica / Drones y VERIFICADA.
+[INFO] Subcat limiada 'smart-home' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Smart home para PDP-SMART-LOCK: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[OK] PDP-SCOOTER-URBAN -> asignada a Electrónica / Movilidad y VERIFICADA.
+[OK] PDP-VR-OASIS -> asignada a Electrónica / Vr y VERIFICADA.
+[OK] PDP-MECH-BOARD -> asignada a Electrónica / Perifericos y VERIFICADA.
+[OK] PDP-CINEMA-BEAM -> asignada a Electrónica / Proyectores y VERIFICADA.
+[OK] PDP-PODCAST-PRO -> asignada a Electrónica / Audio y VERIFICADA.
+[INFO] Subcat limiada 'smart-home' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Smart home para PDP-ROBOT-VACUUM: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[INFO] Subcat limiada 'smart-home' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Smart home para PDP-PURIFICADOR: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[INFO] Subcat limiada 'smart-home' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Smart home para PDP-HOME-HUB: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[INFO] Subcat limiada 'hogar-smart' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Hogar smart para PDP-STAR-PROJECTOR: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[INFO] Subcat limiada 'salud-belleza' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Salud belleza para PDP-MINI-FRIDGE: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[OK] PDP-TABLET-EXEC -> asignada a Electrónica / Tablets y VERIFICADA.
+[OK] PDP-WATCH-LUMEN -> asignada a Electrónica / Wearables y VERIFICADA.
+[OK] PDP-SMART-GUITAR -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] PDP-LENTES-BT -> asignada a Electrónica / Wearables y VERIFICADA.
+[OK] PDP-RETRO-CONSOLE -> asignada a Electrónica / Gaming y VERIFICADA.
+[OK] PDP-TRANSLATOR -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] PDP-SMART-RING -> asignada a Electrónica / Wearables y VERIFICADA.
+[OK] PDP-PARTY-AUDIO -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] PDP-EREADER-ZEN -> asignada a Electrónica / Ereaders y VERIFICADA.
+[OK] PDP-SILLA-ERGO -> asignada a Electrónica / Ergonomia y VERIFICADA.
+[OK] PDP-MONITOR-ULTRA -> asignada a Electrónica / Monitores y VERIFICADA.
+[OK] PDP-COFFEE-MAKER -> asignada a Electrónica / Electrodomesticos y VERIFICADA.
+[OK] PDP-MASCOTA-GPS -> asignada a Electrónica / Mascotas y VERIFICADA.
+[OK] PDP-HOLOGRAM-FAN -> asignada a Electrónica / Displays y VERIFICADA.
+[OK] PDP-EBIKE-KIT -> asignada a Electrónica / Movilidad y VERIFICADA.
+[OK] PDP-LASER-ENGRAVER -> asignada a Electrónica / Herramientas y VERIFICADA.
+[OK] PDP-PORTABLE-ESPRESSO -> asignada a Electrónica / Outdoor y VERIFICADA.
+[OK] PDP-DASHCAM -> asignada a Electrónica / Automotriz y VERIFICADA.
+[INFO] Subcat limiada 'hogar-smart' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Hogar smart para PDP-SMART-PLANTER: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[OK] PDP-BIO-SAFE -> asignada a Electrónica / Seguridad y VERIFICADA.
+[OK] PDP-GIMBAL-PRO -> asignada a Electrónica / Fotografía y VERIFICADA.
+[OK] PDP-SKI-AR -> asignada a Electrónica / Outdoor y VERIFICADA.
+[INFO] Subcat limiada 'salud-belleza' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Salud belleza para PDP-THERAGUN: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[OK] PDP-KEYFINDER -> asignada a Electrónica / Seguridad y VERIFICADA.
+[OK] PDP-NUMPAD -> asignada a Electrónica / Perifericos y VERIFICADA.
+[OK] PDP-DRONE-PRO -> asignada a Electrónica / Drones y VERIFICADA.
+[OK] PDP-VR-STATION -> asignada a Electrónica / Vr y VERIFICADA.
+[OK] PDP-GAMING-LAPTOP -> asignada a Electrónica / Laptops y VERIFICADA.
+[INFO] Subcat limiada 'hogar-smart' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Hogar smart para PDP-SMART-VACUUM: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[INFO] Subcat limiada 'hogar-smart' no existe en cat DB 'Electrónica'. Creándola automáticamente...
+[ERROR] Falla al crear subcategoría Hogar smart para PDP-SMART-MIRROR: duplicate key value violates unique constraint "Subcategorias_PDP_categoria_id_nombre_key"
+[OK] PDP-VINTAGE-TURN -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] PDP-ANC-EARPHONES -> asignada a Electrónica / Audio y VERIFICADA.
+[OK] PDP-SMART-TELESCOPE -> asignada a Electrónica / Optica y VERIFICADA.
+[OK] PDP-NEXTGEN-CONSOLE -> asignada a Electrónica / Consolas y VERIFICADA.
+[OK] PDP-POWER-STATION -> asignada a Electrónica / Outdoor y VERIFICADA.
+[OK] PDP-URBAN-SCOOTER -> asignada a Electrónica / Movilidad y VERIFICADA.
+[OK] PDP-CINEMA-OLED -> asignada a Electrónica / Displays y VERIFICADA.
+[OK] PDP-MECH-BOARD-PRO -> asignada a Electrónica / Perifericos y VERIFICADA.
+[OK] PDP-PRO-ESPRESSO -> asignada a Electrónica / Electrodomesticos y VERIFICADA.
+[OK] PDP-CINE-GIMBAL -> asignada a Electrónica / Fotografía y VERIFICADA.
+[OK] PDP-RAPID-3D -> asignada a Electrónica / Herramientas y VERIFICADA.
+[OK] PDP-TITANIUM-PHONE -> asignada a Electrónica / Celulares y VERIFICADA.
+[OK] PDP-ENDURANCE-WATCH -> asignada a Electrónica / Wearables y VERIFICADA.
+[OK] PDP-EINK-FOLIO -> asignada a Electrónica / Tablets y VERIFICADA.
+
+¡Clasificación Global Finalizada! 87 plantillas asignadas y verificadas.

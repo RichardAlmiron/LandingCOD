@@ -82,11 +82,9 @@ export default function TemplatesPage() {
                 tab={pageTab}
                 estadoFiltro={filters.estadoFiltro}
                 categoriaFiltro={filters.categoriaFiltro}
-                subcategoriaFiltro={filters.subcategoriaFiltro}
                 categorias={categorias}
                 onEstadoChange={filters.setEstadoFiltro}
                 onCategoriaChange={filters.setCategoriaFiltro}
-                onSubcategoriaChange={filters.setSubcategoriaFiltro}
             />
             <BulkActionBar
                 count={selection.count}
@@ -117,7 +115,7 @@ export default function TemplatesPage() {
                                 onToggle={() => selection.toggle(item.id)}
                                 onVerify={() => actions.doVerify(item.id, item.verified)}
                                 onDelete={() => actions.doDelete(item.id)}
-                                onCategoryChange={(catId, subId) => actions.doAssignCategory(item.id, catId, subId)}
+                                onCategoryChange={(catId) => actions.doAssignCategory(item.id, catId)}
                             />
                         ))}
                         <Pagination

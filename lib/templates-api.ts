@@ -43,7 +43,7 @@ export const templatesApi = {
         return res.ok;
     },
 
-    async assignCategory(itemId: string, categoriaId: string | null, subcategoriaId: string | null): Promise<boolean> {
+    async assignCategory(itemId: string, categoriaId: string | null): Promise<boolean> {
         const res = await fetch('/api/categorias-pdp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -52,7 +52,6 @@ export const templatesApi = {
                 accion: 'asignar_categoria',
                 id: itemId,
                 categoria_id: categoriaId,
-                subcategoria_id: subcategoriaId,
             }),
         });
         return res.ok;
@@ -83,6 +82,5 @@ function mapPdp(p: any): TemplateRecord {
         componente: p.componente,
         categoria_nombre: p.categoria_nombre,
         categoria_color: p.categoria_color,
-        subcategoria_nombre: p.subcategoria_nombre,
     };
 }

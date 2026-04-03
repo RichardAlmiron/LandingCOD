@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('Plantillas_PDP')
-      .select('*, Categorias_PDP(nombre, color), Subcategorias_PDP(nombre)')
+      .select('*, Categorias_PDP(nombre, color)')
       .order('orden', { ascending: true });
 
     if (!includeDeleted) {
@@ -43,7 +43,6 @@ export async function GET(request: Request) {
       componente: pdp.componente,
       categoria_nombre: pdp.Categorias_PDP?.nombre || null,
       categoria_color: pdp.Categorias_PDP?.color || null,
-      subcategoria_nombre: pdp.Subcategorias_PDP?.nombre || null,
     }));
 
     return NextResponse.json({ pdps: mappedPdps });

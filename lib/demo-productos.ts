@@ -14,6 +14,7 @@
  */
 
 import { obtenerNicho, getCodigosRegistrados } from '@/lib/plantilla-registry';
+import { TEMPLATE_SUGGESTIONS } from '@/lib/template-suggestions';
 
 export interface DemoProducto {
   id: string;
@@ -86,6 +87,62 @@ const DEMO_POR_NICHO: Record<string, DemoData> = {
       features: ['Cancelación de ruido', '40h batería', 'Hi-Res Audio'],
     },
     store: { name: 'TechStore', logoText: 'TECH', products: [] },
+  },
+  'electronico-camaras': {
+    product: {
+      id: 'demo-cam',
+      title: 'Action Camera Ultra 5K',
+      description: 'Gimbal estabilizador integrado, sumergible a 60m, batería dual inteligente.',
+      price: '$299.99', originalPrice: '$450.00', currency: 'USD',
+      imageUrl: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=800&fit=crop',
+      images: [
+        'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=800&fit=crop',
+        'https://images.unsplash.com/photo-1516961642265-531546e84af2?w=800&h=800&fit=crop'
+      ],
+      gallery: [
+        'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=800&fit=crop',
+      ],
+      category: 'Cámaras', rating: 4.9, reviews: 3450,
+      features: ['Video 5K/60fps', 'Sumergible', 'Estabilización Pro'],
+    },
+    store: { name: 'CamGear', logoText: 'GEAR', products: [] },
+  },
+  'electronico-wearables': {
+    product: {
+      id: 'demo-wear',
+      title: 'SmartWatch Titanium Elite',
+      description: 'Cuerpo de titanio, ECG incorporado, GPS de doble banda militar.',
+      price: '$450.00', originalPrice: '$600.00', currency: 'USD',
+      imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&h=800&fit=crop',
+      images: [
+        'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&h=800&fit=crop',
+        'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=800&h=800&fit=crop'
+      ],
+      gallery: [
+        'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&h=800&fit=crop'
+      ],
+      category: 'Wearables', rating: 4.8, reviews: 2980,
+      features: ['Titanio Forjado', 'Monitor Salud', 'GPS Preciso'],
+    },
+    store: { name: 'WearStore', logoText: 'WEAR', products: [] },
+  },
+  'electronico-gaming': {
+    product: {
+      id: 'demo-game',
+      title: 'Mechanical Keyboard RGB Pro',
+      description: 'Switches ópticos ultra-rápidos, base de aluminio y keycaps PBT.',
+      price: '$129.99', originalPrice: '$180.00', currency: 'USD',
+      imageUrl: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&h=800&fit=crop',
+      images: [
+        'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&h=800&fit=crop'
+      ],
+      gallery: [
+        'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&h=800&fit=crop'
+      ],
+      category: 'Gaming', rating: 4.9, reviews: 5200,
+      features: ['Switches Ópticos', 'RGB Sync', 'Aluminio'],
+    },
+    store: { name: 'GamerGear', logoText: 'GAMING', products: [] },
   },
 
   salud: {
@@ -185,6 +242,23 @@ const DEMO_POR_NICHO: Record<string, DemoData> = {
  */
 export function obtenerDemoParaTemplate(templateId: string): DemoData {
   const nicho = obtenerNicho(templateId);
+  
+  // Refinamos usando la asombrosa clasificación de subnichos
+  const subcat = TEMPLATE_SUGGESTIONS[templateId]?.subcat || '';
+  
+  if (subcat.includes('camara') || subcat.includes('camaras')) {
+      return DEMO_POR_NICHO['electronico-camaras'];
+  }
+  if (subcat.includes('wearable') || subcat.includes('reloj')) {
+      return DEMO_POR_NICHO['electronico-wearables'];
+  }
+  if (subcat.includes('gaming') || subcat.includes('periferico') || subcat.includes('keyboard')) {
+      return DEMO_POR_NICHO['electronico-gaming'];
+  }
+  if (subcat === 'celulares') {
+      return DEMO_POR_NICHO['celulares'];
+  }
+
   return DEMO_POR_NICHO[nicho] || DEMO_POR_NICHO['electronico'];
 }
 

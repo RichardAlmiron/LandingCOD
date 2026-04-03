@@ -4,7 +4,7 @@
 import { useState, useCallback } from 'react';
 import { TemplateType } from '@/hooks/useTemplates';
 import { templatesApi } from '@/lib/templates-api';
-import { CategoriaConSubcategorias } from '@/lib/types-categorias';
+import { CategoriaPDP } from '@/lib/types-categorias';
 
 interface UseTemplateActionsParams {
     tab: TemplateType;
@@ -12,7 +12,7 @@ interface UseTemplateActionsParams {
     onDeselect: (ids: string[]) => void;
     onClearSelection: () => void;
     selectedIds: string[];
-    categorias: CategoriaConSubcategorias[];
+    categorias: CategoriaPDP[];
 }
 
 export function useTemplateActions({
@@ -76,9 +76,9 @@ export function useTemplateActions({
         [tab, selectedIds, onMutate, onClearSelection, withBusy],
     );
 
-    const doAssignCategory = useCallback((itemId: string, categoriaId: string | null, subcategoriaId: string | null) =>
+    const doAssignCategory = useCallback((itemId: string, categoriaId: string | null) =>
         withBusy(async () => {
-            await templatesApi.assignCategory(itemId, categoriaId, subcategoriaId);
+            await templatesApi.assignCategory(itemId, categoriaId);
             onMutate();
         }),
         [onMutate, withBusy],

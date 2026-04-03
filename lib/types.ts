@@ -180,13 +180,10 @@ export interface PdpTemplate {
   verified?: boolean;
   verificada?: boolean;
   niche?: string;
-  sub_niche?: string;
   category?: string;
   categoria_id?: string;
-  subcategoria_id?: string;
   categoria_nombre?: string;
   categoria_color?: string;
-  subcategoria_nombre?: string;
   variante?: number;
   orden?: number;
   activa?: boolean;

@@ -15,19 +15,6 @@ export interface CategoriaPDP {
   updated_at: string;
 }
 
-/** Subcategoría (sub-nicho) dentro de una categoría */
-export interface SubcategoriaPDP {
-  id: string;
-  categoria_id: string;
-  nombre: string;
-  descripcion: string;
-  icono: string;
-  orden: number;
-  activa: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 /** Plantilla PDP con nomenclatura Standard */
 export interface PlantillaPDP {
   id: string;
@@ -36,7 +23,6 @@ export interface PlantillaPDP {
   descripcion: string;
   componente: string;
   categoria_id: string | null;
-  subcategoria_id: string | null;
   imagen_url: string | null;
   premium: boolean;
   verificada: boolean;
@@ -48,16 +34,10 @@ export interface PlantillaPDP {
   updated_at: string;
 }
 
-/** Categoría con sus subcategorías anidadas (para UI) */
-export interface CategoriaConSubcategorias extends CategoriaPDP {
-  subcategorias: SubcategoriaPDP[];
-}
-
 /** Plantilla con datos de categoría expandidos (para UI) */
 export interface PlantillaConCategoria extends PlantillaPDP {
   categoria_nombre?: string;
   categoria_color?: string;
-  subcategoria_nombre?: string;
 }
 
 // ────────────────────────────────────────────────────────────

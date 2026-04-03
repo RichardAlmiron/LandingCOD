@@ -17,7 +17,6 @@ export interface TemplateRecord {
     componente?: string;
     categoria_nombre?: string;
     categoria_color?: string;
-    subcategoria_nombre?: string;
 }
 
 export function useTemplates() {

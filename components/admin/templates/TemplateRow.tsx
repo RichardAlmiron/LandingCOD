@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { TemplateType, TemplateRecord } from '@/hooks/useTemplates';
-import { CategoriaConSubcategorias } from '@/lib/types-categorias';
+import { CategoriaPDP } from '@/lib/types-categorias';
 import { CheckCircle2, XCircle, Loader2, Store, LayoutTemplate, Trash2, CheckSquare, Square, Eye } from 'lucide-react';
 
 interface TemplateRowProps {
@@ -9,11 +9,11 @@ interface TemplateRowProps {
     tab: TemplateType;
     isSelected: boolean;
     actionLoading: boolean;
-    categorias?: CategoriaConSubcategorias[];
+    categorias?: CategoriaPDP[];
     onToggle: () => void;
     onVerify: () => void;
     onDelete: () => void;
-    onCategoryChange?: (categoriaId: string | null, subcategoriaId: string | null) => void;
+    onCategoryChange?: (categoriaId: string | null) => void;
 }
 
 export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, onToggle, onVerify, onDelete, onCategoryChange }: TemplateRowProps) {
@@ -63,7 +63,6 @@ export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, 
                             border: `1px solid ${item.categoria_color || '#6366f1'}40`,
                         }}>
                             {currentCat?.icono || '📦'} {item.categoria_nombre}
-                            {item.subcategoria_nombre && <span style={{ opacity: 0.7, fontSize: 10 }}>/ {item.subcategoria_nombre}</span>}
                         </button>
                     ) : (
                         <button onClick={() => setCatDropOpen(!catDropOpen)} style={{
@@ -79,9 +78,9 @@ export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, 
                         <CategoryDropdown
                             categorias={categorias}
                             currentCatId={currentCat?.id || null}
-                            onSelect={(catId, subId) => {
+                            onSelect={(catId) => {
                                 setCatDropOpen(false);
-                                onCategoryChange?.(catId, subId);
+                                onCategoryChange?.(catId);
                             }}
                             onClose={() => setCatDropOpen(false)}
                         />
@@ -100,7 +99,9 @@ export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, 
                 <button onClick={() => {
                     const code = item.codigo || item.id;
                     const type = isPdp ? 'pdp' : 'store';
-                    window.open(`/preview?template=${code}&type=${type}`, '_blank');
+                    let url = `/preview?template=${code}&type=${type}`;
+                    if (item.categoria_nombre) url += `&cat=${encodeURIComponent(item.categoria_nombre)}`;
+                    window.open(url, '_blank');
                 }} title="Previsualizar" style={{
                     width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(99,102,241,0.1)', color: '#a78bfa',
@@ -120,13 +121,11 @@ export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, 
 
 /* ── Dropdown de categoría/subcategoría ── */
 function CategoryDropdown({ categorias, currentCatId, onSelect, onClose }: {
-    categorias: CategoriaConSubcategorias[];
+    categorias: CategoriaPDP[];
     currentCatId: string | null;
-    onSelect: (catId: string | null, subId: string | null) => void;
+    onSelect: (catId: string | null) => void;
     onClose: () => void;
 }) {
-    const [step, setStep] = useState<'cat' | 'sub'>('cat');
-    const [selectedCat, setSelectedCat] = useState<CategoriaConSubcategorias | null>(null);
 
     return (
         <>
@@ -138,14 +137,12 @@ function CategoryDropdown({ categorias, currentCatId, onSelect, onClose }: {
                 background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.5)', padding: 4,
             }}>
-                {step === 'cat' ? (
-                    <>
                         <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Seleccionar categoría
                         </div>
                         {/* Option to remove category */}
                         {currentCatId && (
-                            <button onClick={() => onSelect(null, null)} style={{
+                            <button onClick={() => onSelect(null)} style={{
                                 width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8,
                                 border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
                                 background: 'transparent', color: '#ef4444', textAlign: 'left',
@@ -158,12 +155,7 @@ function CategoryDropdown({ categorias, currentCatId, onSelect, onClose }: {
                         )}
                         {categorias.map(cat => (
                             <button key={cat.id} onClick={() => {
-                                if (cat.subcategorias.length > 0) {
-                                    setSelectedCat(cat);
-                                    setStep('sub');
-                                } else {
-                                    onSelect(cat.id, null);
-                                }
+                                onSelect(cat.id);
                             }} style={{
                                 width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8,
                                 border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
@@ -175,47 +167,8 @@ function CategoryDropdown({ categorias, currentCatId, onSelect, onClose }: {
                             >
                                 <span style={{ fontSize: 16 }}>{cat.icono}</span>
                                 <span>{cat.nombre}</span>
-                                {cat.subcategorias.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>▸</span>}
                             </button>
                         ))}
-                    </>
-                ) : selectedCat && (
-                    <>
-                        <button onClick={() => { setStep('cat'); setSelectedCat(null); }} style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8,
-                            border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: 'transparent', color: 'rgba(255,255,255,0.4)',
-                        }}>
-                            ◂ Volver
-                        </button>
-                        <div style={{ padding: '4px 10px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
-                            {selectedCat.icono} {selectedCat.nombre}
-                        </div>
-                        {/* Option: only category, no subcategory */}
-                        <button onClick={() => onSelect(selectedCat.id, null)} style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8,
-                            border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                            background: 'transparent', color: 'rgba(255,255,255,0.5)', textAlign: 'left', fontStyle: 'italic',
-                        }}
-                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                            Solo categoría (sin sub)
-                        </button>
-                        {selectedCat.subcategorias.map(sub => (
-                            <button key={sub.id} onClick={() => onSelect(selectedCat.id, sub.id)} style={{
-                                width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8,
-                                border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                                background: 'transparent', color: '#fff', textAlign: 'left',
-                            }}
-                                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                            >
-                                <span style={{ fontSize: 14 }}>{sub.icono}</span>
-                                <span>{sub.nombre}</span>
-                            </button>
-                        ))}
-                    </>
-                )}
             </div>
         </>
     );
