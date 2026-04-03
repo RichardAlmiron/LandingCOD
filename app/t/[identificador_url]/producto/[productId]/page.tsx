@@ -77,9 +77,11 @@ const COMPONENTES_DINAMICOS: Record<string, any> = {
 function getPdpComponent(data: StoreData) {
   if (data.productPageType === 'standard') return null;
   
-  const templateId = data.pdpTemplate || 'standard-urgencia';
+  const templateId = data.pdpTemplate || '';
+  if (!templateId) return null;
   const codigo = resolverCodigoPlantilla(templateId);
-  const Component = COMPONENTES_DINAMICOS[codigo] || PdpUrgenciaMaxima;
+  const Component = COMPONENTES_DINAMICOS[codigo];
+  if (!Component) return null;
   const parts = templateId.split('-');
   const variant = parseInt(parts[parts.length - 1] || '1', 10);
 

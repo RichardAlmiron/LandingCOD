@@ -116,7 +116,7 @@ export default function Preview({ data, template, device, setDevice, previewMode
       const product = data.products.find(p => p.id === activeProductId) || data.products[0];
       if (!product) return <div>No hay productos para previsualizar.</div>;
 
-      const currentPdpTemplate = data.pdpTemplate || 'standard-urgencia';
+      const currentPdpTemplate = data.pdpTemplate || '';
       const variant = extraerVariante(currentPdpTemplate);
 
       console.log('[Preview] Rendering PDP:', { currentPdpTemplate, variant, productId: product.id });

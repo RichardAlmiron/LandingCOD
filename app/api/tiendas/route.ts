@@ -98,7 +98,7 @@ export async function POST(request: Request) {
                     user_id: payload.sub,
                     identificador_url,
                     name: pdpName,
-                    pdp_template: storeData.pdpTemplate || template || 'urgency-1',
+                    pdp_template: storeData.pdpTemplate || template,
                     store_data: storeData,
                     status: 'published'
                 })
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
                 identificador_url,
                 name: storeName,
                 template,
-                pdp_template: storeData.pdpTemplate || 'urgency-1',
+                pdp_template: storeData.pdpTemplate || template || null,
                 store_data: storeData,
                 status: 'published'
             })
@@ -191,7 +191,7 @@ export async function PUT(request: Request) {
                     .from('pdp_publicadas')
                     .update({
                         name: pdpName,
-                        pdp_template: storeData.pdpTemplate || 'urgency-1',
+                        pdp_template: storeData.pdpTemplate || template || null,
                         store_data: storeData,
                     })
                     .eq('id', existingPdp.id);
@@ -210,7 +210,7 @@ export async function PUT(request: Request) {
                         user_id: payload.sub,
                         identificador_url: `draft-pdp-${payload.sub}-${Date.now()}`,
                         name: pdpName,
-                        pdp_template: storeData.pdpTemplate || 'urgency-1',
+                        pdp_template: storeData.pdpTemplate || template || null,
                         store_data: storeData,
                         status: 'draft'
                     })
@@ -244,7 +244,7 @@ export async function PUT(request: Request) {
                 .update({
                     name: storeName,
                     template: template || 'megamarket',
-                    pdp_template: storeData.pdpTemplate || 'urgency-1',
+                    pdp_template: storeData.pdpTemplate || null,
                     store_data: storeData,
                 })
                 .eq('id', existingStore.id);
@@ -263,7 +263,7 @@ export async function PUT(request: Request) {
                     identificador_url: `draft-store-${payload.sub}-${Date.now()}`,
                     name: storeName,
                     template: template || 'megamarket',
-                    pdp_template: storeData.pdpTemplate || 'urgency-1',
+                    pdp_template: storeData.pdpTemplate || null,
                     store_data: storeData,
                     status: 'draft'
                 })

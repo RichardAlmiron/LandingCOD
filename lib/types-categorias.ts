@@ -140,10 +140,10 @@ export const MAPA_LEGACY_A_STANDARD: Record<string, string> = {
  * Soporta IDs legacy (urgency-1) y nuevos (standard-urgencia).
  */
 export function resolverCodigoPlantilla(templateId: string): string {
-  // Si ya es un código Standard, retornarlo
+  // Si ya es un código conocido, retornarlo
   if (MAPA_COMPONENTES_PDP[templateId]) return templateId;
   // Si es un ID legacy, convertirlo
   if (MAPA_LEGACY_A_STANDARD[templateId]) return MAPA_LEGACY_A_STANDARD[templateId];
-  // Fallback
-  return 'standard-urgencia';
+  // NO hay fallback — devolver el ID tal cual para que el error se detecte arriba
+  return templateId;
 }

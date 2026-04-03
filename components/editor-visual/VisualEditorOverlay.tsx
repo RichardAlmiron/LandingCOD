@@ -11,6 +11,7 @@ import {
   EDITOR_FONTS, EDITOR_COLORS, COMPONENT_BLOCKS, ComponentBlock
 } from '@/lib/visual-editor-types';
 import { StoreData, TemplateType } from '@/lib/types';
+import { generateVeId, getVeType, getVeLabel } from '@/lib/ve-id-generator';
 
 interface VisualEditorOverlayProps {
   isOpen: boolean;
@@ -121,6 +122,8 @@ export default function VisualEditorOverlay({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showToolsFab, setShowToolsFab] = useState(false);
+  const [aiRewriting, setAiRewriting] = useState(false);
+  const [aiRewritingAll, setAiRewritingAll] = useState(false);
 
   // ── Persistent original snapshots (captured ONCE per element, never overwritten) ──
   const originalSnapshotsRef = useRef<Map<string, { styles: Record<string, string>; textContent?: string }>>(new Map());
@@ -399,8 +402,8 @@ export default function VisualEditorOverlay({
       /* ── Unsaved badge + revert button on edited elements ── */
       .ve-unsaved-badge {
         position: absolute;
-        top: -2px;
-        right: -2px;
+        top: -28px;
+        right: 0;
         display: flex;
         align-items: center;
         gap: 4px;
@@ -453,6 +456,51 @@ export default function VisualEditorOverlay({
         to { opacity: 1; transform: translateY(0); }
       }
       * { scroll-behavior: smooth; }
+      /* ── AI Rewrite Buttons ── */
+      .ve-ai-rewrite-btn {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+        border: 2px solid rgba(255,255,255,0.9);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        transform: scale(0.7);
+        transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: 0 2px 10px rgba(99,102,241,0.5), 0 0 0 1px rgba(99,102,241,0.3);
+        pointer-events: auto;
+      }
+      [data-ve-editable]:hover > .ve-ai-rewrite-btn,
+      .ve-ai-rewrite-btn:hover {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .ve-ai-rewrite-btn:hover {
+        background: linear-gradient(135deg, #6d28d9, #4f46e5);
+        box-shadow: 0 4px 20px rgba(99,102,241,0.7), 0 0 0 2px rgba(99,102,241,0.4);
+        transform: scale(1.1);
+      }
+      .ve-ai-rewrite-btn:active {
+        transform: scale(0.95);
+      }
+      .ve-ai-rewrite-btn.ve-ai-loading {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: none;
+        animation: ve-ai-spin 1s linear infinite;
+      }
+      @keyframes ve-ai-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
     `;
     doc.head.appendChild(style);
   }, []);
@@ -474,23 +522,14 @@ export default function VisualEditorOverlay({
       if (htmlEl.closest('[data-ve-product]')) return;
 
       const text = htmlEl.textContent?.trim() || '';
-      const children = htmlEl.children.length;
       
-      // EXTREMELY RESTRICTIVE heuristic for product detection
-      // Only mark as product if it's VERY clearly a product card/container
-      // This prevents marking entire PDP sections as non-editable
       const isPageWrapper = ['main', 'body', 'html', 'header', 'footer', 'section', 'article'].includes(tag);
-      const isDeeplyNested = htmlEl.querySelectorAll('*').length > 50; // Too big = probably not just a product card
-      const isVerySmallContainer = children <= 3 && htmlEl.querySelectorAll('img').length <= 2;
-      
-      // Product detection: must be a specific product card pattern
-      // NOT a full section, NOT a grid of products, NOT the entire page
-      const hasSinglePrice = (text.match(/\$[\d,.]+/g) || []).length === 1; // Exactly one price
-      const hasProductTitle = text.length > 10 && text.length < 200; // Reasonable title length
+      const isDeeplyNested = htmlEl.querySelectorAll('*').length > 50;
+      const hasSinglePrice = (text.match(/\$[\d,.]+/g) || []).length === 1;
+      const hasProductTitle = text.length > 10 && text.length < 200;
       const hasBuyButton = htmlEl.querySelector('button, [role="button"]') !== null;
-      const isCompactCard = htmlEl.querySelectorAll('*').length < 30; // Small card, not a section
+      const isCompactCard = htmlEl.querySelectorAll('*').length < 30;
       
-      // Only mark as product if it's a compact product card (not a full section)
       if (!isPageWrapper && !isDeeplyNested && isCompactCard && hasSinglePrice && hasProductTitle && hasBuyButton) {
         htmlEl.setAttribute('data-ve-product', 'true');
         return;
@@ -503,19 +542,37 @@ export default function VisualEditorOverlay({
           .join('');
 
         if (directText.length > 0 && directText.length < 500 && !htmlEl.closest('[data-ve-product]')) {
+          let veId: string;
           if (!htmlEl.hasAttribute('data-ve-editable')) {
-            const veId = `ve-${tag}-${Math.random().toString(36).slice(2, 8)}`;
+            veId = generateVeId(htmlEl);
             htmlEl.setAttribute('data-ve-editable', veId);
             htmlEl.setAttribute('data-ve-type', 'text');
             htmlEl.setAttribute('data-ve-label', tag.toUpperCase());
+          } else {
+            veId = htmlEl.getAttribute('data-ve-editable')!;
+          }
+
+          if (directText.length > 1 && !htmlEl.querySelector('.ve-ai-rewrite-btn')) {
+            const pos = iframe.contentWindow!.getComputedStyle(htmlEl).position;
+            if (pos === 'static') htmlEl.style.position = 'relative';
+            const btn = doc.createElement('button');
+            btn.className = 've-ai-rewrite-btn';
+            btn.setAttribute('data-ve-ai-for', veId);
+            btn.title = 'Reescribir con IA — Gs. 1.000 por click';
+            btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              iframe.contentWindow?.parent.postMessage({ type: 've-ai-rewrite', veId, text: directText }, '*');
+            }, true);
+            htmlEl.appendChild(btn);
           }
         }
       }
 
       if (tag === 'img' && !htmlEl.closest('[data-ve-product]')) {
         if (!htmlEl.hasAttribute('data-ve-editable')) {
-          const veId = `ve-img-${Math.random().toString(36).slice(2, 8)}`;
-          htmlEl.setAttribute('data-ve-editable', veId);
+          htmlEl.setAttribute('data-ve-editable', generateVeId(htmlEl));
           htmlEl.setAttribute('data-ve-type', 'image');
           htmlEl.setAttribute('data-ve-label', 'IMAGEN');
         }
@@ -523,10 +580,9 @@ export default function VisualEditorOverlay({
 
       if (['header', 'footer', 'nav', 'section', 'main'].includes(tag)) {
         if (!htmlEl.closest('[data-ve-product]') && !htmlEl.hasAttribute('data-ve-editable')) {
-          const veId = `ve-${tag}-${Math.random().toString(36).slice(2, 8)}`;
-          htmlEl.setAttribute('data-ve-editable', veId);
+          htmlEl.setAttribute('data-ve-editable', generateVeId(htmlEl));
           htmlEl.setAttribute('data-ve-type', 'section');
-          htmlEl.setAttribute('data-ve-label', tag === 'header' ? 'ENCABEZADO' : tag === 'footer' ? 'PIE DE PÁGINA' : tag === 'nav' ? 'NAVEGACIÓN' : 'SECCIÓN');
+          htmlEl.setAttribute('data-ve-label', getVeLabel(htmlEl));
         }
       }
     });
@@ -769,6 +825,175 @@ export default function VisualEditorOverlay({
       return next;
     });
   }, [editorState.selectedElement, addCustomization, captureOriginalSnapshot, updateUnsavedTooltips]);
+
+  // ── Helper: build AI rewrite request body with full context ──
+  const buildRewriteBody = useCallback((el: HTMLElement, currentText: string) => {
+    const product = storeData.products?.[0];
+    const tag = el.tagName.toLowerCase();
+    const textLen = currentText.split(/\s+/).length;
+    const sectionType = (tag === 'button' || tag === 'a') ? 'botón CTA'
+      : tag === 'h1' ? 'título principal'
+      : tag === 'h2' ? 'título de sección'
+      : tag === 'h3' || tag === 'h4' ? 'subtítulo'
+      : tag === 'li' ? 'punto de beneficio'
+      : tag === 'span' && textLen <= 5 ? 'badge o etiqueta'
+      : tag === 'label' ? 'etiqueta de formulario'
+      : textLen <= 5 ? 'texto corto (badge/CTA)'
+      : textLen <= 15 ? 'título o frase de impacto'
+      : 'descripción o párrafo';
+
+    // Get surrounding text for zone context
+    const parent = el.closest('section, article, div[class], main') as HTMLElement | null;
+    let surroundingText = '';
+    if (parent) {
+      const nearby = parent.querySelectorAll('h1,h2,h3,h4,p,span,button');
+      const texts: string[] = [];
+      nearby.forEach(n => {
+        const t = (n.textContent || '').trim();
+        if (t.length > 2 && t.length < 200 && t !== currentText) texts.push(t);
+      });
+      surroundingText = texts.slice(0, 5).join(' | ');
+    }
+
+    return {
+      productTitle: product?.title || product?.aiContent?.enhancedTitle || '',
+      productDescription: product?.description || product?.aiContent?.enhancedDescription || '',
+      productCategory: product?.category || '',
+      sectionType,
+      currentText,
+      aiContext: product?.aiContent || null,
+      surroundingText,
+    };
+  }, [storeData]);
+
+  // ── AI Rewrite selected text element ──
+  const handleAIRewrite = useCallback(async () => {
+    const el = editorState.selectedElement;
+    if (!el || aiRewriting) return;
+    const currentText = el.textContent?.trim();
+    if (!currentText) return;
+
+    setAiRewriting(true);
+    try {
+      const res = await fetch('/api/ai/rewrite-section', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildRewriteBody(el, currentText)),
+      });
+      const data = await res.json();
+      if (data.success && data.newText) {
+        applyTextFromPanel(data.newText);
+      }
+    } catch (err) {
+      console.error('[AI Rewrite] Error:', err);
+    } finally {
+      setAiRewriting(false);
+    }
+  }, [editorState.selectedElement, storeData, aiRewriting, applyTextFromPanel, buildRewriteBody]);
+
+  // ── AI Rewrite ALL text elements in ONE single API call ──
+  const handleRewriteAll = useCallback(async () => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentDocument || aiRewritingAll) return;
+    const doc = iframe.contentDocument;
+    const product = storeData.products?.[0];
+    if (!product) return;
+
+    const textElements = Array.from(doc.querySelectorAll('[data-ve-editable][data-ve-type="text"]')) as HTMLElement[];
+    if (textElements.length === 0) return;
+
+    // Collect all text elements info
+    const elements: { veId: string; el: HTMLElement; currentText: string; sectionType: string; wordCount: number }[] = [];
+    textElements.forEach(htmlEl => {
+      const directText = Array.from(htmlEl.childNodes)
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent?.trim())
+        .join('');
+      if (directText.length < 2) return;
+
+      const tag = htmlEl.tagName.toLowerCase();
+      const wordCount = directText.split(/\s+/).length;
+      const sectionType = (tag === 'button' || tag === 'a') ? 'botón CTA'
+        : tag === 'h1' ? 'título principal'
+        : tag === 'h2' ? 'título de sección'
+        : tag === 'h3' || tag === 'h4' ? 'subtítulo'
+        : tag === 'li' ? 'punto de beneficio'
+        : tag === 'span' && wordCount <= 5 ? 'badge o etiqueta'
+        : wordCount <= 5 ? 'texto corto'
+        : wordCount <= 15 ? 'título o frase'
+        : 'descripción o párrafo';
+
+      elements.push({
+        veId: htmlEl.getAttribute('data-ve-editable') || '',
+        el: htmlEl,
+        currentText: directText,
+        sectionType,
+        wordCount,
+      });
+    });
+
+    if (elements.length === 0) return;
+
+    setAiRewritingAll(true);
+    setShowToolsFab(false);
+
+    // Show loading on ALL buttons
+    elements.forEach(({ el }) => {
+      const btn = el.querySelector('.ve-ai-rewrite-btn') as HTMLElement;
+      if (btn) btn.classList.add('ve-ai-loading');
+    });
+
+    try {
+      const res = await fetch('/api/ai/rewrite-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productTitle: product.title || product.aiContent?.enhancedTitle || '',
+          productDescription: product.description || product.aiContent?.enhancedDescription || '',
+          productCategory: product.category || '',
+          aiContext: product.aiContent || null,
+          elements: elements.map(e => ({ sectionType: e.sectionType, wordCount: e.wordCount, currentText: e.currentText })),
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success && Array.isArray(data.results)) {
+        data.results.forEach((r: { i: number; t: string }) => {
+          if (r.i >= 0 && r.i < elements.length && r.t) {
+            const { veId, el } = elements[r.i];
+            captureOriginalSnapshot(el, veId);
+            el.childNodes.forEach(node => {
+              if (node.nodeType === Node.TEXT_NODE && (node.textContent || '').trim().length > 1) {
+                node.textContent = r.t;
+              }
+            });
+            if (!Array.from(el.childNodes).some(n => n.nodeType === Node.TEXT_NODE && (n.textContent || '').trim().length > 1)) {
+              const tw = iframe.contentDocument!.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+              let tn: Text | null;
+              while ((tn = tw.nextNode() as Text | null)) {
+                if ((tn.textContent || '').trim().length > 2) { tn.textContent = r.t; break; }
+              }
+            }
+            addCustomization({
+              id: veId, selector: `[data-ve-editable="${veId}"]`,
+              type: 'text', newValue: el.innerHTML, timestamp: Date.now(),
+            });
+            setUnsavedVeIds(prev => { const next = new Set(prev); next.add(veId); return next; });
+          }
+        });
+      }
+    } catch (err) {
+      console.error('[AI Rewrite All] Error:', err);
+    } finally {
+      // Remove loading from ALL buttons
+      elements.forEach(({ el }) => {
+        const btn = el.querySelector('.ve-ai-rewrite-btn') as HTMLElement;
+        if (btn) btn.classList.remove('ve-ai-loading');
+      });
+      setAiRewritingAll(false);
+      setUnsavedVeIds(prev => { updateUnsavedTooltips(prev); return prev; });
+    }
+  }, [storeData, aiRewritingAll, captureOriginalSnapshot, addCustomization, updateUnsavedTooltips, buildRewriteBody]);
 
   // ── Delete selected element ──
   const deleteElement = useCallback(() => {
@@ -1019,16 +1244,76 @@ export default function VisualEditorOverlay({
     });
   }, [existingInjectedComponents]);
 
-  // ── Listen for revert messages from iframe ──
+  // ── Listen for revert and AI rewrite messages from iframe ──
   useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
+    const handleMessage = async (e: MessageEvent) => {
       if (e.data?.type === 've-revert' && e.data?.veId) {
         revertElement(e.data.veId);
+      }
+      if (e.data?.type === 've-ai-rewrite' && e.data?.veId && e.data?.text) {
+        const iframe = iframeRef.current;
+        if (!iframe?.contentDocument) return;
+        const el = iframe.contentDocument.querySelector(`[data-ve-editable="${e.data.veId}"]`) as HTMLElement;
+        if (!el) return;
+
+        // Show loading state on the button
+        const btn = el.querySelector('.ve-ai-rewrite-btn') as HTMLElement;
+        if (btn) btn.classList.add('ve-ai-loading');
+
+        try {
+          const res = await fetch('/api/ai/rewrite-section', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(buildRewriteBody(el, e.data.text)),
+          });
+          const data = await res.json();
+          if (data.success && data.newText) {
+            // Replace text in the element
+            const veId = e.data.veId;
+            captureOriginalSnapshot(el, veId);
+            // Preserve the AI button, replace only text nodes
+            el.childNodes.forEach(node => {
+              if (node.nodeType === Node.TEXT_NODE) {
+                node.textContent = data.newText;
+              }
+            });
+            // If no text nodes were found (all wrapped in children), set textContent on first text-bearing child
+            if (!Array.from(el.childNodes).some(n => n.nodeType === Node.TEXT_NODE && (n.textContent || '').trim().length > 2)) {
+              // Fallback: find deepest text node
+              const textNodes: Text[] = [];
+              const tw = iframe.contentDocument!.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+              let tn: Text | null;
+              while ((tn = tw.nextNode() as Text | null)) {
+                if ((tn.textContent || '').trim().length > 2) textNodes.push(tn);
+              }
+              if (textNodes.length > 0) textNodes[0].textContent = data.newText;
+              else el.textContent = data.newText;
+            }
+            setSelectedTextContent(data.newText);
+            addCustomization({
+              id: veId,
+              selector: `[data-ve-editable="${veId}"]`,
+              type: 'text',
+              newValue: el.innerHTML,
+              timestamp: Date.now(),
+            });
+            setUnsavedVeIds(prev => {
+              const next = new Set(prev);
+              next.add(veId);
+              updateUnsavedTooltips(next);
+              return next;
+            });
+          }
+        } catch (err) {
+          console.error('[AI Rewrite] Error:', err);
+        } finally {
+          if (btn) btn.classList.remove('ve-ai-loading');
+        }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [revertElement]);
+  }, [revertElement, storeData, captureOriginalSnapshot, addCustomization, updateUnsavedTooltips, buildRewriteBody]);
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -1174,20 +1459,46 @@ export default function VisualEditorOverlay({
           </button>
 
           {onPublish && (
-            <button
-              onClick={onPublish}
-              style={{
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                border: 'none', borderRadius: 8, padding: '6px 14px',
-                color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 5,
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 10px rgba(16,185,129,0.25)',
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              Publicar
-            </button>
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              <button
+                onClick={() => {
+                  if (editorState.isDirty) return; // Block if unsaved
+                  onPublish();
+                }}
+                style={{
+                  background: editorState.isDirty
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'linear-gradient(135deg, #10b981, #059669)',
+                  border: editorState.isDirty ? '1px solid rgba(239,68,68,0.3)' : 'none',
+                  borderRadius: 8, padding: '6px 14px',
+                  color: editorState.isDirty ? '#ef4444' : '#fff',
+                  fontSize: 12, fontWeight: 700,
+                  cursor: editorState.isDirty ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  transition: 'all 0.2s',
+                  boxShadow: editorState.isDirty ? 'none' : '0 2px 10px rgba(16,185,129,0.25)',
+                  opacity: editorState.isDirty ? 0.7 : 1,
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Publicar
+              </button>
+              {editorState.isDirty && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                  background: 'rgba(220,38,38,0.95)', backdropFilter: 'blur(8px)',
+                  color: '#fff', fontSize: 11, fontWeight: 700,
+                  padding: '8px 12px', borderRadius: 8, whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 15px rgba(220,38,38,0.4)',
+                  zIndex: 200, pointerEvents: 'none',
+                  animation: 'veFabPanelIn 0.2s ease-out',
+                  lineHeight: 1.4,
+                }}>
+                  Guardá los cambios antes de publicar
+                  <div style={{ position: 'absolute', top: -4, right: 14, width: 8, height: 8, background: 'rgba(220,38,38,0.95)', transform: 'rotate(45deg)' }} />
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1283,6 +1594,38 @@ export default function VisualEditorOverlay({
                 color="#22c55e"
                 onClick={() => { setShowComponentPicker(!showComponentPicker); setEditorState(p => ({ ...p, activePanel: 'none' })); }}
               />
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 8px' }} />
+              <button
+                onClick={handleRewriteAll}
+                disabled={aiRewritingAll}
+                style={{
+                  background: aiRewritingAll ? 'rgba(245,158,11,0.1)' : 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.12))',
+                  border: '1px solid rgba(245,158,11,0.25)',
+                  borderRadius: 10, padding: '10px 12px',
+                  cursor: aiRewritingAll ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  transition: 'all 0.15s', textAlign: 'left' as const, width: '100%',
+                }}
+              >
+                <div style={{
+                  width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(245,158,11,0.2)', color: '#f59e0b',
+                }}>
+                  {aiRewritingAll ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={15} />
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: aiRewritingAll ? '#f59e0b' : '#fbbf24', lineHeight: 1.2 }}>
+                    {aiRewritingAll ? 'Reescribiendo...' : 'Reescribir toda la página'}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#78716c', fontWeight: 500, lineHeight: 1.3 }}>
+                    IA reescribe todos los textos
+                  </div>
+                </div>
+              </button>
             </div>
           )}
         </div>
@@ -1306,6 +1649,8 @@ export default function VisualEditorOverlay({
                 veId={editorState.selectedElement.getAttribute('data-ve-editable') || ''}
                 isUnsaved={unsavedVeIds.has(editorState.selectedElement.getAttribute('data-ve-editable') || '')}
                 onRevertElement={revertElement}
+                onAIRewrite={selectedElementInfo.type === 'text' ? handleAIRewrite : undefined}
+                aiRewriting={aiRewriting}
               />
             )}
 
@@ -1467,6 +1812,10 @@ export default function VisualEditorOverlay({
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.8; transform: scale(1.05); }
         }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
         .custom-scrollbar select {
           background-color: #1e1e2a !important;
           color: #e4e4e7 !important;
@@ -1549,7 +1898,7 @@ function ToolbarButton({ icon, label, active, disabled, danger, onClick }: {
 }
 
 // ── Selected Element Info Card ──
-function SelectedElementCard({ info, textContent, onTextChange, isTextType, veId, isUnsaved, onRevertElement }: {
+function SelectedElementCard({ info, textContent, onTextChange, isTextType, veId, isUnsaved, onRevertElement, onAIRewrite, aiRewriting }: {
   info: { tag: string; type: string; label: string };
   textContent: string;
   onTextChange: (text: string) => void;
@@ -1557,6 +1906,8 @@ function SelectedElementCard({ info, textContent, onTextChange, isTextType, veId
   veId: string;
   isUnsaved: boolean;
   onRevertElement: (veId: string) => void;
+  onAIRewrite?: () => void;
+  aiRewriting?: boolean;
 }) {
   const typeColors: Record<string, string> = {
     text: '#6366f1',
@@ -1632,6 +1983,35 @@ function SelectedElementCard({ info, textContent, onTextChange, isTextType, veId
             onFocus={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.5)'; }}
             onBlur={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.2)'; }}
           />
+          {/* AI Rewrite Button */}
+          {onAIRewrite && (
+            <button
+              onClick={onAIRewrite}
+              disabled={aiRewriting || !textContent.trim()}
+              style={{
+                width: '100%', marginTop: 8, padding: '9px 12px', borderRadius: 10,
+                background: aiRewriting ? 'rgba(139,92,246,0.1)' : 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.15))',
+                border: '1px solid rgba(139,92,246,0.25)',
+                color: aiRewriting ? '#a78bfa' : '#c4b5fd',
+                fontSize: 11, fontWeight: 700, cursor: aiRewriting ? 'wait' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                transition: 'all 0.2s',
+                opacity: (!textContent.trim()) ? 0.4 : 1,
+              }}
+            >
+              {aiRewriting ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                  Reescribiendo...
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                  Reescribir con IA — Gs. 1.000
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>

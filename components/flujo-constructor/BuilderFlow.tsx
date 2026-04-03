@@ -1114,7 +1114,13 @@ export default function BuilderFlow() {
                     flowType={flowType || 'store'}
                     existingCustomizations={storeData.visualCustomizations?.customizations || []}
                     existingInjectedComponents={storeData.visualCustomizations?.injectedComponents || []}
-                    onPublish={() => publish.open()}
+                    onPublish={async () => {
+                        // Auto-save customizations before publishing
+                        if (storeData.visualCustomizations?.customizations?.length || 0 > 0) {
+                            await builderApi.saveDraft(storeData, template, flowType || 'store');
+                        }
+                        publish.open();
+                    }}
                     onSave={async (customizations, injectedComponents) => {
                         const updatedStoreData = {
                             ...storeData,
