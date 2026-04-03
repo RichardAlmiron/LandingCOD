@@ -208,7 +208,7 @@ function mapAlmiDropProduct(p: any) {
         images: p.images || [],
         edited_images: p.edited_images || [],
         original_images: p.original_images || [],
-        videos: [], // Videos desactivados — no se extraen del catálogo
+        videos: Array.isArray(p.videos) ? p.videos.filter((v: any) => typeof v === 'string' && v.trim()) : [],
         category: p.categories?.name || p.category_id || 'General',
         categoryId: p.category_id,
         categorySlug: p.categories?.slug,

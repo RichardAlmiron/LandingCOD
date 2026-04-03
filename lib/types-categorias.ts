@@ -15,7 +15,7 @@ export interface CategoriaPDP {
   updated_at: string;
 }
 
-/** Plantilla PDP con nomenclatura Standard */
+/** Plantilla PDP */
 export interface PlantillaPDP {
   id: string;
   codigo: string;

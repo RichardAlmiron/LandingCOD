@@ -1,11 +1,27 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
 import { Product } from '@/lib/types';
 
 interface EnhancedProductGalleryProps {
   product: Product;
   accentColor?: string;
+}
+
+type MediaItem = { type: 'image'; url: string } | { type: 'video'; url: string };
+
+/** Inline video thumbnail that autoplays muted when visible */
+function GalleryVideo({ src, isActive }: { src: string; isActive: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    if (isActive) ref.current.play().catch(() => {});
+    else ref.current.pause();
+  }, [isActive]);
+  return (
+    <video ref={ref} src={src} muted loop playsInline preload="metadata"
+      className="w-full h-full object-cover" />
+  );
 }
 
 export default function EnhancedProductGallery({ 
@@ -15,17 +31,17 @@ export default function EnhancedProductGallery({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // Combinar imágenes del producto: 1 principal + máximo 4 miniaturas, sin videos
+  // Combinar imágenes + videos del producto
   const allMedia = useMemo(() => {
-    const media: Array<{ type: 'image', url: string }> = [];
+    const media: MediaItem[] = [];
     
-    // Imagen principal primero (imageUrl)
+    // Imagen principal primero
     if (product.imageUrl) {
       media.push({ type: 'image', url: product.imageUrl });
     }
 
-    // Agregar imágenes únicas de los arrays (sin duplicar la principal)
-    const uniqueImages = new Set<string>(product.imageUrl ? [product.imageUrl] : []);
+    // Agregar imágenes únicas
+    const uniqueUrls = new Set<string>(product.imageUrl ? [product.imageUrl] : []);
     const imageArrays = [
       product.original_images || [],
       product.edited_images || [],
@@ -34,11 +50,20 @@ export default function EnhancedProductGallery({
     
     imageArrays.forEach(arr => {
       arr.forEach(img => {
-        if (img && !uniqueImages.has(img) && media.length < 5) {
-          uniqueImages.add(img);
+        if (img && !uniqueUrls.has(img) && media.length < 5) {
+          uniqueUrls.add(img);
           media.push({ type: 'image', url: img });
         }
       });
+    });
+
+    // Agregar videos del producto (después de las imágenes)
+    const videos = (product.videos || []).filter(v => v && typeof v === 'string' && v.trim());
+    videos.forEach(videoUrl => {
+      if (!uniqueUrls.has(videoUrl)) {
+        uniqueUrls.add(videoUrl);
+        media.push({ type: 'video', url: videoUrl });
+      }
     });
 
     // Pad with high-quality placeholders until we have exactly 5 items (1 main + 4 thumbnails)
@@ -74,11 +99,15 @@ export default function EnhancedProductGallery({
       <div className="space-y-4">
         {/* Large Media Display */}
         <div className="relative aspect-square rounded-3xl overflow-hidden bg-gray-100 group">
-          <img 
-            src={currentMedia?.url || product.imageUrl} 
-            alt={`${product.title} - Vista ${selectedIndex + 1}`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          {currentMedia?.type === 'video' ? (
+            <GalleryVideo src={currentMedia.url} isActive={true} />
+          ) : (
+            <img 
+              src={currentMedia?.url || product.imageUrl} 
+              alt={`${product.title} - Vista ${selectedIndex + 1}`}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          )}
           
           {/* Navigation Arrows */}
           {allMedia.length > 1 && (
@@ -123,7 +152,7 @@ export default function EnhancedProductGallery({
               <button
                 key={idx}
                 onClick={() => setSelectedIndex(idx + 1)}
-                className={`aspect-square rounded-xl overflow-hidden transition-all ${
+                className={`aspect-square rounded-xl overflow-hidden transition-all relative ${
                   selectedIndex === idx + 1
                     ? 'ring-3 ring-offset-1 scale-[1.03]' 
                     : 'opacity-60 hover:opacity-100'
@@ -132,11 +161,20 @@ export default function EnhancedProductGallery({
                   '--tw-ring-color': accentColor 
                 } as React.CSSProperties : {}}
               >
-                <img 
-                  src={media.url} 
-                  alt={`${product.title} - Miniatura ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                {media.type === 'video' ? (
+                  <>
+                    <video src={media.url} muted preload="metadata" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" opacity="0.9"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                    </div>
+                  </>
+                ) : (
+                  <img 
+                    src={media.url} 
+                    alt={`${product.title} - Miniatura ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -157,12 +195,17 @@ export default function EnhancedProductGallery({
           </button>
           
           <div className="relative max-w-6xl w-full">
-            <img 
-              src={currentMedia.url} 
-              alt={`${product.title} - Vista ampliada`}
-              className="w-full h-auto rounded-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {currentMedia.type === 'video' ? (
+              <video src={currentMedia.url} controls autoPlay loop muted playsInline
+                className="w-full h-auto rounded-2xl" onClick={(e) => e.stopPropagation()} />
+            ) : (
+              <img 
+                src={currentMedia.url} 
+                alt={`${product.title} - Vista ampliada`}
+                className="w-full h-auto rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             
             {/* Navigation in Zoom */}
             {allMedia.length > 1 && (

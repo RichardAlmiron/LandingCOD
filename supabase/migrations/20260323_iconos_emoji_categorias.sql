@@ -6,7 +6,6 @@
 -- ════════════════════════════════════════════════════════════
 
 -- ── CATEGORÍAS ──
-UPDATE "Categorias_PDP" SET icono = '📐' WHERE nombre = 'Standard';
 UPDATE "Categorias_PDP" SET icono = '📱' WHERE nombre = 'Electrónica';
 UPDATE "Categorias_PDP" SET icono = '💊' WHERE nombre = 'Salud';
 UPDATE "Categorias_PDP" SET icono = '💄' WHERE nombre = 'Belleza';

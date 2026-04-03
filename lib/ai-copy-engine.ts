@@ -66,8 +66,8 @@ async function callModel(product: Product, apiKey: string, model: string): Promi
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: buildUserPrompt(product) },
       ],
-      temperature: 0.8,
-      max_tokens: 2500,
+      temperature: 0.85,
+      max_tokens: 3500,
     }),
   });
 

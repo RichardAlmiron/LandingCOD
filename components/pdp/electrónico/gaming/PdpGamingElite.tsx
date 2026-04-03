@@ -10,8 +10,8 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
     const [faqOpen, setFaqOpen] = useState<number | null>(null);
     const [isHovered, setIsHovered] = useState(false);
     
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const ai = product.aiContent;
+    const sec = ai?.sections;
     const fmtPrice = (n: number) => { const s = Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return `Gs. ${s}`; };
     
     const accent = '#06B6D4'; // Cyan
@@ -79,14 +79,14 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                             <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.1 }}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="flex items-center px-2.5 py-1 rounded-sm bg-cyan-500/10 border border-cyan-500/20">
-                                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-cyan-400 animate-pulse">0.1ms Response</span>
+                                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-cyan-400 animate-pulse">{ai?.authority?.badgeText || '0.1ms Response'}</span>
                                     </div>
                                 </div>
                                 <h1 className="text-5xl md:text-6xl font-black leading-[0.9] tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-neutral-200 to-neutral-600 pb-2">
                                     {ai?.enhancedTitle || product.title}
                                 </h1>
                                 <p className="text-[15px] text-neutral-400 leading-relaxed font-medium mt-4 border-l-2 border-cyan-500/30 pl-4">
-                                    {ai?.enhancedDescription || product.description || 'Rendimiento extremo diseñado para esports. Precisión milimétrica que elimina la brecha entre el pensamiento y la acción in-game.'}
+                                    {ai?.enhancedDescription || product.description}
                                 </p>
                             </motion.div>
                             <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.2 }} className="space-y-4">
@@ -97,7 +97,7 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                                 <button onClick={() => document.getElementById('checkout-game')?.scrollIntoView({ behavior: 'smooth' })} className="relative w-full rounded-xl font-black text-sm uppercase tracking-[0.2em] h-[70px] overflow-hidden group">
                                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-cyan-500 to-violet-600 glow-pulse"></div>
                                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-1"></div>
-                                    <span className="relative z-10 text-white drop-shadow-md">Asegurar Ventaja Competitiva</span>
+                                    <span className="relative z-10 text-white drop-shadow-md">{sec?.ctaPrimary || 'Asegurar Ventaja Competitiva'}</span>
                                 </button>
                             </motion.div>
                         </div>
@@ -109,7 +109,7 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                     <div className="flex whitespace-nowrap animate-marquee">
                         {[...Array(3)].map((_, i) => (
                             <div key={i} className="flex items-center gap-12 px-6">
-                                {['Zero Hardware Acceleration', 'Switches Ópticos', 'Esports Ready', 'Polling Rate 1000Hz'].map((text, j) => (
+                                {(sec?.benefitsBullets || ['Zero Hardware Acceleration', 'Switches Ópticos', 'Esports Ready', 'Polling Rate 1000Hz']).slice(0, 4).map((text, j) => (
                                     <div key={j} className="flex items-center gap-4">
                                         <span className="text-[11px] font-black uppercase tracking-[0.3em] text-neutral-500">{text}</span>
                                         <div className="w-1.5 h-1.5 rounded-full bg-cyan-500/50"></div>
@@ -123,7 +123,7 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                 {/* 4. ENGINEERING (BENEFITS) */}
                 <div id="ingeniería" className="max-w-7xl mx-auto px-6 py-10">
                     <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-3xl md:text-5xl font-black text-center tracking-tight text-white mb-20">
-                        Ventaja <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500">Injusta.</span>
+                        {sec?.heroHeadline ? <>{sec.heroHeadline.split(' ').slice(0, -1).join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500">{sec.heroHeadline.split(' ').slice(-1)[0]}</span></> : <>Ventaja <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500">Injusta.</span></>}
                     </motion.h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
@@ -166,22 +166,18 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
 
                 {/* 6. US VS THEM */}
                 <div className="max-w-4xl mx-auto px-6 py-20">
-                    <h2 className="text-3xl font-black text-center mb-10">La diferencia en un combate.</h2>
+                    <h2 className="text-3xl font-black text-center mb-10">{ai?.storytelling?.hook || 'La diferencia en un combate.'}</h2>
                     <div className="rounded-3xl border border-white/10 bg-[#0A0A0F]/60 backdrop-blur-xl overflow-hidden shadow-2xl">
                         <div className="grid grid-cols-3 bg-white/[0.02] border-b border-white/10 p-5">
-                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em]">Dato</div>
-                            <div className="text-[10px] font-black uppercase text-cyan-400 tracking-[0.2em] text-center border-b-2 border-cyan-500 pb-2">APEX Setup</div>
-                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em] text-center">Setup Promedio</div>
+                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em]">Aspecto</div>
+                            <div className="text-[10px] font-black uppercase text-cyan-400 tracking-[0.2em] text-center border-b-2 border-cyan-500 pb-2">NOSOTROS</div>
+                            <div className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em] text-center">OTROS</div>
                         </div>
-                        {[
-                            { k: 'Tiempo de Actuación', u: '0.2 ms', t: '1.0 ms+' },
-                            { k: 'Arrastre (Fricción)', u: 'Deslizamiento Absoluto', t: 'Resistencia Notoria' },
-                            { k: 'Lift-Off Distance', u: 'Programable (1mm)', t: 'Fijo (Sensors Spin)' },
-                        ].map((r, i) => (
+                        {(ai?.comparison?.us || ['Deslizamiento Absoluto', 'Programable (1mm)', '0.2 ms']).map((u: string, i: number) => (
                             <div key={i} className="grid grid-cols-3 p-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition">
-                                <div className="text-xs font-bold text-neutral-400 pt-1">{r.k}</div>
-                                <div className="text-center font-black text-white text-sm">{r.u}</div>
-                                <div className="text-center font-bold text-neutral-600 text-sm line-through">{r.t}</div>
+                                <div className="text-xs font-bold text-neutral-400 pt-1">Punto {i + 1}</div>
+                                <div className="text-center font-black text-white text-sm">{u}</div>
+                                <div className="text-center font-bold text-neutral-600 text-sm line-through">{ai?.comparison?.them?.[i] || '—'}</div>
                             </div>
                         ))}
                     </div>
@@ -208,17 +204,17 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                         <div className="flex justify-center gap-1 mb-4 text-cyan-500">
                             {[1,2,3,4,5].map(i=><svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}
                         </div>
-                        <h2 className="text-3xl font-black">Certificado en lobbies Ranked.</h2>
+                        <h2 className="text-3xl font-black">{sec?.socialProofText || 'Certificado en lobbies Ranked.'}</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            {t: "Con este modelo crucé de Ascendente a Inmortal. Ese mínimo input lag ahorrado gana tiroteos imposibles.", n: "Kieran J."},
-                            {t: "Lo recomiendo muchísimo para agarre de garra (Claw). Las dimensiones son milimétricamente exactas.", n: "TenzFan44"},
-                            {t: "El cable realmente no se siente. Es como jugar wireless pero sin la paranoia de que se apague en rondas.", n: "OmenMain_x"}
-                        ].map((r,i) => (
+                        {(ai?.testimonials || [
+                            {text: "Con este modelo crucé de Ascendente a Inmortal. Ese mínimo input lag ahorrado gana tiroteos imposibles.", name: "Kieran J."},
+                            {text: "Lo recomiendo muchísimo para agarre de garra (Claw). Las dimensiones son milimétricamente exactas.", name: "TenzFan44"},
+                            {text: "El cable realmente no se siente. Es como jugar wireless pero sin la paranoia de que se apague en rondas.", name: "OmenMain_x"}
+                        ]).slice(0, 3).map((r: any, i: number) => (
                             <div key={i} className="p-6 rounded-2xl bg-gradient-to-b from-[#08080C] to-[#040406] border border-white/[0.08]">
-                                <p className="text-sm text-neutral-300 italic mb-4 font-light">"{r.t}"</p>
-                                <div className="text-[10px] uppercase font-black tracking-widest text-violet-400">— {r.n}</div>
+                                <p className="text-sm text-neutral-300 italic mb-4 font-light">"{r.text}"</p>
+                                <div className="text-[10px] uppercase font-black tracking-widest text-violet-400">— {r.name}</div>
                             </div>
                         ))}
                     </div>
@@ -229,8 +225,8 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                     <div className="absolute inset-0 bg-black/80"></div>
                     <div className="relative z-10 max-w-2xl mx-auto px-6">
                         <svg className="w-10 h-10 mx-auto text-cyan-500/50 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                        <h3 className="text-2xl font-black mb-4">Creado por Gamers, para Competidores.</h3>
-                        <p className="text-sm text-neutral-400 font-medium">Buscábamos erradicar las excusas de setup. Queríamos crear un hardware tan puro que tu única limitación sea tu reflejo visual dictaminado por la biología.</p>
+                        <h3 className="text-2xl font-black mb-4">{ai?.storytelling?.reveal || 'Creado por Gamers, para Competidores.'}</h3>
+                        <p className="text-sm text-neutral-400 font-medium">{ai?.storytelling?.painPoint || 'Buscábamos erradicar las excusas de setup. Queríamos crear un hardware tan puro que tu única limitación sea tu reflejo visual dictaminado por la biología.'}</p>
                     </div>
                 </div>
 
@@ -241,21 +237,21 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                             <span className="font-black text-2xl text-cyan-400 leading-none">100%</span>
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black mb-2">Sin Riesgo en el Clash.</h3>
-                            <p className="text-sm text-neutral-400">Garantía total de satisfacción. Si no se convierte en la mejor extensión corporal en tu setup de escritorio, solicita un reembolso. Paga a contra-entrega con total seguridad.</p>
+                            <h3 className="text-2xl font-black mb-2">{sec?.guaranteeText || 'Sin Riesgo en el Clash.'}</h3>
+                            <p className="text-sm text-neutral-400">{sec?.ctaSecondary || 'Garantía total de satisfacción. Paga a contra-entrega con total seguridad.'}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* 11. FAQ */}
                 <div id="faq" className="max-w-3xl mx-auto px-6 py-20">
-                    <h2 className="text-3xl font-black text-center mb-12">Inteligencia Compartida (FAQ)</h2>
+                    <h2 className="text-3xl font-black text-center mb-12">Preguntas Frecuentes</h2>
                     <div className="space-y-4">
-                        {[
+                        {(ai?.faq || [
                             {q: '¿Funciona bien en consolas?', a: 'Sí, gracias a la memoria integrada mantiene la configuración si lo conectas directamente por USB tanto a PS5 como a Xbox Series X/S.'},
                             {q: '¿Necesito instalar software obligatoriamente?', a: 'No, opera en modalidad plug & play pura. El panel de software es opcional solo si deseas configurar macros específicos.'},
                             {q: '¿Cuándo llega mi pedido?', a: 'El envío toma de 24 a 48 horas en zonas urbanas. Recordatorio: pagas únicamente cuando el producto esté en tus manos.'}
-                        ].map((f, i) => (
+                        ]).slice(0, 4).map((f: any, i: number) => (
                             <div key={i} className="border border-white/10 rounded-2xl bg-white/[0.01] overflow-hidden">
                                 <button onClick={() => setFaqOpen(faqOpen===i?null:i)} className="w-full text-left px-6 py-5 flex items-center justify-between font-bold text-white">
                                     {f.q}
@@ -277,8 +273,8 @@ const PdpGamingElite: React.FC<Props> = ({ data, product }) => {
                 <div className="py-20 relative bg-[#0A0A0F]/80 backdrop-blur-3xl border-t border-cyan-500/20">
                     <div id="checkout-game" className="max-w-2xl mx-auto px-6">
                         <div className="text-center mb-10">
-                            <h3 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">Desbloquea el Nivel</h3>
-                            <p className="text-sm text-neutral-400 mt-2">Asegura tu unidad pagando al recibir. Sin fricción. Sin riesgo.</p>
+                            <h3 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">{sec?.urgencyText || 'Desbloquea el Nivel'}</h3>
+                            <p className="text-sm text-neutral-400 mt-2">{sec?.ctaSecondary || 'Asegura tu unidad pagando al recibir. Sin fricción. Sin riesgo.'}</p>
                         </div>
                         <div className="relative p-[1px] rounded-[24px] overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-violet-500 opacity-50 glow-pulse"></div>

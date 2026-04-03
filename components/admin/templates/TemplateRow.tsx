@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { TemplateType, TemplateRecord } from '@/hooks/useTemplates';
 import { CategoriaPDP } from '@/lib/types-categorias';
 import { CheckCircle2, XCircle, Loader2, Store, LayoutTemplate, Trash2, CheckSquare, Square, Eye } from 'lucide-react';
+import { obtenerDemoParaTemplate } from '@/lib/demo-productos';
 
 interface TemplateRowProps {
     item: TemplateRecord;
@@ -42,6 +43,12 @@ export function TemplateRow({ item, tab, isSelected, actionLoading, categorias, 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {item.image_url ? (
                     <img src={item.image_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                ) : isPdp && item.codigo ? (
+                    <img 
+                        src={obtenerDemoParaTemplate(item.codigo).product.imageUrl} 
+                        alt={item.name} 
+                        style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} 
+                    />
                 ) : (
                     <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {tab === 'stores' ? <Store size={18} style={{ color: '#6366f1' }} /> : <LayoutTemplate size={18} style={{ color: '#6366f1' }} />}

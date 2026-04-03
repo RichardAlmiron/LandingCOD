@@ -346,10 +346,6 @@ export const translations: Translations = {
     es: 'Premium',
     pt: 'Premium'
   },
-  'builder.standard': {
-    es: 'Standard',
-    pt: 'Padrão'
-  },
   'builder.filmstrip': {
     es: 'Tira de película',
     pt: 'Tira de filme'

@@ -120,6 +120,7 @@ export default function VisualEditorOverlay({
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [showToolsFab, setShowToolsFab] = useState(false);
 
   // ── Persistent original snapshots (captured ONCE per element, never overwritten) ──
   const originalSnapshotsRef = useRef<Map<string, { styles: Record<string, string>; textContent?: string }>>(new Map());
@@ -1070,146 +1071,229 @@ export default function VisualEditorOverlay({
       display: 'flex', flexDirection: 'column',
       animation: 'veSlideIn 0.3s ease-out',
     }}>
-      {/* ── Top Toolbar ── */}
+      {/* ── Compact Top Bar ── */}
       <div style={{
-        height: 56, background: '#0f0f14', borderBottom: '1px solid #2a2a35',
+        height: 48, background: '#0f0f14', borderBottom: '1px solid #1e1e28',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 16px', flexShrink: 0,
+        padding: '0 14px', flexShrink: 0,
       }}>
-        {/* Left: Close + Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Tooltip text={closeLabel} description="Vuelve al paso anterior del constructor" position="bottom">
-            <button onClick={onClose} style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8, padding: '6px 10px', color: '#a1a1aa', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s',
-              fontSize: 12, fontWeight: 600,
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#a1a1aa'; }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-              <span>{closeLabel}</span>
-            </button>
-          </Tooltip>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Sparkles size={14} style={{ color: '#a78bfa' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 8px', borderRadius: 6, letterSpacing: '0.04em' }}>ETAPA 4</span>
-              LandingCOD Studio
-              {editorState.isDirty && (
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-              )}
-            </div>
-            <div style={{ fontSize: 11, color: '#71717a' }}>
-              Editor visual — haz clic en cualquier elemento para editarlo
-            </div>
-          </div>
-        </div>
-
-        {/* Center: Tools */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 4 }}>
-          <Tooltip text="✏️ Tipografía y Texto" description="Para editar TEXTOS de tu tienda: cambiar lo que dice un título, párrafo o botón, y también cambiar la fuente, tamaño de letra, color del texto, alineación, etc. Primero haz clic en el texto que quieras editar dentro de la tienda, y luego usa este panel para modificarlo." position="bottom">
-            <ToolbarButton icon={<Type size={15} />} label="Tipografía y Texto"
-              active={editorState.activePanel === 'text'}
-              onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'text' ? 'none' : 'text' })); setShowComponentPicker(false); }} />
-          </Tooltip>
-          <Tooltip text="🎨 Estilo Visual" description="Para cambiar el FONDO y APARIENCIA de secciones completas de tu tienda (no el texto). Aquí puedes cambiar: colores de fondo, degradados de colores, bordes redondeados, sombras, transparencia y espaciado. Si quieres cambiar el texto, usa 'Tipografía y Texto'. Si quieres cambiar cómo se ve una sección por detrás, usa este botón." position="bottom">
-            <ToolbarButton icon={<Palette size={15} />} label="Estilo Visual"
-              active={editorState.activePanel === 'style'}
-              onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'style' ? 'none' : 'style' })); setShowComponentPicker(false); }} />
-          </Tooltip>
-          <Tooltip text="🖼️ Imágenes" description="Para cambiar cualquier imagen de tu tienda: fotos de productos, imágenes de testimonios, banners, logos, etc. Haz clic en una imagen y podrás subir una nueva desde tu computadora o pegar una URL." position="bottom">
-            <ToolbarButton icon={<Image size={15} />} label="Imágenes"
-              active={editorState.activePanel === 'image'}
-              onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'image' ? 'none' : 'image' })); setShowComponentPicker(false); }} />
-          </Tooltip>
-          <Tooltip text="🧩 Bloques y Secciones" description="Agrega NUEVAS secciones a tu tienda que no existían antes. Por ejemplo: una barra de anuncio con una oferta, un banner grande con imagen, un botón de WhatsApp, un temporizador de cuenta regresiva, insignias de confianza (pago seguro, envío rápido), testimonios de clientes, y más. Solo elige el bloque y se agrega automáticamente." position="bottom">
-            <ToolbarButton icon={<Plus size={15} />} label="Bloques y Secciones"
-              active={showComponentPicker}
-              onClick={() => { setShowComponentPicker(!showComponentPicker); setEditorState(p => ({ ...p, activePanel: 'none' })); }} />
-          </Tooltip>
-          <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
-          <Tooltip text="↩️ Deshacer" description="Revierte el último cambio realizado (Ctrl+Z)" position="bottom">
-            <ToolbarButton icon={<Undo2 size={15} />} label="Deshacer" disabled={editorState.undoStack.length === 0} onClick={handleUndo} />
-          </Tooltip>
-          <Tooltip text="↪️ Rehacer" description="Restaura el cambio que acabas de deshacer (Ctrl+Shift+Z)" position="bottom">
-            <ToolbarButton icon={<Redo2 size={15} />} label="Rehacer" disabled={editorState.redoStack.length === 0} onClick={handleRedo} />
-          </Tooltip>
-          {editorState.selectedElement && (
-            <>
-              <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
-              {unsavedVeIds.has(editorState.selectedElement.getAttribute('data-ve-editable') || '') && (
-                <Tooltip text="↩️ Revertir elemento" description="Revierte TODOS los cambios del elemento seleccionado a su estado original" position="bottom">
-                  <ToolbarButton icon={<RotateCcw size={15} />} label="Revertir"
-                    onClick={() => revertElement(editorState.selectedElement!.getAttribute('data-ve-editable') || '')} />
-                </Tooltip>
-              )}
-              <Tooltip text="🗑️ Eliminar" description="Oculta el elemento seleccionado de la tienda. Puedes deshacerlo con Ctrl+Z." position="bottom">
-                <ToolbarButton icon={<Trash2 size={15} />} label="Eliminar" onClick={deleteElement} danger />
-              </Tooltip>
-            </>
-          )}
-        </div>
-
-        {/* Right: Save + Status */}
+        {/* Left: Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {saveSuccess && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#22c55e', fontSize: 12, fontWeight: 600 }}>
-              <Check size={14} /> Guardado
+          <button onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 8, padding: '5px 10px', color: '#a1a1aa', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s',
+            fontSize: 11, fontWeight: 600,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.15)'; e.currentTarget.style.color = '#c4b5fd'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#a1a1aa'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            <span>{closeLabel}</span>
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <Sparkles size={13} style={{ color: '#a78bfa' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 6, lineHeight: 1.2 }}>
+                Studio Editor
+                {editorState.isDirty && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />}
+              </div>
+              <div style={{ fontSize: 10, color: '#52525b', fontWeight: 500 }}>
+                Selecciona un elemento en la vista previa para personalizarlo
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Undo/Redo + Save + Publish */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Compact undo/redo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 2 }}>
+            <button onClick={handleUndo} disabled={editorState.undoStack.length === 0} style={{
+              background: 'transparent', border: 'none', borderRadius: 6, padding: 5, cursor: editorState.undoStack.length === 0 ? 'not-allowed' : 'pointer',
+              color: editorState.undoStack.length === 0 ? '#3f3f46' : '#a1a1aa', display: 'flex', transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { if (editorState.undoStack.length > 0) e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = editorState.undoStack.length === 0 ? '#3f3f46' : '#a1a1aa'; }}
+            ><Undo2 size={14} /></button>
+            <button onClick={handleRedo} disabled={editorState.redoStack.length === 0} style={{
+              background: 'transparent', border: 'none', borderRadius: 6, padding: 5, cursor: editorState.redoStack.length === 0 ? 'not-allowed' : 'pointer',
+              color: editorState.redoStack.length === 0 ? '#3f3f46' : '#a1a1aa', display: 'flex', transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { if (editorState.redoStack.length > 0) e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = editorState.redoStack.length === 0 ? '#3f3f46' : '#a1a1aa'; }}
+            ><Redo2 size={14} /></button>
+          </div>
+
+          {editorState.selectedElement && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 2 }}>
+              {unsavedVeIds.has(editorState.selectedElement.getAttribute('data-ve-editable') || '') && (
+                <button onClick={() => revertElement(editorState.selectedElement!.getAttribute('data-ve-editable') || '')} style={{
+                  background: 'transparent', border: 'none', borderRadius: 6, padding: 5, cursor: 'pointer',
+                  color: '#a1a1aa', display: 'flex', transition: 'all 0.15s',
+                }}><RotateCcw size={14} /></button>
+              )}
+              <button onClick={deleteElement} style={{
+                background: 'transparent', border: 'none', borderRadius: 6, padding: 5, cursor: 'pointer',
+                color: '#ef4444', display: 'flex', transition: 'all 0.15s', opacity: 0.7,
+              }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; }}
+              ><Trash2 size={14} /></button>
             </div>
           )}
-          <div style={{ fontSize: 11, color: '#71717a' }}>
-            {editorState.customizations.length} cambios
-          </div>
-          <Tooltip text="💾 Guardar cambios" description="Guarda todas las personalizaciones en la base de datos (Ctrl+S)" position="bottom">
+
+          {saveSuccess && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#22c55e', fontSize: 11, fontWeight: 600 }}>
+              <Check size={12} /> OK
+            </div>
+          )}
+
+          {editorState.customizations.length > 0 && (
+            <span style={{ fontSize: 10, color: '#52525b', fontWeight: 500 }}>{editorState.customizations.length} cambios</span>
+          )}
+
+          <button
+            onClick={handleSave}
+            disabled={!editorState.isDirty || editorState.isSaving}
+            style={{
+              background: editorState.isDirty ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.06)',
+              border: 'none', borderRadius: 8, padding: '6px 14px',
+              color: editorState.isDirty ? '#fff' : '#52525b',
+              fontSize: 12, fontWeight: 700, cursor: editorState.isDirty ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', gap: 5,
+              transition: 'all 0.2s',
+              opacity: editorState.isSaving ? 0.7 : 1,
+              boxShadow: editorState.isDirty ? '0 2px 10px rgba(99,102,241,0.25)' : 'none',
+            }}
+          >
+            {editorState.isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+            {editorState.isSaving ? 'Guardando...' : 'Guardar'}
+          </button>
+
+          {onPublish && (
             <button
-              onClick={handleSave}
-              disabled={!editorState.isDirty || editorState.isSaving}
+              onClick={onPublish}
               style={{
-                background: editorState.isDirty ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.06)',
-                border: 'none', borderRadius: 10, padding: '8px 20px',
-                color: editorState.isDirty ? '#fff' : '#71717a',
-                fontSize: 13, fontWeight: 700, cursor: editorState.isDirty ? 'pointer' : 'not-allowed',
-                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                border: 'none', borderRadius: 8, padding: '6px 14px',
+                color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 5,
                 transition: 'all 0.2s',
-                opacity: editorState.isSaving ? 0.7 : 1,
-                boxShadow: editorState.isDirty ? '0 4px 15px rgba(99,102,241,0.3)' : 'none',
+                boxShadow: '0 2px 10px rgba(16,185,129,0.25)',
               }}
             >
-              {editorState.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {editorState.isSaving ? 'Guardando...' : 'Guardar'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Publicar
             </button>
-          </Tooltip>
-          {onPublish && (
-            <Tooltip text="🚀 Publicar" description={flowType === 'pdp' ? 'Publica tu página de producto con todos los cambios' : 'Publica tu tienda con todos los cambios para que esté en vivo'} position="bottom">
-              <button
-                onClick={onPublish}
-                style={{
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  border: 'none', borderRadius: 10, padding: '8px 20px',
-                  color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  transition: 'all 0.2s',
-                  boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                Publicar
-              </button>
-            </Tooltip>
           )}
         </div>
       </div>
 
       {/* ── Main Content ── */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* ── Side Panel ── */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+
+        {/* ── Floating Tools FAB (right side, always visible) ── */}
+        <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          {/* FAB Button */}
+          <button
+            onClick={() => setShowToolsFab(prev => !prev)}
+            style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: showToolsFab
+                ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                : 'rgba(15,15,20,0.85)',
+              border: showToolsFab
+                ? '1px solid rgba(139,92,246,0.5)'
+                : '1px solid rgba(255,255,255,0.1)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+              boxShadow: showToolsFab
+                ? '0 8px 25px rgba(99,102,241,0.4), 0 0 0 1px rgba(99,102,241,0.2)'
+                : '0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(12px)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            onMouseEnter={e => { if (!showToolsFab) { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; } }}
+            onMouseLeave={e => { if (!showToolsFab) { e.currentTarget.style.background = 'rgba(15,15,20,0.85)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; } }}
+          >
+            {/* Custom CSS icon: layered design tool */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ transition: 'transform 0.25s', transform: showToolsFab ? 'rotate(45deg)' : 'rotate(0deg)' }}>
+              {showToolsFab ? (
+                <path d="M18 6L6 18M6 6l12 12" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              ) : (
+                <>
+                  <rect x="3" y="3" width="7" height="7" rx="2" stroke="#a78bfa" strokeWidth="1.5" fill="rgba(99,102,241,0.15)"/>
+                  <rect x="14" y="3" width="7" height="7" rx="2" stroke="#818cf8" strokeWidth="1.5" fill="rgba(129,140,248,0.1)"/>
+                  <rect x="3" y="14" width="7" height="7" rx="2" stroke="#818cf8" strokeWidth="1.5" fill="rgba(129,140,248,0.1)"/>
+                  <rect x="14" y="14" width="7" height="7" rx="2" stroke="#a78bfa" strokeWidth="1.5" fill="rgba(99,102,241,0.15)"/>
+                  <circle cx="12" cy="12" r="2.5" fill="#a78bfa" opacity="0.6"/>
+                </>
+              )}
+            </svg>
+            {/* Active panel indicator dot */}
+            {(editorState.activePanel !== 'none' || showComponentPicker) && !showToolsFab && (
+              <span style={{ position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#a78bfa', border: '1.5px solid #0f0f14', animation: 'veFabDot 2s ease-in-out infinite' }} />
+            )}
+          </button>
+
+          {/* Floating Tools Panel */}
+          {showToolsFab && (
+            <div style={{
+              background: 'rgba(15,15,22,0.95)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16, padding: 6, backdropFilter: 'blur(20px)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.1)',
+              display: 'flex', flexDirection: 'column', gap: 2,
+              animation: 'veFabPanelIn 0.2s ease-out',
+              minWidth: 180,
+            }}>
+              <FabToolItem
+                icon={<Type size={15} />}
+                label="Tipografía"
+                sublabel="Fuentes, tamaños, colores"
+                active={editorState.activePanel === 'text'}
+                color="#6366f1"
+                onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'text' ? 'none' : 'text' })); setShowComponentPicker(false); }}
+              />
+              <FabToolItem
+                icon={<Palette size={15} />}
+                label="Estilo"
+                sublabel="Fondos, bordes, sombras"
+                active={editorState.activePanel === 'style'}
+                color="#8b5cf6"
+                onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'style' ? 'none' : 'style' })); setShowComponentPicker(false); }}
+              />
+              <FabToolItem
+                icon={<Image size={15} />}
+                label="Imágenes"
+                sublabel="Fotos, banners, logos"
+                active={editorState.activePanel === 'image'}
+                color="#a78bfa"
+                onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'image' ? 'none' : 'image' })); setShowComponentPicker(false); }}
+              />
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 8px' }} />
+              <FabToolItem
+                icon={<Plus size={15} />}
+                label="Bloques"
+                sublabel="Agregar nuevas secciones"
+                active={showComponentPicker}
+                color="#22c55e"
+                onClick={() => { setShowComponentPicker(!showComponentPicker); setEditorState(p => ({ ...p, activePanel: 'none' })); }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ── Side Panel (slides in from left when a tool is active) ── */}
         {hasSidePanel && (
           <div style={{
-            width: 300, background: '#16161d', borderRight: '1px solid #2a2a35',
+            width: 280, background: 'rgba(16,16,24,0.98)', borderRight: '1px solid #1e1e28',
             overflowY: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column',
-            paddingTop: 8,
+            paddingTop: 6, animation: 'veSidePanelIn 0.2s ease-out',
+            backdropFilter: 'blur(12px)',
           }} className="custom-scrollbar">
 
             {/* ── Selected Element Info Card ── */}
@@ -1279,38 +1363,38 @@ export default function VisualEditorOverlay({
               />
             )}
 
-            {/* ── Bottom Save Button (inside side panel) ── */}
+            {/* ── Compact Save (inside side panel) ── */}
             {!showComponentPicker && editorState.isDirty && (
               <div style={{
-                padding: 12, borderTop: '1px solid rgba(255,255,255,0.06)',
-                background: '#16161d', marginTop: 'auto', flexShrink: 0,
+                padding: 10, borderTop: '1px solid rgba(255,255,255,0.05)',
+                background: 'rgba(16,16,24,0.98)', marginTop: 'auto', flexShrink: 0,
               }}>
                 {unsavedVeIds.size > 0 && (
                   <div style={{
-                    fontSize: 11, color: '#f59e0b', fontWeight: 600, marginBottom: 8,
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 10px', background: 'rgba(245,158,11,0.08)',
-                    borderRadius: 8, border: '1px solid rgba(245,158,11,0.15)',
+                    fontSize: 10, color: '#f59e0b', fontWeight: 600, marginBottom: 6,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '4px 8px', background: 'rgba(245,158,11,0.06)',
+                    borderRadius: 6, border: '1px solid rgba(245,158,11,0.1)',
                   }}>
-                    ⚠️ {unsavedVeIds.size} elemento{unsavedVeIds.size > 1 ? 's' : ''} editado{unsavedVeIds.size > 1 ? 's' : ''} sin guardar
+                    ⚠ {unsavedVeIds.size} sin guardar
                   </div>
                 )}
                 <button
                   onClick={handleSave}
                   disabled={editorState.isSaving}
                   style={{
-                    width: '100%', padding: '10px 0',
+                    width: '100%', padding: '8px 0',
                     background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    border: 'none', borderRadius: 10, color: '#fff',
-                    fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    boxShadow: '0 4px 15px rgba(99,102,241,0.3)',
+                    border: 'none', borderRadius: 8, color: '#fff',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    boxShadow: '0 2px 10px rgba(99,102,241,0.25)',
                     transition: 'all 0.2s',
                     opacity: editorState.isSaving ? 0.7 : 1,
                   }}
                 >
-                  {editorState.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  {editorState.isSaving ? 'Guardando...' : '💾 Guardar todos los cambios'}
+                  {editorState.isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {editorState.isSaving ? 'Guardando...' : 'Guardar cambios'}
                 </button>
               </div>
             )}
@@ -1343,46 +1427,41 @@ export default function VisualEditorOverlay({
         </div>
       </div>
 
-      {/* ── Bottom Status Bar ── */}
+      {/* ── Compact Status Bar ── */}
       <div style={{
-        height: 40, background: '#0f0f14', borderTop: '1px solid #2a2a35',
+        height: 32, background: '#0f0f14', borderTop: '1px solid #1e1e28',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 16px', fontSize: 11, color: '#71717a', flexShrink: 0,
+        padding: '0 14px', fontSize: 10, color: '#52525b', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span>Template: <span style={{ color: '#a78bfa', fontWeight: 600 }}>{flowType === 'pdp' ? (storeData.pdpTemplate || template) : template}</span></span>
-          <span>Elementos: <span style={{ color: '#22c55e' }}>{editorState.customizations.length} modificados</span></span>
-          {unsavedVeIds.size > 0 && (
-            <span style={{ color: '#f59e0b', fontWeight: 600 }}>⚠️ {unsavedVeIds.size} sin guardar</span>
-          )}
-          {editingText && <span style={{ color: '#f59e0b', fontWeight: 600 }}>✏️ Editando texto directo...</span>}
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span>Ctrl+S guardar · Ctrl+Z deshacer · Esc cerrar</span>
-          {editorState.isDirty && (
-            <button
-              onClick={handleSave}
-              disabled={editorState.isSaving}
-              style={{
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                border: 'none', borderRadius: 8, padding: '4px 14px',
-                color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4,
-                boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-              }}
-            >
-              {editorState.isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-              Guardar
-            </button>
+          <span>{flowType === 'pdp' ? (storeData.pdpTemplate || template) : template}</span>
+          <span style={{ color: '#3f3f46' }}>·</span>
+          <span>{editorState.customizations.length} ediciones</span>
+          {unsavedVeIds.size > 0 && (
+            <span style={{ color: '#f59e0b', fontWeight: 600 }}>⚠ {unsavedVeIds.size} pendientes</span>
           )}
+          {editingText && <span style={{ color: '#f59e0b', fontWeight: 600 }}>✏ Editando...</span>}
         </div>
+        <span style={{ color: '#3f3f46' }}>⌘S guardar · ⌘Z deshacer · Esc salir</span>
       </div>
 
       {/* Animations */}
       <style>{`
         @keyframes veSlideIn {
-          from { opacity: 0; transform: scale(0.97); }
+          from { opacity: 0; transform: scale(0.98); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes veFabPanelIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes veSidePanelIn {
+          from { opacity: 0; transform: translateX(-12px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes veFabDot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
         }
         @keyframes veBadgePulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -1413,6 +1492,37 @@ export default function VisualEditorOverlay({
 // ═══════════════════════════════════════════════════════════════
 // Sub-Components
 // ═══════════════════════════════════════════════════════════════
+
+// ── Floating FAB Tool Item ──
+function FabToolItem({ icon, label, sublabel, active, color, onClick }: {
+  icon: React.ReactNode; label: string; sublabel: string; active?: boolean; color: string; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? `${color}18` : 'transparent',
+        border: 'none', borderRadius: 10, padding: '8px 12px',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+        transition: 'all 0.15s', textAlign: 'left',
+        borderLeft: active ? `2px solid ${color}` : '2px solid transparent',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <div style={{
+        width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: active ? `${color}25` : 'rgba(255,255,255,0.05)',
+        color: active ? color : '#a1a1aa',
+        transition: 'all 0.15s',
+      }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: active ? '#fff' : '#d4d4d8', lineHeight: 1.2 }}>{label}</div>
+        <div style={{ fontSize: 9, color: '#52525b', fontWeight: 500, lineHeight: 1.3 }}>{sublabel}</div>
+      </div>
+    </button>
+  );
+}
 
 function ToolbarButton({ icon, label, active, disabled, danger, onClick }: {
   icon: React.ReactNode; label: string; active?: boolean; disabled?: boolean; danger?: boolean; onClick: () => void;

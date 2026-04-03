@@ -3,8 +3,7 @@
 -- Fecha: 2026-03-23
 -- Propósito: Crear tablas nuevas para el sistema de categorías
 --            por nicho y sub-nicho del Landing Code Studio.
---            Renombrar todas las páginas de producto existentes
---            a nomenclatura "Standard".
+--            Renombrar todas las páginas de producto existentes.
 -- ============================================================
 
 -- ────────────────────────────────────────────────────────────
@@ -97,7 +96,7 @@ CREATE TRIGGER trigger_actualizar_subcategorias_pdp
 -- ────────────────────────────────────────────────────────────
 -- TABLA 3: Plantillas_PDP
 -- Tabla nueva que reemplaza Paginas_de_Productos_Reutilizables
--- con nomenclatura Standard y relación a categorías
+-- con relación a categorías
 -- ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS "Plantillas_PDP" (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -152,7 +151,6 @@ CREATE TRIGGER trigger_actualizar_plantillas_pdp
 -- DATOS INICIALES: Categorías
 -- ────────────────────────────────────────────────────────────
 INSERT INTO "Categorias_PDP" (nombre, descripcion, icono, color, orden) VALUES
-('Standard',      'Plantillas estándar multipropósito, aptas para cualquier nicho',                'LayoutTemplate', '#6366f1', 0),
 ('Electrónica',   'Productos tecnológicos: celulares, computadoras, gadgets, audio, gaming',       'Cpu',            '#3b82f6', 1),
 ('Salud',         'Suplementos, equipos médicos, bienestar, fitness, cuidado personal',            'Heart',          '#10b981', 2),
 ('Belleza',       'Cosméticos, skincare, maquillaje, cuidado capilar, fragancias',                 'Sparkles',       '#ec4899', 3),
@@ -306,11 +304,10 @@ WHERE c.nombre = 'Automotriz'
 ON CONFLICT (categoria_id, nombre) DO NOTHING;
 
 -- ────────────────────────────────────────────────────────────
--- DATOS INICIALES: Plantillas Standard (las 14 existentes renombradas)
+-- DATOS INICIALES: Plantillas PDP
 -- ────────────────────────────────────────────────────────────
 INSERT INTO "Plantillas_PDP" (codigo, nombre, descripcion, componente, premium, verificada, variante, orden)
 VALUES
--- Standard (categoría Standard - multipropósito)
 ('standard-urgencia',         'Standard Urgencia',          'Página con psicología de urgencia: contador regresivo, escasez de stock, presión social. Ideal para ofertas flash y liquidaciones.',                                'PdpUrgenciaMaxima',        FALSE, TRUE, 1, 1),
 ('standard-prueba-social',    'Standard Prueba Social',     'Página centrada en validación social: reseñas destacadas, UGC, testimonios, contadores de compradores. Genera confianza masiva.',                                 'PdpPruebaSocial',          FALSE, TRUE, 1, 2),
 ('standard-bundle',           'Standard Bundle',            'Página optimizada para ofertas de paquetes: selección de cantidad, descuentos por volumen, comparativa de precios. Maximiza ticket promedio.',                    'PdpOfertaBundle',          FALSE, TRUE, 1, 3),
@@ -329,21 +326,12 @@ VALUES
 ON CONFLICT (codigo) DO NOTHING;
 
 -- ────────────────────────────────────────────────────────────
--- Asignar categoría "Standard" a todas las plantillas iniciales
--- ────────────────────────────────────────────────────────────
-UPDATE "Plantillas_PDP" p
-SET categoria_id = c.id
-FROM "Categorias_PDP" c
-WHERE c.nombre = 'Standard'
-AND p.categoria_id IS NULL;
-
--- ────────────────────────────────────────────────────────────
 -- Comentarios de documentación
 -- ────────────────────────────────────────────────────────────
 COMMENT ON TABLE "Categorias_PDP" IS 'Catálogo maestro de categorías (nichos) para páginas de producto del Landing Code Studio';
 COMMENT ON TABLE "Subcategorias_PDP" IS 'Sub-nichos dentro de cada categoría principal para clasificación granular de plantillas PDP';
-COMMENT ON TABLE "Plantillas_PDP" IS 'Plantillas de páginas de producto con nomenclatura Standard, vinculadas a categorías y subcategorías';
+COMMENT ON TABLE "Plantillas_PDP" IS 'Plantillas de páginas de producto vinculadas a categorías y subcategorías';
 
-COMMENT ON COLUMN "Plantillas_PDP".codigo IS 'Identificador único legible (ej: standard-urgencia, premium-bundle). Se usa en el frontend para mapear al componente React.';
+COMMENT ON COLUMN "Plantillas_PDP".codigo IS 'Identificador único legible (ej: premium-bundle). Se usa en el frontend para mapear al componente React.';
 COMMENT ON COLUMN "Plantillas_PDP".componente IS 'Nombre del componente React que renderiza esta plantilla (ej: PdpUrgenciaMaxima)';
 COMMENT ON COLUMN "Plantillas_PDP".variante IS 'Número de variante visual del componente (1, 2, 3...)';
