@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState } from 'react';
 import LivePDPPreview from '@/components/panel-de-administracion/LivePDPPreview';
 import { PdpTemplate } from '@/lib/types';
@@ -56,7 +56,6 @@ export default function FullscreenSlider({ items, selectedId, onSelect, onConfir
         >
           <LivePDPPreview 
             templateId={currentItem.id}
-            category={currentItem.category}
             width={500}
             height={500}
             className="rounded-xl shadow-2xl cursor-pointer"
@@ -66,7 +65,7 @@ export default function FullscreenSlider({ items, selectedId, onSelect, onConfir
           <div className="absolute bottom-4 left-4 right-4">
             <div className="bg-black/60 backdrop-blur-md rounded-lg p-4">
               <h2 className="text-white font-bold text-lg">{currentItem.name}</h2>
-              <p className="text-zinc-400 text-sm capitalize">{currentItem.category}</p>
+              <p className="text-zinc-400 text-sm capitalize">{currentItem.categoria_nombre || 'General'}</p>
               {currentItem.premium && (
                 <span className="inline-block mt-2 px-3 py-1 bg-amber-500/20 text-amber-400 text-sm rounded-full">
                   Premium Template
@@ -99,7 +98,6 @@ export default function FullscreenSlider({ items, selectedId, onSelect, onConfir
           >
             <LivePDPPreview 
               templateId={item.id}
-              category={item.category}
               width={80}
               height={80}
             />

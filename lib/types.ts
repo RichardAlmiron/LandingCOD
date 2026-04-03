@@ -179,8 +179,6 @@ export interface PdpTemplate {
   premium?: boolean;
   verified?: boolean;
   verificada?: boolean;
-  niche?: string;
-  category?: string;
   categoria_id?: string;
   categoria_nombre?: string;
   categoria_color?: string;

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState } from 'react';
 import LivePDPPreview from '@/components/panel-de-administracion/LivePDPPreview';
 import { PdpTemplate } from '@/lib/types';
@@ -51,7 +51,6 @@ export default function CardStack({ items, selectedId, onSelect, onConfirmSelect
             >
               <LivePDPPreview 
                 templateId={item.id}
-                category={item.category}
                 width={400}
                 height={500}
                 className="w-full h-full"
@@ -60,7 +59,7 @@ export default function CardStack({ items, selectedId, onSelect, onConfirmSelect
               {/* Card info */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
                 <h3 className="text-white font-bold text-lg">{item.name}</h3>
-                <p className="text-zinc-400 text-sm capitalize">{item.category}</p>
+                <p className="text-zinc-400 text-sm capitalize">{item.categoria_nombre || 'General'}</p>
                 {false && (
                   <span className="inline-block mt-2 px-2 py-1 bg-amber-500 text-white text-xs rounded-full">
                     Premium
