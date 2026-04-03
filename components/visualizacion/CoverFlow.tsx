@@ -211,21 +211,19 @@ export default function CoverFlow({
                   </div>
                 </div>
 
-                {/* Etiqueta Categoría */}
-                {item.categoria_nombre && (
-                  <div className="absolute top-0 right-0 z-20 max-w-[180px]">
-                    <div
-                      className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
-                      style={{
-                        background: item.categoria_color ? `${item.categoria_color}e6` : (isVerified ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'),
-                        textShadow: '0 0 4px rgba(0,0,0,0.3)',
-                      }}
-                      title={item.categoria_nombre}
-                    >
-                      {item.categoria_nombre}
-                    </div>
+                {/* Etiqueta Categoría - siempre visible */}
+                <div className="absolute top-0 right-0 z-20 max-w-[180px]">
+                  <div
+                    className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
+                    style={{
+                      background: item.categoria_color ? `${item.categoria_color}e6` : 'rgba(99,102,241,0.9)',
+                      textShadow: '0 0 4px rgba(0,0,0,0.3)',
+                    }}
+                    title={item.categoria_nombre || 'General'}
+                  >
+                    {item.categoria_nombre || 'General'}
                   </div>
-                )}
+                </div>
                 
                 {/* Selection indicator */}
                 {isSelected && (
@@ -316,18 +314,7 @@ export default function CoverFlow({
                 )}
               </div>
               
-              {/* Label always visible for all items */}
-              <div className="absolute -bottom-16 left-0 right-0 text-center transition-opacity duration-300">
-                <h3 className={`font-bold text-lg ${isSelected ? 'text-green-400' : 'text-white'}`}>
-                  {item.name}
-                </h3>
-                <p className="text-zinc-400 text-sm capitalize">{item.category}</p>
-                {isSelected && (
-                  <span className="inline-block mt-2 px-4 py-1 bg-green-500 text-white text-sm rounded-full font-semibold">
-                    Seleccionado
-                  </span>
-                )}
-              </div>
+
             </div>
           );
         })}

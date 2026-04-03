@@ -192,21 +192,19 @@ export default function FilmStrip({
                     </div>
                   </div>
 
-                  {/* Etiqueta Categoría */}
-                  {item.categoria_nombre && (
-                    <div className="absolute top-0 right-0 z-20 max-w-[160px]">
-                      <div
-                        className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
-                        style={{
-                          background: item.categoria_color ? `${item.categoria_color}e6` : (isVerified ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'),
-                          textShadow: '0 0 4px rgba(0,0,0,0.3)',
-                        }}
-                        title={item.categoria_nombre}
-                      >
-                        {item.categoria_nombre}
-                      </div>
+                  {/* Etiqueta Categoría - siempre visible */}
+                  <div className="absolute top-0 right-0 z-20 max-w-[160px]">
+                    <div
+                      className="text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-md truncate"
+                      style={{
+                        background: item.categoria_color ? `${item.categoria_color}e6` : 'rgba(99,102,241,0.9)',
+                        textShadow: '0 0 4px rgba(0,0,0,0.3)',
+                      }}
+                      title={item.categoria_nombre || 'General'}
+                    >
+                      {item.categoria_nombre || 'General'}
                     </div>
-                  )}
+                  </div>
 
                   {/* Selection indicator */}
                   {isSelected && (
@@ -301,13 +299,7 @@ export default function FilmStrip({
                   )}
                 </div>
                 
-                {/* Label always visible */}
-                <div className="absolute -bottom-10 left-0 right-0 text-center">
-                  <p className={`font-semibold truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>{item.name}</p>
-                  {isSelected && (
-                    <span className="text-green-400 text-sm font-bold">Seleccionado</span>
-                  )}
-                </div>
+
               </div>
             );
           })}
