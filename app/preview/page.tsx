@@ -320,9 +320,7 @@ export default function FullscreenPreview() {
 
         return (
             <div suppressHydrationWarning className="min-h-screen bg-white relative">
-                {!isVisualEditorMode && pdpMode && (
-                    <SupportPdpHeader pdpMode={pdpMode} />
-                )}
+
                 <PdpComponent data={data.store} product={product} variant={variant} />
                 {isAdmin && !isVisualEditorMode && (
                     <div className="fixed bottom-6 right-6 z-[9999]">
@@ -385,81 +383,3 @@ export default function FullscreenPreview() {
     );
 }
 
-import { TEMPLATE_SUGGESTIONS } from '@/lib/template-suggestions';
-
-function SupportPdpHeader({ pdpMode }: { pdpMode: { templateId: string, category?: string } }) {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(pdpMode.templateId);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const suggestion = TEMPLATE_SUGGESTIONS[pdpMode.templateId];
-
-    return (
-        <div style={{
-            position: 'fixed', top: 16, left: 16, zIndex: 99999,
-            display: 'flex', flexDirection: 'column', gap: 6,
-            fontFamily: 'Inter, sans-serif'
-        }}>
-            <div style={{
-                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)',
-                borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16,
-                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-                <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                        ID DE PLANTILLA (SOPORTE)
-                    </div>
-                    <button 
-                        onClick={handleCopy}
-                        style={{
-                            background: copied ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                            padding: '6px 12px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8,
-                            color: copied ? '#10b981' : '#a78bfa', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                            fontFamily: 'monospace', transition: 'all 0.2s ease', border: copied ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
-                        }}
-                        title="Da clic para copiar y mandar un reporte a soporte técnico si notas algún error."
-                    >
-                        {pdpMode.templateId}
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                </div>
-                <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)' }} />
-                <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                        DEPARTAMENTO
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                        <span style={{ 
-                            background: pdpMode.category ? 'rgba(255,255,255,0.06)' : 'rgba(239, 68, 68, 0.1)', 
-                            color: pdpMode.category ? '#fff' : '#ef4444', 
-                            padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600,
-                            border: pdpMode.category ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(239, 68, 68, 0.2)'
-                        }}>
-                            {pdpMode.category || 'Categoría General'}
-                        </span>
-                    </div>
-                </div>
-                {suggestion && (
-                    <>
-                        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)' }} />
-                        <div>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                🎯 CÓDIGO FUENTE (SUGERENCIA)
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                    {suggestion.cat.toUpperCase()} / {suggestion.subcat.toUpperCase()}
-                                </span>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-        </div>
-    );
-}

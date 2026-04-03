@@ -229,11 +229,7 @@ export default function CoverFlow({
                 
                 {/* Selection indicator */}
                 {isSelected && (
-                  <div className="absolute inset-0 border-4 border-green-500 rounded-xl pointer-events-none">
-                    <div className="absolute top-4 right-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                      <CheckCircle className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
+                  <div className="absolute inset-0 border-4 border-green-500 rounded-xl pointer-events-none" />
                 )}
 
                 {/* Botón Previsualizar */}

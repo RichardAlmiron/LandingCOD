@@ -210,11 +210,7 @@ export default function FilmStrip({
 
                   {/* Selection indicator */}
                   {isSelected && (
-                    <div className="absolute inset-0 border-4 border-green-500 rounded-lg pointer-events-none">
-                      <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
+                    <div className="absolute inset-0 border-4 border-green-500 rounded-lg pointer-events-none" />
                   )}
 
                   {/* Botón Previsualizar */}
