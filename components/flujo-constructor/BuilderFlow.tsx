@@ -10,6 +10,7 @@ import StoreDynamicDisplay from '@/components/visualizacion/StoreDynamicDisplay'
 import { AlmiCatalogGrid, AlmiProductModal, ExpressStockBar } from '@/components/integracion-almidrop';
 import { useExpressStock } from '@/hooks/useExpressStock';
 import { X, Globe, Link as LinkIcon, ExternalLink, CheckCircle2, Loader2, Store, LayoutTemplate, MousePointerClick, Check } from 'lucide-react';
+import ExternalProductForm from '@/components/flujo-constructor/ExternalProductForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
 import StoreSearchBar from '@/components/componentes-compartidos/StoreSearchBar';
@@ -577,7 +578,34 @@ export default function BuilderFlow() {
                 </div>
             )}
 
-            {isHydrated && step === 3 && (() => {
+            {isHydrated && step === 3 && user?.source === 'external' && (
+                <ExternalProductForm
+                    onBack={() => setStep(2)}
+                    onConfirm={(product) => {
+                        const sellingPrice = product.price;
+                        const strikePrice = Math.round(sellingPrice * 1.32);
+                        const fullProduct = {
+                            ...product,
+                            originalPrice: strikePrice,
+                            currency: 'Gs.',
+                            category: 'General',
+                            rating: 5,
+                            reviews: 0,
+                            original_images: product.images,
+                            edited_images: [],
+                            videos: [],
+                        };
+                        setStoreData(prev => ({ ...prev, products: [fullProduct as any] }));
+                        goTo(4, 'Etapa 4', 'Configura y Publica', {
+                            minDuration: 2000,
+                            accentColor: '#f59e0b',
+                            pendingAction: () => { setIsLoadingEditor(true); setShowVisualEditor(true); },
+                        });
+                    }}
+                />
+            )}
+
+            {isHydrated && step === 3 && user?.source !== 'external' && (() => {
                 const totalProducts = builderProducts.products.length;
                 const totalPages = builderProducts.totalPages;
                 const paginatedProducts = builderProducts.paginated;
