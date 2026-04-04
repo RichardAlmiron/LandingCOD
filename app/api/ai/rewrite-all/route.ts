@@ -11,13 +11,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { flowType, productTitle, productDescription, productCategory, aiContext, storeName, elements } = body;
+    const { flowType, productTitle, productDescription, productCategory, productPrice, productOriginalPrice, aiContext, storeName, elements } = body;
 
     if (!elements || !Array.isArray(elements) || elements.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
     }
 
     const isStore = flowType === 'store';
+    const fmtPrice = (n: number) => `Gs. ${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+    const priceInfo = productPrice > 0 ? `
+PRECIOS REALES DEL PRODUCTO (OBLIGATORIO usar estos exactos):
+- Precio con descuento: ${fmtPrice(productPrice)}
+- Precio original (tachado): ${fmtPrice(productOriginalPrice || productPrice)}
+- NUNCA inventes precios. Usa EXACTAMENTE estos valores cuando el texto mencione precio.
+- Si el texto original tiene un precio, reemplázalo con el precio real de arriba.` : '';
 
     const elementsList = elements.map((el: any, i: number) =>
       `[${i}] tipo="${el.sectionType}" palabras=${el.wordCount} texto_actual="${el.currentText.slice(0, 100)}${el.currentText.length > 100 ? '...' : ''}"`
@@ -55,6 +62,8 @@ REGLAS DE CONTENIDO:
 8. NO toques nada relacionado con productos individuales (nombres, precios, descripciones de productos)
 9. Solo adaptá textos de la tienda: headers, banners, secciones informativas, garantía, envío, footer, CTAs generales
 10. Cada sección debe ser coherente — es UNA tienda, no textos sueltos
+11. NUMERACIÓN: si el texto original tiene un número (1, 2, 3, etc.), tu texto nuevo debe empezar con ESE MISMO número. NO agregues un número extra. Si el original dice "1", tu respuesta debe empezar con "1". NUNCA pongas "11" ni "22".
+12. Si el texto original es SOLO un número, devolvé ESE MISMO número sin cambios.
 
 Responde ÚNICAMENTE con un JSON array: [{"i":0,"t":"texto nuevo"},{"i":1,"t":"otro texto"}]
 Sin markdown, sin explicaciones. Solo el JSON array.`;
@@ -82,6 +91,7 @@ PRODUCTO:
 - Nombre: ${productTitle}
 - Descripción: ${productDescription || 'No disponible'}
 - Categoría: ${productCategory || 'General'}
+${priceInfo}
 ${fullPageContext}
 
 MODELO DE NEGOCIO: Cash on Delivery. El cliente paga en efectivo al recibir. Explota esto como ventaja.
@@ -95,9 +105,11 @@ REGLAS CRÍTICAS:
 6. Español latinoamericano (Paraguay/Colombia). Tuteo. Directo
 7. Técnicas CRO: urgencia, escasez, FOMO, prueba social
 8. CERO emojis ni símbolos decorativos
-9. Precios en Guaraníes: "Gs. XXX.XXX"
+9. Precios en Guaraníes: usa EXACTAMENTE los precios reales del producto indicados arriba
 10. NUNCA menciones devolución de dinero
 11. Cada sección debe ser coherente con las demás — es UNA página, no textos sueltos
+12. NUMERACIÓN: si el texto original tiene un número (1, 2, 3, etc.), tu texto nuevo debe empezar con ESE MISMO número. NO agregues un número extra. Si el original dice "1", tu respuesta debe empezar con "1" seguido del texto nuevo. NUNCA pongas "11" ni "22" ni "33".
+13. Si el texto original es SOLO un número (como "1", "2", "3"), devolvé ESE MISMO número sin cambios.
 
 Responde ÚNICAMENTE con un JSON array: [{"i":0,"t":"texto nuevo"},{"i":1,"t":"otro texto"}]
 Sin markdown, sin explicaciones. Solo el JSON array.`;

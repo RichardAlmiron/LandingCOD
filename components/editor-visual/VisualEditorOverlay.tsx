@@ -974,6 +974,8 @@ export default function VisualEditorOverlay({
           productTitle: product?.title || product?.aiContent?.enhancedTitle || storeData.name || '',
           productDescription: product?.description || product?.aiContent?.enhancedDescription || storeData.description || '',
           productCategory: product?.category || '',
+          productPrice: product?.price || 0,
+          productOriginalPrice: product?.originalPrice || 0,
           aiContext: product?.aiContent || null,
           storeName: storeData.name || '',
           elements: elements.map(e => ({ sectionType: e.sectionType, wordCount: e.wordCount, currentText: e.currentText })),
@@ -986,17 +988,21 @@ export default function VisualEditorOverlay({
           if (r.i >= 0 && r.i < elements.length && r.t) {
             const { veId, el } = elements[r.i];
             captureOriginalSnapshot(el, veId);
-            el.childNodes.forEach(node => {
-              if (node.nodeType === Node.TEXT_NODE && (node.textContent || '').trim().length > 1) {
-                node.textContent = r.t;
+            // Replace text properly: put new text in first text node, clear all others
+            const textNodes: Text[] = [];
+            const tw = iframe.contentDocument!.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let tn: Text | null;
+            while ((tn = tw.nextNode() as Text | null)) {
+              if ((tn.textContent || '').trim().length > 0) textNodes.push(tn);
+            }
+            if (textNodes.length > 0) {
+              textNodes[0].textContent = r.t;
+              // Clear remaining text nodes to prevent duplication
+              for (let k = 1; k < textNodes.length; k++) {
+                textNodes[k].textContent = '';
               }
-            });
-            if (!Array.from(el.childNodes).some(n => n.nodeType === Node.TEXT_NODE && (n.textContent || '').trim().length > 1)) {
-              const tw = iframe.contentDocument!.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-              let tn: Text | null;
-              while ((tn = tw.nextNode() as Text | null)) {
-                if ((tn.textContent || '').trim().length > 2) { tn.textContent = r.t; break; }
-              }
+            } else {
+              el.textContent = r.t;
             }
             addCustomization({
               id: veId, selector: `[data-ve-editable="${veId}"]`,
