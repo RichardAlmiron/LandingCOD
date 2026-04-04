@@ -69,7 +69,7 @@ LandingCOD es una plataforma de creación de páginas de producto (PDP) y tienda
 - User interface actualizada: source, almidropId, plan 'almidrop'
 - Documentación completa en admin: /admin/documentacion/landingcode-almidrop
 
-### ✅ FASE 2 — Campo de Precio de Venta (PARCIAL)
+### ✅ FASE 2 — Campo de Precio de Venta y Etapa 3 Dual (COMPLETADA)
 - Estado customPrices en BuilderFlow para guardar precios por producto
 - Campo "Tu precio de venta" en cada tarjeta de AlmiCatalogGrid (solo para source='almidrop')
 - Precio tachado calculado automáticamente: precio_venta × 1.32 (+32%)
@@ -77,15 +77,16 @@ LandingCOD es una plataforma de creación de páginas de producto (PDP) y tienda
 - Validación: sin precio no puede pasar a etapa 4 (alerta)
 - Los precios personalizados se aplican a los productos antes de pasar a la IA y a la etapa 4
 - pricedProducts reemplaza chosen en el flujo de IA
+- Componente ExternalProductForm.tsx creado para usuarios externos
+- Detección automática en etapa 3: user.source === 'external' → formulario manual, user.source !== 'external' → catálogo Almidrop
+- Formulario externo: subir imágenes (URLs), título, descripción, precio de venta
+- Precio tachado calculado automáticamente (+32%) también para externos
+- Sin título, descripción, imagen o precio → no puede pasar a etapa 4
+- Al confirmar, el producto se crea con ID único (ext-timestamp) y pasa directo a etapa 4
 
 ---
 
 ## FASES PENDIENTES
-
-### 🔲 FASE 2 (CONTINUACIÓN) — Etapa 3 para Usuarios Externos
-- Si user.source === 'external': mostrar formulario de subida manual en vez de catálogo Almidrop
-- Subir: imágenes del producto, título, descripción, precio
-- La IA hace el resto en etapa 4
 
 ### 🔲 FASE 3 — Sistema de Ventas
 - Crear tabla ventas_landingcod en Supabase:
