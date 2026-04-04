@@ -164,7 +164,7 @@ export default function CerebroPage() {
                             <div className="p-5 border border-red-500/20 bg-red-500/5 rounded-2xl">
                                 <h4 className="font-bold text-red-400 mb-2">Lo Obsoleto (A Ignorar / Eliminar a futuro)</h4>
                                 <ul className="list-disc pl-4 space-y-2 text-slate-300">
-                                    <li>Plantillas menores a 10 secciones (Ej. `PdpCroBold`, `PdpGeneralEstandar`). Poca capacidad de retención y convencimiento.</li>
+                                    <li>Plantillas con pocas secciones y poca capacidad de retención.</li>
                                     <li>Uso de emojis como 🚚 y ⚡ (prohibidos en el diseño Ultra-Premium por ser considerados poco profesionales para tiendas estelares).</li>
                                     <li>Las antiguas lógicas de inserción que marcaban `activa = true` por defecto (scripts viejos).</li>
                                 </ul>

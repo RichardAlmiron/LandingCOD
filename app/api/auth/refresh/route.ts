@@ -13,6 +13,8 @@ import {
 } from '@/lib/auth';
 import { parse, serialize } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
     try {
         const cookieHeader = request.headers.get('cookie') || '';

@@ -308,20 +308,11 @@ ON CONFLICT (categoria_id, nombre) DO NOTHING;
 -- ────────────────────────────────────────────────────────────
 INSERT INTO "Plantillas_PDP" (codigo, nombre, descripcion, componente, premium, verificada, variante, orden)
 VALUES
-('standard-urgencia',         'Standard Urgencia',          'Página con psicología de urgencia: contador regresivo, escasez de stock, presión social. Ideal para ofertas flash y liquidaciones.',                                'PdpUrgenciaMaxima',        FALSE, TRUE, 1, 1),
-('standard-prueba-social',    'Standard Prueba Social',     'Página centrada en validación social: reseñas destacadas, UGC, testimonios, contadores de compradores. Genera confianza masiva.',                                 'PdpPruebaSocial',          FALSE, TRUE, 1, 2),
-('standard-bundle',           'Standard Bundle',            'Página optimizada para ofertas de paquetes: selección de cantidad, descuentos por volumen, comparativa de precios. Maximiza ticket promedio.',                    'PdpOfertaBundle',          FALSE, TRUE, 1, 3),
-('standard-historia',         'Standard Historia',          'Página con storytelling: narrativa problema-solución, conexión emocional, revelación del producto. Para productos que necesitan contexto.',                       'PdpHistoriaProducto',      FALSE, TRUE, 1, 4),
-('standard-checkout-directo', 'Standard Checkout Directo',  'Página con formulario de compra integrado: checkout sin redirección, pago contra entrega, mínima fricción. Máxima conversión directa.',                          'PdpCheckoutDirecto',       FALSE, TRUE, 1, 5),
 ('standard-salud',            'Standard Salud',             'Página especializada en productos de salud y bienestar: beneficios clínicos, ingredientes, modo de uso, testimonios de resultados.',                             'PdpSaludEstandar',         FALSE, TRUE, 1, 6),
-('standard-electronico',      'Standard Electrónico',       'Página para productos tecnológicos: especificaciones técnicas, comparativas, galería HD, compatibilidad. Diseño tech-forward.',                                 'PdpElectronicoEstandar',   FALSE, TRUE, 1, 7),
 ('standard-herramientas',     'Standard Herramientas',      'Página para herramientas y ferretería: durabilidad, materiales, tutorial de uso, aplicaciones prácticas. Diseño robusto y funcional.',                           'PdpHerramientasEstandar',  FALSE, TRUE, 1, 8),
 ('standard-belleza',          'Standard Belleza',           'Página para cosméticos y belleza: ingredientes, antes/después, rutina de aplicación, resultados. Diseño elegante y femenino.',                                   'PdpBellezaEstandar',       FALSE, TRUE, 1, 9),
 ('standard-hogar',            'Standard Hogar',             'Página para productos del hogar: ambientación, dimensiones, materiales, estilo de vida. Diseño cálido y acogedor.',                                              'PdpHogarEstandar',         FALSE, TRUE, 1, 10),
 -- Premium
-('premium-urgencia',          'Premium Urgencia',           'Versión premium de urgencia: animaciones avanzadas, micro-interacciones, diseño de alto impacto visual. Para campañas de máxima conversión.',                    'PdpUrgenciaPremium',       TRUE,  TRUE, 1, 11),
-('premium-bundle',            'Premium Bundle',             'Versión premium de bundles: selector 3D, animaciones de ahorro, diseño luxury. Para productos de alto valor.',                                                   'PdpOfertaBundlePremium',   TRUE,  TRUE, 1, 12),
-('premium-electronico',       'Premium Electrónico',        'Versión premium para tech: galería interactiva, specs animadas, comparador integrado. Para gadgets y electrónica de gama alta.',                                 'PdpElectronicoPremium',    TRUE,  TRUE, 1, 13),
 ('premium-salud',             'Premium Salud',              'Versión premium para salud: visualización de ingredientes, timeline de resultados, testimonios con video. Para suplementos premium.',                             'PdpSaludPremium',          TRUE,  TRUE, 1, 14)
 ON CONFLICT (codigo) DO NOTHING;
 
@@ -333,5 +324,5 @@ COMMENT ON TABLE "Subcategorias_PDP" IS 'Sub-nichos dentro de cada categoría pr
 COMMENT ON TABLE "Plantillas_PDP" IS 'Plantillas de páginas de producto vinculadas a categorías y subcategorías';
 
 COMMENT ON COLUMN "Plantillas_PDP".codigo IS 'Identificador único legible (ej: premium-bundle). Se usa en el frontend para mapear al componente React.';
-COMMENT ON COLUMN "Plantillas_PDP".componente IS 'Nombre del componente React que renderiza esta plantilla (ej: PdpUrgenciaMaxima)';
+COMMENT ON COLUMN "Plantillas_PDP".componente IS 'Nombre del componente React que renderiza esta plantilla';
 COMMENT ON COLUMN "Plantillas_PDP".variante IS 'Número de variante visual del componente (1, 2, 3...)';

@@ -50,7 +50,7 @@ export default function EnhancedProductGallery({
     
     imageArrays.forEach(arr => {
       arr.forEach(img => {
-        if (img && !uniqueUrls.has(img) && media.length < 5) {
+        if (img && !uniqueUrls.has(img)) {
           uniqueUrls.add(img);
           media.push({ type: 'image', url: img });
         }
@@ -66,18 +66,13 @@ export default function EnhancedProductGallery({
       }
     });
 
-    // Pad with high-quality placeholders until we have exactly 5 items (1 main + 4 thumbnails)
-    // Only premium tech/electronics placeholders based on current sub-niche rules!
-    const fallbacks = [
-      'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=1000&auto=format&fit=crop', // Tech setup
-      'https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=1000&auto=format&fit=crop', // Circuit board / Abstract tech
-      'https://images.unsplash.com/photo-1526406915894-7bcd65f60845?q=80&w=1000&auto=format&fit=crop', // Electronic gadgets macro
-      'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop'  // Circuit chip
-    ];
-    let fallbackIndex = 0;
-    while (media.length < 5) {
-      media.push({ type: 'image', url: fallbacks[fallbackIndex % fallbacks.length] });
-      fallbackIndex++;
+    // Solo agregar placeholders si no hay NINGUNA imagen real
+    if (media.length === 0) {
+      const fallbacks = [
+        'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=1000&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=1000&auto=format&fit=crop',
+      ];
+      fallbacks.forEach(url => media.push({ type: 'image', url }));
     }
     
     return media;
@@ -145,10 +140,10 @@ export default function EnhancedProductGallery({
           </div>
         </div>
 
-        {/* Thumbnails — exactamente 4 miniaturas alineadas al ancho de la imagen principal */}
+        {/* Thumbnails — máximo 5 miniaturas del producto */}
         {allMedia.length > 1 && (
-          <div className="grid grid-cols-4 gap-2" style={{ width: '100%' }}>
-            {allMedia.slice(1, 5).map((media, idx) => (
+          <div className="grid gap-2" style={{ width: '100%', gridTemplateColumns: `repeat(${Math.min(allMedia.length - 1, 5)}, 1fr)` }}>
+            {allMedia.slice(1, 6).map((media, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedIndex(idx + 1)}

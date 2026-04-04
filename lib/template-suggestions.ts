@@ -1,40 +1,4 @@
 export const TEMPLATE_SUGGESTIONS: Record<string, { cat: string, subcat: string }> = {
-  "standard-urgencia": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "standard-prueba-social": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "standard-bundle": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "standard-historia": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "standard-checkout-directo": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "standard-electronico": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "premium-urgencia": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "premium-bundle": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "premium-electronico": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
   "standard-salud": {
     "cat": "salud",
     "subcat": "general"
@@ -118,26 +82,6 @@ export const TEMPLATE_SUGGESTIONS: Record<string, { cat: string, subcat: string 
   "PDP-CEL-STREETWEAR": {
     "cat": "electrónico",
     "subcat": "celulares"
-  },
-  "pdp-cro-bold": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "pdp-cro-elegant": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "pdp-cro-futurista": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "pdp-cro-minimal": {
-    "cat": "electrónico",
-    "subcat": "general"
-  },
-  "pdp-cro-visual": {
-    "cat": "electrónico",
-    "subcat": "general"
   },
   "PDP-AUDIO-STUDIO": {
     "cat": "electrónico",

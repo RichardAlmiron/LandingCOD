@@ -97,7 +97,7 @@ export const defaultPreviewStoreData = {
   logoText: 'TIENDA',
   bannerImage: demoBanners.marketplace,
   products: getDemoProducts(24),
-  pdpTemplate: 'standard-urgencia' as const,
+  pdpTemplate: '' as const,
   model: 'marketplace' as const,
   pdpFeatures: {
     liveViewers: true,

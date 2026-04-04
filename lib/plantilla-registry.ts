@@ -12,19 +12,10 @@
  * 5. Al verificar → disponible para clientes
  */
 
-import PdpUrgenciaMaxima from '@/components/pdp/electrónico/general/PdpUrgenciaMaxima';
-import PdpPruebaSocial from '@/components/pdp/electrónico/general/PdpPruebaSocial';
-import PdpOfertaBundle from '@/components/pdp/electrónico/general/PdpOfertaBundle';
-import PdpHistoriaProducto from '@/components/pdp/electrónico/general/PdpHistoriaProducto';
-import PdpCheckoutDirecto from '@/components/pdp/electrónico/general/PdpCheckoutDirecto';
 import PdpSaludEstandar from '@/components/pdp/salud/general/PdpSaludEstandar';
-import PdpElectronicoEstandar from '@/components/pdp/electrónico/general/PdpElectronicoEstandar';
 import PdpHerramientasEstandar from '@/components/pdp/herramientas/general/PdpHerramientasEstandar';
 import PdpBellezaEstandar from '@/components/pdp/belleza/general/PdpBellezaEstandar';
 import PdpHogarEstandar from '@/components/pdp/hogar/general/PdpHogarEstandar';
-import PdpUrgenciaPremium from '@/components/pdp/electrónico/general/PdpUrgenciaPremium';
-import PdpOfertaBundlePremium from '@/components/pdp/electrónico/general/PdpPremiumBundle';
-import PdpElectronicoPremium from '@/components/pdp/electrónico/general/PdpElectronicoPremium';
 import PdpSaludPremium from '@/components/pdp/salud/general/PdpSaludPremium';
 import PdpCelulares from '@/components/pdp/electrónico/celulares/PdpCelulares';
 import PdpCelularesMinimal from '@/components/pdp/electrónico/celulares/PdpCelularesMinimal';
@@ -42,11 +33,6 @@ import PdpCelularesNordic from '@/components/pdp/electrónico/celulares/PdpCelul
 import PdpCelularesTerminal from '@/components/pdp/electrónico/celulares/PdpCelularesTerminal';
 import PdpCelularesVintage from '@/components/pdp/electrónico/celulares/PdpCelularesVintage';
 import PdpCelularesStreetwear from '@/components/pdp/electrónico/celulares/PdpCelularesStreetwear';
-import PdpCroBold from '@/components/pdp/electrónico/general/PdpCroBold';
-import PdpCroElegant from '@/components/pdp/electrónico/general/PdpCroElegant';
-import PdpCroFuturista from '@/components/pdp/electrónico/general/PdpCroFuturista';
-import PdpCroMinimal from '@/components/pdp/electrónico/general/PdpCroMinimal';
-import PdpCroVisual from '@/components/pdp/electrónico/general/PdpCroVisual';
 import PdpAudioStudio from '@/components/pdp/electrónico/audio/PdpAudioStudio';
 import PdpCameraPro from '@/components/pdp/electrónico/camaras/PdpCameraPro';
 import PdpGamingElite from '@/components/pdp/electrónico/gaming/PdpGamingElite';
@@ -131,19 +117,6 @@ import PdpEInkFolio from '@/components/pdp/electrónico/tablets/PdpEInkFolio';
 // REGISTRO ÚNICO: código → { componente, nicho }
 // ────────────────────────────────────────────────────────────
 const PLANTILLAS_REGISTRY: Record<string, { componente: React.ComponentType<any>; nicho: string }> = {
-  // Estándar - Electrónico
-  'standard-urgencia':         { componente: PdpUrgenciaMaxima, nicho: 'electronico' },
-  'standard-prueba-social':    { componente: PdpPruebaSocial, nicho: 'electronico' },
-  'standard-bundle':           { componente: PdpOfertaBundle, nicho: 'electronico' },
-  'standard-historia':         { componente: PdpHistoriaProducto, nicho: 'electronico' },
-  'standard-checkout-directo': { componente: PdpCheckoutDirecto, nicho: 'electronico' },
-  'standard-electronico':      { componente: PdpElectronicoEstandar, nicho: 'electronico' },
-  
-  // Premium - Electrónico
-  'premium-urgencia':          { componente: PdpUrgenciaPremium, nicho: 'electronico' },
-  'premium-bundle':            { componente: PdpOfertaBundlePremium, nicho: 'electronico' },
-  'premium-electronico':       { componente: PdpElectronicoPremium, nicho: 'electronico' },
-  
   // Otros nichos estándar
   'standard-salud':            { componente: PdpSaludEstandar, nicho: 'salud' },
   'standard-belleza':          { componente: PdpBellezaEstandar, nicho: 'belleza' },
@@ -170,13 +143,6 @@ const PLANTILLAS_REGISTRY: Record<string, { componente: React.ComponentType<any>
   'PDP-CEL-TERMINAL':          { componente: PdpCelularesTerminal, nicho: 'celulares' },
   'PDP-CEL-VINTAGE':           { componente: PdpCelularesVintage, nicho: 'celulares' },
   'PDP-CEL-STREETWEAR':        { componente: PdpCelularesStreetwear, nicho: 'celulares' },
-  
-  // CRO (Conversion Rate Optimization)
-  'pdp-cro-bold':        { componente: PdpCroBold, nicho: 'electronico' },
-  'pdp-cro-elegant':     { componente: PdpCroElegant, nicho: 'electronico' },
-  'pdp-cro-futurista':   { componente: PdpCroFuturista, nicho: 'electronico' },
-  'pdp-cro-minimal':     { componente: PdpCroMinimal, nicho: 'electronico' },
-  'pdp-cro-visual':      { componente: PdpCroVisual, nicho: 'electronico' },
 
   // Subcategorías Electrónica — Premium PDP
   'PDP-AUDIO-STUDIO':    { componente: PdpAudioStudio, nicho: 'electronico' },

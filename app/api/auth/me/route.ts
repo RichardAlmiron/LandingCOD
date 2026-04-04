@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 // Caché en memoria para datos de usuario (evita consultas repetidas a Supabase)
 const userCache = new Map<string, { user: any; expiry: number }>();
 const USER_CACHE_TTL = 30000; // 30 segundos

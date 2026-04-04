@@ -337,26 +337,24 @@ const DEMO_POR_NICHO: Record<string, DemoData> = {
  *   3. Fallback electronico genérico
  */
 export function obtenerDemoParaTemplate(templateId: string): DemoData {
-  // 1. Obtener nicho PRIMERO
   let nicho = 'electronico';
   try {
     nicho = obtenerNicho(templateId);
   } catch {
-    // Silently fallback
+    // Template no registrado, usar electronico
   }
 
-  // 2. Si NO es electrónico, usar nicho directamente
-  if (nicho !== 'electronico' && DEMO_POR_NICHO[nicho]) {
+  // Buscar por nicho
+  if (DEMO_POR_NICHO[nicho]) {
     return DEMO_POR_NICHO[nicho];
   }
 
-  // 3. Para electrónico: buscar subcat específico
+  // Buscar por subcat si existe
   const subcat = TEMPLATE_SUGGESTIONS[templateId]?.subcat || '';
   if (subcat && subcat !== 'general' && DEMO_POR_SUBCAT[subcat]) {
     return DEMO_POR_SUBCAT[subcat];
   }
 
-  // 4. Fallback genérico
   return DEMO_POR_NICHO['electronico'];
 }
 

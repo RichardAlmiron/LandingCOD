@@ -894,13 +894,44 @@ export default function VisualEditorOverlay({
     const iframe = iframeRef.current;
     if (!iframe?.contentDocument || aiRewritingAll) return;
     const doc = iframe.contentDocument;
-    const product = storeData.products?.[0];
-    if (!product) return;
 
-    const textElements = Array.from(doc.querySelectorAll('[data-ve-editable][data-ve-type="text"]')) as HTMLElement[];
+    // Temporarily reveal ALL hidden content (accordions, collapsed sections, tabs)
+    // so their text can be captured and rewritten by the AI
+    const hiddenElements: { el: HTMLElement; orig: string }[] = [];
+    doc.querySelectorAll('*').forEach(el => {
+      const htmlEl = el as HTMLElement;
+      const style = iframe.contentWindow!.getComputedStyle(htmlEl);
+      if (
+        (style.display === 'none' || style.height === '0px' || style.maxHeight === '0px' || style.overflow === 'hidden' && parseInt(style.height) === 0) &&
+        htmlEl.textContent && htmlEl.textContent.trim().length > 2 &&
+        !htmlEl.closest('[data-ve-product]') &&
+        !['SCRIPT', 'STYLE', 'LINK', 'META'].includes(htmlEl.tagName)
+      ) {
+        hiddenElements.push({ el: htmlEl, orig: htmlEl.style.cssText });
+        htmlEl.style.display = 'block';
+        htmlEl.style.height = 'auto';
+        htmlEl.style.maxHeight = 'none';
+        htmlEl.style.overflow = 'visible';
+        htmlEl.style.opacity = '1';
+        htmlEl.style.visibility = 'visible';
+      }
+    });
+
+    // Re-mark elements now that hidden content is visible
+    markEditableElements();
+
+    // Collect text elements — EXCLUDE product cards
+    const textElements = Array.from(doc.querySelectorAll('[data-ve-editable][data-ve-type="text"]')).filter(el => {
+      return !el.closest('[data-ve-product]');
+    }) as HTMLElement[];
+
+    // Restore hidden elements after collecting
+    hiddenElements.forEach(({ el, orig }) => { el.style.cssText = orig; });
+
     if (textElements.length === 0) return;
 
-    // Collect all text elements info
+    const product = storeData.products?.[0];
+
     const elements: { veId: string; el: HTMLElement; currentText: string; sectionType: string; wordCount: number }[] = [];
     textElements.forEach(htmlEl => {
       const directText = Array.from(htmlEl.childNodes)
@@ -921,13 +952,7 @@ export default function VisualEditorOverlay({
         : wordCount <= 15 ? 'título o frase'
         : 'descripción o párrafo';
 
-      elements.push({
-        veId: htmlEl.getAttribute('data-ve-editable') || '',
-        el: htmlEl,
-        currentText: directText,
-        sectionType,
-        wordCount,
-      });
+      elements.push({ veId: htmlEl.getAttribute('data-ve-editable') || '', el: htmlEl, currentText: directText, sectionType, wordCount });
     });
 
     if (elements.length === 0) return;
@@ -935,7 +960,6 @@ export default function VisualEditorOverlay({
     setAiRewritingAll(true);
     setShowToolsFab(false);
 
-    // Show loading on ALL buttons
     elements.forEach(({ el }) => {
       const btn = el.querySelector('.ve-ai-rewrite-btn') as HTMLElement;
       if (btn) btn.classList.add('ve-ai-loading');
@@ -946,10 +970,12 @@ export default function VisualEditorOverlay({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productTitle: product.title || product.aiContent?.enhancedTitle || '',
-          productDescription: product.description || product.aiContent?.enhancedDescription || '',
-          productCategory: product.category || '',
-          aiContext: product.aiContent || null,
+          flowType: flowType || (storeData.pdpTemplate ? 'pdp' : 'store'),
+          productTitle: product?.title || product?.aiContent?.enhancedTitle || storeData.name || '',
+          productDescription: product?.description || product?.aiContent?.enhancedDescription || storeData.description || '',
+          productCategory: product?.category || '',
+          aiContext: product?.aiContent || null,
+          storeName: storeData.name || '',
           elements: elements.map(e => ({ sectionType: e.sectionType, wordCount: e.wordCount, currentText: e.currentText })),
         }),
       });
@@ -1131,6 +1157,55 @@ export default function VisualEditorOverlay({
         clearInterval(pollInterval);
         console.log('[VE] Editor setup complete after', pollCount, 'polls');
         
+        // ── Inject real product images into the PDP ──
+        if (flowType === 'pdp') {
+          setTimeout(() => {
+            try {
+              const doc = iframe.contentDocument;
+              if (!doc) return;
+              const product = storeData.products?.[0];
+              if (!product) return;
+
+              // Collect all real product images (no duplicates)
+              const realImages: string[] = [];
+              const seen = new Set<string>();
+              [product.imageUrl, ...(product.original_images || []), ...(product.edited_images || []), ...(product.images || [])].forEach(img => {
+                if (img && !seen.has(img)) { seen.add(img); realImages.push(img); }
+              });
+              if (realImages.length === 0) return;
+
+              // Find all <img> in the iframe that are NOT inside product cards
+              const allImgs = Array.from(doc.querySelectorAll('img:not([data-ve-product] img)')) as HTMLImageElement[];
+              
+              // Track which real images were used in header (first 6 images = hero + thumbnails)
+              const headerImgs = allImgs.slice(0, 6);
+              const bodyImgs = allImgs.slice(6);
+
+              // Replace header images with real product images (hero + up to 5 thumbnails)
+              headerImgs.forEach((img, i) => {
+                const realIdx = i % realImages.length;
+                img.src = realImages[realIdx];
+                img.setAttribute('data-ve-real-img', 'true');
+              });
+
+              // Replace body images with remaining real images (no repeat of header if possible)
+              const headerUsed = new Set(headerImgs.map((_, i) => i % realImages.length));
+              const bodyPool = realImages.filter((_, i) => !headerUsed.has(i));
+              const finalPool = bodyPool.length > 0 ? bodyPool : realImages;
+
+              bodyImgs.forEach((img, i) => {
+                const realIdx = i % finalPool.length;
+                img.src = finalPool[realIdx];
+                img.setAttribute('data-ve-real-img', 'true');
+              });
+
+              console.log(`[VE] Injected ${allImgs.length} real product images (${realImages.length} unique)`);
+            } catch (e) {
+              console.error('[VE] Image injection error:', e);
+            }
+          }, 1000);
+        }
+
         // Set up MutationObserver for resilience after successful setup
         try {
           const doc = iframe.contentDocument;

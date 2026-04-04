@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 // ────────────────────────────────────────────────────────────
 // GET: Obtener plantillas PDP desde Plantillas_PDP (nuevo sistema)
 // Mantiene compatibilidad con el formato anterior para clientes existentes

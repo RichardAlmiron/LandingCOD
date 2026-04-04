@@ -11,16 +11,59 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { productTitle, productDescription, productCategory, aiContext, elements } = body;
+    const { flowType, productTitle, productDescription, productCategory, aiContext, storeName, elements } = body;
 
-    if (!productTitle || !elements || !Array.isArray(elements) || elements.length === 0) {
+    if (!elements || !Array.isArray(elements) || elements.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
     }
 
-    let fullPageContext = '';
-    if (aiContext) {
-      const sec = aiContext.sections || {};
-      fullPageContext = `
+    const isStore = flowType === 'store';
+
+    const elementsList = elements.map((el: any, i: number) =>
+      `[${i}] tipo="${el.sectionType}" palabras=${el.wordCount} texto_actual="${el.currentText.slice(0, 100)}${el.currentText.length > 100 ? '...' : ''}"`
+    ).join('\n');
+
+    let systemPrompt: string;
+
+    if (isStore) {
+      // ── STORE PROMPT ──
+      systemPrompt = `Eres un experto en e-commerce COD (Cash on Delivery / Cobro Contra Entrega) para el mercado paraguayo. Vas a adaptar TODOS los textos de una tienda online completa.
+
+TIENDA: ${storeName || 'Tienda Online'}
+
+MERCADO: Paraguay. Todo el contenido debe estar en español latinoamericano natural (Paraguay). Tuteo. Directo. Sin rodeos.
+
+MODELO DE NEGOCIO — COBRO CONTRA ENTREGA:
+- El cliente pide el producto online y PAGA EN EFECTIVO cuando lo recibe en su puerta
+- Esto es la MAYOR ventaja competitiva. Explotala en cada oportunidad
+- Frases clave: "Pedí ahora, pagá al recibir", "Sin riesgo", "Cero pago adelantado", "Tu dinero seguro hasta que lo tengas en tus manos"
+- NUNCA digas "compra online", "paga con tarjeta", "transferencia bancaria"
+
+REGLAS DE GARANTÍA (ESTRICTAS):
+- SÍ mencionar: "Garantía de Satisfacción", "Compra 100% Segura", "Calidad Garantizada", "Respaldamos tu compra"
+- NUNCA mencionar: devolución de dinero, reembolso, cancelación, días de garantía, "30 días", "7 días"
+- La garantía se expresa como confianza y seguridad, NUNCA como política de devolución
+
+REGLAS DE CONTENIDO:
+1. TODO en español. Si el texto original está en inglés, traducilo y adaptalo al mercado paraguayo
+2. Cada texto nuevo debe tener la MISMA longitud aproximada que el original (±30% de palabras)
+3. Un botón de 3 palabras = respuesta de 2-4 palabras. NUNCA más
+4. Un título de 8 palabras = respuesta de 6-10 palabras
+5. CERO emojis ni símbolos decorativos
+6. Precios siempre en Guaraníes: "Gs. XXX.XXX"
+7. Tono profesional, confiable, cercano. Como una tienda real paraguaya
+8. NO toques nada relacionado con productos individuales (nombres, precios, descripciones de productos)
+9. Solo adaptá textos de la tienda: headers, banners, secciones informativas, garantía, envío, footer, CTAs generales
+10. Cada sección debe ser coherente — es UNA tienda, no textos sueltos
+
+Responde ÚNICAMENTE con un JSON array: [{"i":0,"t":"texto nuevo"},{"i":1,"t":"otro texto"}]
+Sin markdown, sin explicaciones. Solo el JSON array.`;
+    } else {
+      // ── PDP PROMPT ──
+      let fullPageContext = '';
+      if (aiContext) {
+        const sec = aiContext.sections || {};
+        fullPageContext = `
 COPY YA GENERADO POR LA IA PRINCIPAL (mantén coherencia):
 - Título: ${aiContext.enhancedTitle || ''}
 - Tagline: ${aiContext.tagline || ''}
@@ -31,14 +74,9 @@ COPY YA GENERADO POR LA IA PRINCIPAL (mantén coherencia):
 - CTA: ${sec.ctaPrimary || ''}
 - Cierre: ${sec.closingArgument || ''}
 - Nicho: ${aiContext.niche || ''}`;
-    }
+      }
 
-    // Build the elements list for the prompt
-    const elementsList = elements.map((el: any, i: number) =>
-      `[${i}] tipo="${el.sectionType}" palabras=${el.wordCount} texto_actual="${el.currentText.slice(0, 100)}${el.currentText.length > 100 ? '...' : ''}"`
-    ).join('\n');
-
-    const systemPrompt = `Eres un copywriter de élite para e-commerce COD (Cash on Delivery) en Latinoamérica. Vas a reescribir TODOS los textos de una página de producto de una sola vez.
+      systemPrompt = `Eres un copywriter de élite para e-commerce COD (Cash on Delivery) en Latinoamérica. Vas a reescribir TODOS los textos de una página de producto de una sola vez.
 
 PRODUCTO:
 - Nombre: ${productTitle}
@@ -61,9 +99,9 @@ REGLAS CRÍTICAS:
 10. NUNCA menciones devolución de dinero
 11. Cada sección debe ser coherente con las demás — es UNA página, no textos sueltos
 
-Responde ÚNICAMENTE con un JSON array. Cada elemento tiene "i" (índice) y "t" (texto nuevo).
-Ejemplo: [{"i":0,"t":"texto nuevo"},{"i":1,"t":"otro texto"}]
+Responde ÚNICAMENTE con un JSON array: [{"i":0,"t":"texto nuevo"},{"i":1,"t":"otro texto"}]
 Sin markdown, sin explicaciones. Solo el JSON array.`;
+    }
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -77,7 +115,10 @@ Sin markdown, sin explicaciones. Solo el JSON array.`;
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Reescribe estos ${elements.length} textos de la página. Genera contenido 100% nuevo para el producto "${productTitle}".\n\n${elementsList}\n\nResponde con JSON array: [{"i":0,"t":"..."},{"i":1,"t":"..."}]` },
+          { role: 'user', content: isStore
+            ? `Adaptá estos ${elements.length} textos de la tienda "${storeName || 'Mi Tienda'}" al mercado paraguayo con modelo COD.\n\n${elementsList}\n\nResponde con JSON array: [{"i":0,"t":"..."},{"i":1,"t":"..."}]`
+            : `Reescribe estos ${elements.length} textos de la página. Genera contenido 100% nuevo para el producto "${productTitle}".\n\n${elementsList}\n\nResponde con JSON array: [{"i":0,"t":"..."},{"i":1,"t":"..."}]`
+          },
         ],
         temperature: 0.85,
         max_tokens: 4000,

@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 const BUCKET = 'store-images';
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 

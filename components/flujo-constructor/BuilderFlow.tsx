@@ -36,7 +36,7 @@ export default function BuilderFlow() {
         logoText: '',
         bannerImage: '',
         products: [],
-        pdpTemplate: 'standard-urgencia',
+        pdpTemplate: '',
         model: 'marketplace',
         productPageType: 'standard',
         pdpFeatures: { liveViewers: true, recentSales: true, scarcityTimer: true, stickyButton: true },
@@ -138,7 +138,18 @@ export default function BuilderFlow() {
     const confirmProductSelection = async () => {
         const chosen = builderProducts.products.filter(p => builderProducts.selected.has(p.id));
         
-        // ── Generar copywriting con IA antes de pasar a etapa 4 ──
+        // ── Tiendas: pasar directo a etapa 4 sin IA ──
+        if (flowType === 'store') {
+            setStoreData(prev => ({ ...prev, products: chosen }));
+            goTo(4, 'Etapa 4', 'Configura y Publica', {
+                minDuration: 2000,
+                accentColor: '#f59e0b',
+                pendingAction: () => { setIsLoadingEditor(true); setShowVisualEditor(true); },
+            });
+            return;
+        }
+
+        // ── PDP: generar copywriting con IA antes de pasar a etapa 4 ──
         setAiGenerating(true);
         setAiCriticalError(false);
         setAiProgress('Analizando producto...');
@@ -155,20 +166,20 @@ export default function BuilderFlow() {
                     
                     if (result.success && result.content) {
                         const ai = result.content;
+                        const allOriginal = product.original_images || [];
+                        const allEdited = product.edited_images || [];
                         const heroImg = (ai.mediaStrategy?.heroImages?.[0]) || product.imageUrl;
-                        const thumbs = [
-                            ...(product.original_images || []),
-                            ...(product.edited_images || []),
-                        ].filter(img => img && img !== heroImg).slice(0, 4);
+                        // Preserve ALL original images — don't truncate
+                        const allImages = [heroImg, ...allOriginal, ...allEdited].filter((img, idx, arr) => img && arr.indexOf(img) === idx);
 
                         return {
                             ...product,
                             title: ai.enhancedTitle || product.title,
                             description: ai.enhancedDescription || product.description,
                             imageUrl: heroImg,
-                            images: [heroImg, ...thumbs],
-                            original_images: [heroImg],
-                            edited_images: thumbs,
+                            images: allImages,
+                            original_images: allOriginal.length > 0 ? allOriginal : [heroImg],
+                            edited_images: allEdited,
                             videos: product.videos || [],
                             aiContent: {
                                 enhancedTitle: ai.enhancedTitle,
@@ -828,7 +839,7 @@ export default function BuilderFlow() {
                                     )}
                                     <button className="btn-primary" disabled={publish.slug.length < 3 || publish.publishing || !storeData.name.trim()} style={{ width: '100%', padding: '14px', fontSize: 15, opacity: (publish.slug.length < 3 || publish.publishing || !storeData.name.trim()) ? 0.5 : 1, cursor: (publish.slug.length < 3 || publish.publishing || !storeData.name.trim()) ? 'not-allowed' : 'pointer' }}
                                         onClick={() => publish.publish({
-                                            storeData, template, flowType: flowType || 'store',
+                                            storeData, template, flowType: flowType || (storeData.pdpTemplate ? 'pdp' : 'store'),
                                             userId: user?.id, userName: user?.name, userEmail: user?.email,
                                             activeProductId,
                                             onSuccess: () => { if (user?.id) draft.clearSaved(); },

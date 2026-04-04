@@ -75,24 +75,15 @@ Columnas: id, codigo, nombre, descripcion, componente, categoria_id, imagen_url,
     content: `PLANTILLAS BASE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. standard-urgencia → PdpUrgenciaMaxima
-2. standard-prueba-social → PdpPruebaSocial
-3. standard-bundle → PdpOfertaBundle
-4. standard-historia → PdpHistoriaProducto
-5. standard-checkout-directo → PdpCheckoutDirecto
-6. standard-salud → PdpSaludEstandar
-7. standard-electronico → PdpElectronicoEstandar
-8. standard-herramientas → PdpHerramientasEstandar
-9. standard-belleza → PdpBellezaEstandar
-10. standard-hogar → PdpHogarEstandar
+1. standard-salud → PdpSaludEstandar
+2. standard-herramientas → PdpHerramientasEstandar
+4. standard-belleza → PdpBellezaEstandar
+5. standard-hogar → PdpHogarEstandar
 
 PLANTILLAS PREMIUM:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-11. premium-urgencia → PdpUrgenciaPremium
-12. premium-bundle → PdpOfertaBundlePremium
-13. premium-electronico → PdpElectronicoPremium
-14. premium-salud → PdpSaludPremium`
+6. premium-salud → PdpSaludPremium`
   },
   {
     id: 'api',

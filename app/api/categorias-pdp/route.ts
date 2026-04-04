@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 // ────────────────────────────────────────────────────────────
 // GET: Obtener categorías y plantillas
 // ────────────────────────────────────────────────────────────

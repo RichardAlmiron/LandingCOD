@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 const ACCESS_COOKIE = 'access_token';
 
 // Helper para verificar autenticación

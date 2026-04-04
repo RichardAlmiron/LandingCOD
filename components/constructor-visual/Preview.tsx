@@ -79,19 +79,10 @@ import StoreAppShell from '@/components/componentes-tiendas/StoreAppShell';
 import { resolverComponentePDP, extraerVariante } from '@/lib/plantilla-registry';
 import { Smartphone, Monitor, Battery, Wifi, Signal, ArrowLeft, ExternalLink, Pencil } from 'lucide-react';
 
-import PdpUrgenciaMaxima from '@/components/pdp/electrónico/general/PdpUrgenciaMaxima';
-import PdpPruebaSocial from '@/components/pdp/electrónico/general/PdpPruebaSocial';
-import PdpOfertaBundle from '@/components/pdp/electrónico/general/PdpOfertaBundle';
-import PdpHistoriaProducto from '@/components/pdp/electrónico/general/PdpHistoriaProducto';
-import PdpCheckoutDirecto from '@/components/pdp/electrónico/general/PdpCheckoutDirecto';
 import PdpSaludEstandar from '@/components/pdp/salud/general/PdpSaludEstandar';
-import PdpElectronicoEstandar from '@/components/pdp/electrónico/general/PdpElectronicoEstandar';
 import PdpHerramientasEstandar from '@/components/pdp/herramientas/general/PdpHerramientasEstandar';
 import PdpBellezaEstandar from '@/components/pdp/belleza/general/PdpBellezaEstandar';
 import PdpHogarEstandar from '@/components/pdp/hogar/general/PdpHogarEstandar';
-import PdpUrgenciaPremium from '@/components/pdp/electrónico/general/PdpUrgenciaPremium';
-import PdpOfertaBundlePremium from '@/components/pdp/electrónico/general/PdpPremiumBundle';
-import PdpElectronicoPremium from '@/components/pdp/electrónico/general/PdpElectronicoPremium';
 import PdpSaludPremium from '@/components/pdp/salud/general/PdpSaludPremium';
 
 interface PreviewProps {

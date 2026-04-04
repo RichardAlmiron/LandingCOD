@@ -4,22 +4,13 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 import type { StoreData } from '@/lib/types';
 import ProductStandardPage from '@/components/tiendas/ProductStandardPage';
-import { resolverCodigoPlantilla, MAPA_LEGACY_A_STANDARD } from '@/lib/types-categorias';
+import { resolverCodigoPlantilla } from '@/lib/types-categorias';
 
 // Dynamic imports para componentes PDP (solo páginas premium)
-const PdpUrgenciaMaxima = dynamic(() => import('@/components/pdp/electrónico/general/PdpUrgenciaMaxima'));
-const PdpPruebaSocial = dynamic(() => import('@/components/pdp/electrónico/general/PdpPruebaSocial'));
-const PdpOfertaBundle = dynamic(() => import('@/components/pdp/electrónico/general/PdpOfertaBundle'));
-const PdpHistoriaProducto = dynamic(() => import('@/components/pdp/electrónico/general/PdpHistoriaProducto'));
-const PdpCheckoutDirecto = dynamic(() => import('@/components/pdp/electrónico/general/PdpCheckoutDirecto'));
 const PdpSaludEstandar = dynamic(() => import('@/components/pdp/salud/general/PdpSaludEstandar'));
-const PdpElectronicoEstandar = dynamic(() => import('@/components/pdp/electrónico/general/PdpElectronicoEstandar'));
 const PdpHerramientasEstandar = dynamic(() => import('@/components/pdp/herramientas/general/PdpHerramientasEstandar'));
 const PdpBellezaEstandar = dynamic(() => import('@/components/pdp/belleza/general/PdpBellezaEstandar'));
 const PdpHogarEstandar = dynamic(() => import('@/components/pdp/hogar/general/PdpHogarEstandar'));
-const PdpUrgenciaPremium = dynamic(() => import('@/components/pdp/electrónico/general/PdpUrgenciaPremium'));
-const PdpOfertaBundlePremium = dynamic(() => import('@/components/pdp/electrónico/general/PdpPremiumBundle'));
-const PdpElectronicoPremium = dynamic(() => import('@/components/pdp/electrónico/general/PdpElectronicoPremium'));
 const PdpSaludPremium = dynamic(() => import('@/components/pdp/salud/general/PdpSaludPremium'));
 // Celulares
 const PdpCelulares = dynamic(() => import('@/components/pdp/electrónico/celulares/PdpCelulares'));
@@ -41,19 +32,10 @@ const PdpCelularesStreetwear = dynamic(() => import('@/components/pdp/electróni
 
 // Mapa centralizado: código Standard → componente (dynamic imports para SSR)
 const COMPONENTES_DINAMICOS: Record<string, any> = {
-  'standard-urgencia':         PdpUrgenciaMaxima,
-  'standard-prueba-social':    PdpPruebaSocial,
-  'standard-bundle':           PdpOfertaBundle,
-  'standard-historia':         PdpHistoriaProducto,
-  'standard-checkout-directo': PdpCheckoutDirecto,
   'standard-salud':            PdpSaludEstandar,
-  'standard-electronico':      PdpElectronicoEstandar,
   'standard-herramientas':     PdpHerramientasEstandar,
   'standard-belleza':          PdpBellezaEstandar,
   'standard-hogar':            PdpHogarEstandar,
-  'premium-urgencia':          PdpUrgenciaPremium,
-  'premium-bundle':            PdpOfertaBundlePremium,
-  'premium-electronico':       PdpElectronicoPremium,
   'premium-salud':             PdpSaludPremium,
   // Celulares
   'standard-celulares':        PdpCelulares,

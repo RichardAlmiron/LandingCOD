@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { verifyAccessToken, ACCESS_COOKIE } from '@/lib/auth';
 import { parse } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 function getPayload(request: Request) {
     const cookieHeader = request.headers.get('cookie') || '';
     const cookies = parse(cookieHeader);

@@ -13,6 +13,8 @@ import {
 } from '@/lib/auth';
 import { serialize } from 'cookie';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
     try {
         const { name, email, password, plan = 'free', role = 'user' } = await request.json();
