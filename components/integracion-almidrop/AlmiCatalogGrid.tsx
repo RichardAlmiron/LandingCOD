@@ -14,6 +14,9 @@ interface AlmiCatalogGridProps {
   loading?: boolean;
   emptyMessage?: string;
   flowType?: 'store' | 'pdp';
+  customPrices?: Record<string, number>;
+  onPriceChange?: (id: string, price: number) => void;
+  userSource?: string;
 }
 
 const CARD_MIN_WIDTH = 145;
@@ -28,7 +31,10 @@ export default function AlmiCatalogGrid({
   onViewDetails,
   loading,
   emptyMessage = 'No hay productos disponibles',
-  flowType = 'store'
+  flowType = 'store',
+  customPrices = {},
+  onPriceChange,
+  userSource,
 }: AlmiCatalogGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -331,6 +337,41 @@ export default function AlmiCatalogGrid({
                 flexDirection: 'column',
                 gap: '0.3rem'
               }}>
+                {/* Campo de precio de venta — solo para usuarios Almidrop */}
+                {userSource === 'almidrop' && (
+                  <div style={{ marginBottom: '0.2rem' }}>
+                    <label style={{ fontSize: '0.5rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', display: 'block', marginBottom: '0.15rem' }}>
+                      Tu precio de venta
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)' }}>Gs.</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={customPrices[product.id] || ''}
+                        placeholder={Math.round(product.price).toLocaleString('es-PY')}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value) || 0;
+                          onPriceChange?.(product.id, val);
+                        }}
+                        style={{
+                          flex: 1, padding: '0.3rem 0.4rem', borderRadius: 6,
+                          background: customPrices[product.id] ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.05)',
+                          border: customPrices[product.id] ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff', fontSize: '0.7rem', fontWeight: 700, outline: 'none',
+                          width: '100%',
+                        }}
+                      />
+                    </div>
+                    {customPrices[product.id] > 0 && (
+                      <div style={{ fontSize: '0.45rem', color: '#71717a', marginTop: '0.1rem' }}>
+                        Tachado: Gs. {Math.round(customPrices[product.id] * 1.32).toLocaleString('es-PY')}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <button
                   onClick={() => onViewDetails(product)}
                   style={{

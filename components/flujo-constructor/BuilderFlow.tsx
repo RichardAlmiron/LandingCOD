@@ -54,6 +54,7 @@ export default function BuilderFlow() {
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiProgress, setAiProgress] = useState('');
     const [aiCriticalError, setAiCriticalError] = useState(false);
+    const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
 
     // ── Hooks con responsabilidad única ──
     const builderStep = useBuilderStep();
@@ -138,9 +139,27 @@ export default function BuilderFlow() {
     const confirmProductSelection = async () => {
         const chosen = builderProducts.products.filter(p => builderProducts.selected.has(p.id));
         
+        // ── Verificar que todos los productos tengan precio de venta ──
+        const missingPrice = chosen.filter(p => !customPrices[p.id] && !p.price);
+        if (missingPrice.length > 0 && user?.source === 'almidrop') {
+            alert(`Poné tu precio de venta para: ${missingPrice.map(p => p.title).join(', ')}`);
+            return;
+        }
+
+        // ── Aplicar precios personalizados y calcular precio tachado ──
+        const pricedProducts = chosen.map(p => {
+            const sellingPrice = customPrices[p.id] || p.price;
+            const strikePrice = Math.round(sellingPrice * 1.32); // +32% para simular descuento
+            return {
+                ...p,
+                price: sellingPrice,
+                originalPrice: strikePrice,
+            };
+        });
+
         // ── Tiendas: pasar directo a etapa 4 sin IA ──
         if (flowType === 'store') {
-            setStoreData(prev => ({ ...prev, products: chosen }));
+            setStoreData(prev => ({ ...prev, products: pricedProducts }));
             goTo(4, 'Etapa 4', 'Configura y Publica', {
                 minDuration: 2000,
                 accentColor: '#f59e0b',
@@ -156,10 +175,10 @@ export default function BuilderFlow() {
         
         let allSucceeded = true;
         const enhancedProducts = await Promise.all(
-            chosen.map(async (product, idx) => {
+            pricedProducts.map(async (product, idx) => {
                 try {
-                    setAiProgress(chosen.length > 1 
-                        ? `Generando copy IA (${idx + 1}/${chosen.length})...` 
+                    setAiProgress(pricedProducts.length > 1 
+                        ? `Generando copy IA (${idx + 1}/${pricedProducts.length})...` 
                         : 'Generando página de ventas con IA...');
                     
                     const result = await builderApi.generateAICopy(product);
@@ -625,6 +644,9 @@ export default function BuilderFlow() {
                             loading={builderProducts.loading}
                             emptyMessage="No se encontraron productos en el catálogo."
                             flowType={flowType || 'store'}
+                            customPrices={customPrices}
+                            onPriceChange={(id, price) => setCustomPrices(prev => ({ ...prev, [id]: price }))}
+                            userSource={user?.source}
                         />
 
                         {/* Paginación */}

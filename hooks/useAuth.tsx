@@ -6,8 +6,10 @@ interface User {
     id: string;
     email: string;
     name: string;
-    plan: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'pro' | 'enterprise' | 'almidrop';
     role: 'user' | 'admin';
+    source?: 'almidrop' | 'landingcod' | 'external';
+    almidropId?: string;
 }
 
 interface AuthContextValue {
