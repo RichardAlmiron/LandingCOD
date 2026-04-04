@@ -16,7 +16,17 @@ Almidrop es una plataforma de dropshipping que conecta bodegas (proveedores) con
 
 OBJETIVO: Permitir que los dropshippers de Almidrop accedan a LandingCOD con sus mismas credenciales, seleccionen productos del catálogo de Almidrop, pongan su precio de venta, y publiquen páginas de producto o tiendas. Cuando un cliente compra, la venta se registra y notifica al dropshipper.
 
-MODELO DE NEGOCIO: Cobro Contra Entrega. El cliente pide online y paga en efectivo al recibir el producto en su puerta.`
+MODELO DE NEGOCIO: Cobro Contra Entrega. El cliente pide online y paga en efectivo al recibir el producto en su puerta.
+
+ESTADO ACTUAL DE IMPLEMENTACIÓN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Fase 0 — Limpieza y preparación (14 plantillas eliminadas, fallbacks eliminados, force-dynamic 25/25 APIs)
+✅ Fase 0.5 — IA y Editor Visual (Gemini 2.5 Flash, reescritura completa, botones IA, accordions, imágenes reales)
+✅ Fase 1 — Autenticación dual (login Almidrop + externos, registro externos, detección automática)
+✅ Fase 2 — Campo de precio de venta en etapa 3 (precio personalizado, precio tachado +32% automático)
+🔲 Fase 3 — Sistema de ventas (tabla ventas, formulario de compra, geolocalización, WhatsApp)
+🔲 Fase 4 — Interfaz "Mis Ventas LandingCOD" (en LandingCOD y en Almidrop)
+🔲 Fase 5 — Etapa 3 para usuarios externos (subida manual de producto)`
   },
   {
     id: 'usuarios',
@@ -34,6 +44,16 @@ MODELO DE NEGOCIO: Cobro Contra Entrega. El cliente pide online y paga en efecti
 - is_admin, is_master e is_bodega de Almidrop NO acceden a LandingCOD
 - Ve el catálogo completo de productos de Almidrop (Almiplace)
 - Puede poner su precio de venta personalizado
+- El sistema calcula automáticamente un precio tachado (+32%) para simular descuento
+- Sin poner precio, no puede pasar a la etapa 4
+
+IMPLEMENTADO:
+- Login dual: /api/auth/login verifica en 3 niveles (Almidrop → Admin LandingCOD → Externos)
+- Registro externos: /api/auth/register-external
+- Página de registro: /register-external
+- Campo "Tu precio de venta" en cada tarjeta de producto (etapa 3)
+- Precio tachado calculado automáticamente (+32%)
+- Validación: sin precio no pasa a etapa 4
 
 2. USUARIO EXTERNO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -69,12 +89,19 @@ ALMIDROP:
 - Cookie: token
 - Conexión desde LandingCOD: via ALMIDROP_SUPABASE_URL y ALMIDROP_SUPABASE_SERVICE_ROLE_KEY
 
-FLUJO DE LOGIN:
+FLUJO DE LOGIN (IMPLEMENTADO):
 1. Usuario ingresa email + contraseña en LandingCOD
 2. LandingCOD consulta la DB de Almidrop: ¿existe este email con is_dropshipper=true?
-3. Si SÍ → verifica contraseña contra password_hash de Almidrop → acceso como usuario Almidrop
-4. Si NO → busca en tabla "usuarios" de LandingCOD → acceso como usuario externo
-5. Se genera JWT de LandingCOD y se setean cookies
+3. Si SÍ → verifica contraseña contra password_hash de Almidrop → acceso como usuario Almidrop (source: 'almidrop')
+4. Si NO → busca en tabla "usuarios" de LandingCOD → acceso como admin (source: 'landingcod')
+5. Si NO → busca en tabla "usuarios_externos" de LandingCOD → acceso como externo (source: 'external')
+6. Se genera JWT de LandingCOD y se setean cookies
+7. El campo "source" viaja en el JWT y se usa para detectar el tipo de usuario en todo el sistema
+
+API /api/auth/me: Detecta automáticamente el source del usuario:
+- Si el ID empieza con "almidrop_" → source: 'almidrop'
+- Si existe en tabla "usuarios" → source: 'landingcod'
+- Si existe en tabla "usuarios_externos" → source: 'external'
 
 IMPORTANTE: LandingCOD NUNCA modifica la DB de Almidrop. Solo LEE para verificar credenciales y obtener catálogo.`
   },
@@ -88,12 +115,13 @@ IMPORTANTE: LandingCOD NUNCA modifica la DB de Almidrop. Solo LEE para verificar
 EN SUPABASE DE LANDINGCOD (grxeiinmunfjmptqtfwf):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - usuarios: usuarios admin de LandingCOD (tabla existente)
-- usuarios_externos: usuarios que no son de Almidrop (tabla nueva)
-- ventas_landingcod: registro de todas las ventas (tabla nueva)
+- usuarios_externos: usuarios que no son de Almidrop (tabla NUEVA — CREADA)
+- sesiones_activas: sesiones JWT activas (tabla existente)
+- ventas_landingcod: registro de todas las ventas (tabla PENDIENTE — Fase 3)
 - tiendas_publicadas: tiendas publicadas (tabla existente)
 - pdp_publicadas: páginas de producto publicadas (tabla existente)
 - Categorias_PDP: categorías de plantillas (tabla existente)
-- Plantillas_PDP: plantillas de páginas de producto (tabla existente)
+- Plantillas_PDP: plantillas de páginas de producto (tabla existente, 14 antiguas eliminadas)
 
 EN SUPABASE DE ALMIDROP (bakmisrdgjpnrwohjcyn):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -119,19 +147,23 @@ ETAPA 2 — SELECCIÓN DE DISEÑO
 ETAPA 3 — SELECCIÓN DE PRODUCTOS (DOS CAMINOS)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Usuario Almidrop:
+Usuario Almidrop (source: 'almidrop') — IMPLEMENTADO:
 - Ve catálogo clonado de Almiplace (productos reales de Almidrop)
-- Cada tarjeta muestra: producto, costo bodega, precio sugerido
-- El dropshipper DEBE poner su precio de venta
-- Sin precio → no puede pasar a etapa 4
-- El sistema calcula precio tachado automáticamente (+30-35%)
-- Precio de venta = lo que aparece en la PDP como precio real
-- Precio tachado = simulación de descuento (calculado por el sistema)
+- Cada tarjeta muestra: imagen, nombre, categoría, precio proveedor ("Tu costo"), precio sugerido
+- Campo "Tu precio de venta" en cada tarjeta (color amarillo)
+- Sin precio → no puede pasar a etapa 4 (sale alerta)
+- El sistema calcula precio tachado automáticamente (+32% del precio de venta)
+- Precio de venta = lo que aparece en la PDP como precio real con descuento
+- Precio tachado = simulación de precio anterior (calculado por el sistema)
+- Debajo del campo aparece: "Tachado: Gs. XXX.XXX" como preview
 
-Usuario Externo:
+Usuario Externo (source: 'external') — PENDIENTE (Fase 5):
 - NO ve catálogo de Almidrop
 - Sube manualmente: imágenes, título, descripción
 - Pone su precio de venta
+
+Admin/Legacy (sin source) — FUNCIONA IGUAL QUE ANTES:
+- Ve catálogo de Almidrop (comportamiento original)
 
 ETAPA 3.5 — IA INTERMEDIA (solo PDP)
 - La IA genera copywriting CRO basado en el producto seleccionado
