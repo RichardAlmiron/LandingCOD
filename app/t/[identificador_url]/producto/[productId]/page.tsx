@@ -126,11 +126,28 @@ export default async function ProductPage({ params }: { params: Promise<{ identi
   const pdpComponent = getPdpComponent(storeData);
   
   if (!pdpComponent) {
-    // Fallback a página estándar si no hay PDP configurado
+    const templateId = storeData.pdpTemplate || '';
+    const codigo = templateId ? resolverCodigoPlantilla(templateId) : '';
     return (
-      <div suppressHydrationWarning className="min-h-screen bg-white">
-        <title>{product.title} - {store.name}</title>
-        <ProductStandardPage product={product} storeData={storeData} />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full">
+          <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error de Plantilla PDP</h1>
+          <p className="text-gray-500 mb-4">No se pudo cargar la página de producto premium.</p>
+          <div className="bg-gray-100 rounded-lg p-4 text-left mb-6 space-y-1">
+            <p className="text-xs font-mono text-red-600">ERROR: PDP_RENDER_FAILED</p>
+            <p className="text-xs font-mono text-gray-600">productPageType: {storeData.productPageType}</p>
+            <p className="text-xs font-mono text-gray-600">pdpTemplate: {templateId || 'vacío'}</p>
+            <p className="text-xs font-mono text-gray-600">código resuelto: {codigo || 'vacío'}</p>
+            <p className="text-xs font-mono text-gray-600">tienda: {resolvedParams.identificador_url}</p>
+            <p className="text-xs font-mono text-gray-600">producto: {resolvedParams.productId}</p>
+          </div>
+          <a href={`https://wa.me/595973532550?text=${encodeURIComponent(`Error PDP en tienda ${resolvedParams.identificador_url}, producto ${resolvedParams.productId}. Template: ${templateId}, Código: ${codigo}`)}`} target="_blank" rel="noopener noreferrer" className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 transition w-full block text-center">
+            Contactar Soporte
+          </a>
+        </div>
       </div>
     );
   }

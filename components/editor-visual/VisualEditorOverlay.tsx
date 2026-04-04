@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   VisualCustomization, VisualEditorState, TextEditorOptions,
-  EDITOR_FONTS, EDITOR_COLORS, COMPONENT_BLOCKS, ComponentBlock
+  EDITOR_FONTS, EDITOR_COLORS
 } from '@/lib/visual-editor-types';
 import { StoreData, TemplateType } from '@/lib/types';
 import { generateVeId, getVeType, getVeLabel } from '@/lib/ve-id-generator';
@@ -108,9 +108,7 @@ export default function VisualEditorOverlay({
     activePanel: 'none',
     zoom: 100,
   });
-  const [injectedComponents, setInjectedComponents] = useState<string[]>(existingInjectedComponents);
-  const [showComponentPicker, setShowComponentPicker] = useState(false);
-  const [insertPosition, setInsertPosition] = useState<'top' | 'bottom'>('top');
+  const [injectedComponents] = useState<string[]>(existingInjectedComponents);
   const [selectedElementStyles, setSelectedElementStyles] = useState<Partial<TextEditorOptions>>({});
   const [originalElementStyles, setOriginalElementStyles] = useState<Partial<TextEditorOptions>>({});
   const [originalStylePanelValues, setOriginalStylePanelValues] = useState<Record<string, string>>({});
@@ -1021,39 +1019,6 @@ export default function VisualEditorOverlay({
     });
   }, [editorState.selectedElement, addCustomization, captureOriginalSnapshot, updateUnsavedTooltips]);
 
-  // ── Inject component ──
-  const injectComponent = useCallback((block: ComponentBlock) => {
-    const iframe = iframeRef.current;
-    if (!iframe?.contentDocument) return;
-    const doc = iframe.contentDocument;
-    const body = doc.body;
-
-    const wrapper = doc.createElement('div');
-    wrapper.className = 've-injected-component';
-    wrapper.setAttribute('data-ve-editable', `ve-injected-${block.id}-${Date.now()}`);
-    wrapper.setAttribute('data-ve-type', 'component');
-    wrapper.setAttribute('data-ve-label', `✨ ${block.name}`);
-    wrapper.innerHTML = block.defaultHtml;
-
-    const templateRoot = body.firstElementChild;
-    if (!templateRoot) return;
-
-    if (insertPosition === 'top') {
-      templateRoot.insertBefore(wrapper, templateRoot.firstChild);
-    } else {
-      const footer = templateRoot.querySelector('footer') || null;
-      if (footer) {
-        footer.parentElement?.insertBefore(wrapper, footer);
-      } else {
-        templateRoot.appendChild(wrapper);
-      }
-    }
-
-    setInjectedComponents(prev => [...prev, wrapper.outerHTML]);
-    setEditorState(prev => ({ ...prev, isDirty: true }));
-    setShowComponentPicker(false);
-  }, [insertPosition]);
-
   // ── Save all customizations ──
   const handleSave = useCallback(async () => {
     setEditorState(prev => ({ ...prev, isSaving: true }));
@@ -1347,7 +1312,7 @@ export default function VisualEditorOverlay({
   const previewUrl = flowType === 'pdp' 
     ? `/preview?template=${storeData.pdpTemplate || template}&type=pdp&ve=1`
     : `/preview?template=${template}&type=store&ve=1`;
-  const hasSidePanel = editorState.activePanel !== 'none' || showComponentPicker;
+  const hasSidePanel = editorState.activePanel !== 'none';
 
   return (
     <div style={{
@@ -1546,7 +1511,7 @@ export default function VisualEditorOverlay({
               )}
             </svg>
             {/* Active panel indicator dot */}
-            {(editorState.activePanel !== 'none' || showComponentPicker) && !showToolsFab && (
+            {(editorState.activePanel !== 'none') && !showToolsFab && (
               <span style={{ position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#a78bfa', border: '1.5px solid #0f0f14', animation: 'veFabDot 2s ease-in-out infinite' }} />
             )}
           </button>
@@ -1584,15 +1549,6 @@ export default function VisualEditorOverlay({
                 active={editorState.activePanel === 'image'}
                 color="#a78bfa"
                 onClick={() => { setEditorState(p => ({ ...p, activePanel: p.activePanel === 'image' ? 'none' : 'image' })); setShowComponentPicker(false); }}
-              />
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 8px' }} />
-              <FabToolItem
-                icon={<Plus size={15} />}
-                label="Bloques"
-                sublabel="Agregar nuevas secciones"
-                active={showComponentPicker}
-                color="#22c55e"
-                onClick={() => { setShowComponentPicker(!showComponentPicker); setEditorState(p => ({ ...p, activePanel: 'none' })); }}
               />
               <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 8px' }} />
               <button
@@ -1640,7 +1596,7 @@ export default function VisualEditorOverlay({
           }} className="custom-scrollbar">
 
             {/* ── Selected Element Info Card ── */}
-            {editorState.selectedElement && selectedElementInfo && !showComponentPicker && (
+            {editorState.selectedElement && selectedElementInfo && (
               <SelectedElementCard
                 info={selectedElementInfo}
                 textContent={selectedTextContent}
@@ -1699,17 +1655,8 @@ export default function VisualEditorOverlay({
               <EmptyPanelMessage panelType="image" />
             )}
 
-            {/* Component Picker */}
-            {showComponentPicker && (
-              <ComponentPickerPanel
-                onInsert={injectComponent}
-                insertPosition={insertPosition}
-                setInsertPosition={setInsertPosition}
-              />
-            )}
-
             {/* ── Compact Save (inside side panel) ── */}
-            {!showComponentPicker && editorState.isDirty && (
+            {editorState.isDirty && (
               <div style={{
                 padding: 10, borderTop: '1px solid rgba(255,255,255,0.05)',
                 background: 'rgba(16,16,24,0.98)', marginTop: 'auto', flexShrink: 0,
@@ -2939,110 +2886,6 @@ function StylePanel({ element, onApply, iframeRef, originalValues, veId, isUnsav
           ))}
         </div>
       </PanelSection>
-    </div>
-  );
-}
-
-// ── Component Picker Panel ──
-function ComponentPickerPanel({ onInsert, insertPosition, setInsertPosition }: {
-  onInsert: (block: ComponentBlock) => void;
-  insertPosition: 'top' | 'bottom';
-  setInsertPosition: (pos: 'top' | 'bottom') => void;
-}) {
-  const categories = ['banner', 'text', 'media', 'social', 'divider', 'badge', 'cta'] as const;
-  const categoryLabels: Record<string, string> = {
-    banner: '🖼️ Banners', text: '📝 Texto', media: '🌄 Media',
-    social: '⭐ Social', divider: '➖ Separadores', badge: '🛡️ Insignias', cta: '🔘 Botones',
-  };
-
-  return (
-    <div style={{ padding: 16 }}>
-      <PanelHeader title="Bloques y Secciones" icon="🧩" />
-
-      <div style={{
-        fontSize: 12, color: '#a1a1aa', lineHeight: 1.5, marginBottom: 14,
-        padding: '10px 12px', background: 'rgba(99,102,241,0.04)',
-        borderRadius: 8, border: '1px solid rgba(99,102,241,0.08)',
-      }}>
-        <Info size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4, color: '#6366f1' }} />
-        Elige un bloque de la lista y se agregará automáticamente a tu tienda. Son secciones nuevas como banners, botones, testimonios, temporizadores, etc. Puedes elegir si se inserta arriba o abajo.
-      </div>
-
-      {/* Insert Position */}
-      <div style={{ marginBottom: 16 }}>
-        <label style={miniLabelStyle}>Posición de inserción</label>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <Tooltip text="Insertar arriba" description="El componente se agregará al inicio de la tienda, antes del contenido existente." position="bottom">
-            <button
-              onClick={() => setInsertPosition('top')}
-              style={{
-                flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: insertPosition === 'top' ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.04)',
-                border: insertPosition === 'top' ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)',
-                color: insertPosition === 'top' ? '#a78bfa' : '#a1a1aa', cursor: 'pointer',
-              }}
-            >
-              ⬆ Arriba
-            </button>
-          </Tooltip>
-          <Tooltip text="Insertar abajo" description="El componente se agregará al final de la tienda, antes del pie de página." position="bottom">
-            <button
-              onClick={() => setInsertPosition('bottom')}
-              style={{
-                flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: insertPosition === 'bottom' ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.04)',
-                border: insertPosition === 'bottom' ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)',
-                color: insertPosition === 'bottom' ? '#a78bfa' : '#a1a1aa', cursor: 'pointer',
-              }}
-            >
-              ⬇ Abajo
-            </button>
-          </Tooltip>
-        </div>
-      </div>
-
-      {/* Component List */}
-      {categories.map(cat => {
-        const blocks = COMPONENT_BLOCKS.filter(b => b.category === cat);
-        if (blocks.length === 0) return null;
-        return (
-          <div key={cat} style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#a1a1aa', marginBottom: 8 }}>
-              {categoryLabels[cat]}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {blocks.map(block => (
-                <Tooltip key={block.id} text={block.name} description={block.description} position="right">
-                  <button
-                    onClick={() => onInsert(block)}
-                    style={{
-                      padding: '10px 12px', borderRadius: 10, width: '100%',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      color: '#e4e4e7', cursor: 'pointer', textAlign: 'left',
-                      transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(99,102,241,0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(99,102,241,0.2)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                    }}
-                  >
-                    <span style={{ fontSize: 20 }}>{block.icon}</span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{block.name}</div>
-                      <div style={{ fontSize: 11, color: '#71717a' }}>{block.description}</div>
-                    </div>
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

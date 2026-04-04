@@ -175,8 +175,19 @@ export default React.memo(function LiveStorePreview({
   // Normalize template ID
   const normalizedId = templateId.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
   
-  // Find the component - fallback to MegaMarket if not found
-  const StoreComponent = storeTemplates[normalizedId] || MegaMarketTemplate;
+  // Find the component — no silent fallback
+  const StoreComponent = storeTemplates[normalizedId];
+  if (!StoreComponent) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-900 text-center p-4">
+        <div>
+          <p className="text-red-400 text-xs font-mono mb-1">TEMPLATE_NOT_FOUND</p>
+          <p className="text-gray-500 text-xs font-mono">id: {templateId}</p>
+          <p className="text-gray-500 text-xs font-mono">normalized: {normalizedId}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 

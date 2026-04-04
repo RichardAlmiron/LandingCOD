@@ -163,9 +163,13 @@ export default function FullscreenPreview() {
         let messageCleanup: (() => void) | null = null;
         if (veParam === '1') {
             console.log('[Preview VE] Visual editor mode active, listening for ve-init-data');
+            
+            if (typeParam === 'pdp' && templateParam) {
+                setPdpMode({ templateId: templateParam, category: catParam || undefined, subcategory: subcatParam || undefined });
+            }
+
             const handleMessage = (e: MessageEvent) => {
                 if (e.data?.type === 've-init-data' && e.data?.store) {
-                    console.log('[Preview VE] ve-init-data received');
                     const incoming = e.data.store;
                     
                     // Smart merge: only override fields that have real values from the user.
@@ -192,13 +196,8 @@ export default function FullscreenPreview() {
                     // CRITICAL: In VE mode, NEVER change the template to avoid re-mounting the dynamic component.
                     // Only update the store data props. The template is already loaded from the URL.
                     setData(prev => {
-                        if (!prev) {
-                            // First time: use the template already set from URL parsing (including __pdp_ prefix for PDP)
-                            const fallbackTemplate = (typeParam === 'pdp' && templateParam) 
-                                ? `__pdp_${templateParam}` 
-                                : (templateParam || 'megamarket');
-                            return { store: mergedStore as StoreData, template: fallbackTemplate };
-                        }
+                        const tmpl = (typeParam === 'pdp' && templateParam) ? templateParam : (templateParam || '');
+                        if (!prev) return { store: mergedStore as StoreData, template: tmpl };
                         return { ...prev, store: mergedStore as StoreData };
                     });
                 }
@@ -207,21 +206,13 @@ export default function FullscreenPreview() {
             messageCleanup = () => window.removeEventListener('message', handleMessage);
 
             // Load template immediately from URL so iframe renders content right away
-            const tmpl = templateParam || 'megamarket';
-            
-            // If type=pdp, render PDP through the SAME path as Store.
-            // We register a dynamic wrapper in templateComponents so the VE
-            // treats PDP identically to Store (same iframe setup, same editor flow).
+            const tmpl = templateParam || '';
             if (typeParam === 'pdp' && tmpl) {
-                // Register PDP wrapper as a "store template" so it uses the identical rendering path
-                templateComponents[`__pdp_${tmpl}`] = (props: { data: StoreData }) => (
-                    <PdpTemplateWrapper data={props.data} templateId={tmpl} />
-                );
-                setData({ store: defaultPreviewStore, template: `__pdp_${tmpl}` });
-            } else if (templateComponents[tmpl]) {
                 setData({ store: defaultPreviewStore, template: tmpl });
-            } else {
-                setData({ store: defaultPreviewStore, template: 'megamarket' });
+            } else if (tmpl && templateComponents[tmpl]) {
+                setData({ store: defaultPreviewStore, template: tmpl });
+            } else if (tmpl) {
+                setData({ store: defaultPreviewStore, template: tmpl });
             }
             return messageCleanup;
         }
@@ -355,8 +346,22 @@ export default function FullscreenPreview() {
             TemplateComponent = () => <GenericMobileTemplate data={data.store} />;
         }
     } else {
-        // Desktop: use original template
-        TemplateComponent = templateComponents[data.template] || templateComponents.megamarket;
+        TemplateComponent = templateComponents[data.template];
+        if (!TemplateComponent) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-center px-4">
+                    <div className="bg-gray-900 p-8 rounded-2xl shadow-xl max-w-lg w-full border border-red-500/20">
+                        <h1 className="text-xl font-bold text-white mb-2">Plantilla no encontrada</h1>
+                        <div className="bg-gray-800 rounded-lg p-4 text-left mb-4 space-y-1">
+                            <p className="text-xs font-mono text-red-400">ERROR: TEMPLATE_NOT_FOUND</p>
+                            <p className="text-xs font-mono text-gray-500">template: &quot;{data.template}&quot;</p>
+                            <p className="text-xs font-mono text-gray-500">pdpMode: {pdpMode ? pdpMode.templateId : 'null'}</p>
+                            <p className="text-xs font-mono text-gray-500">isVE: {isVisualEditorMode ? 'true' : 'false'}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
     }
 
     return (

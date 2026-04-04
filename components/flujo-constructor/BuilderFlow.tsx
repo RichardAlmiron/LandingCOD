@@ -1111,7 +1111,7 @@ export default function BuilderFlow() {
                     closeLabel="Volver al paso 3"
                     storeData={storeData}
                     template={template}
-                    flowType={flowType || 'store'}
+                    flowType={flowType || (storeData.pdpTemplate ? 'pdp' : 'store')}
                     existingCustomizations={storeData.visualCustomizations?.customizations || []}
                     existingInjectedComponents={storeData.visualCustomizations?.injectedComponents || []}
                     onPublish={async () => {
