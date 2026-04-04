@@ -40,22 +40,59 @@ export async function GET(request: Request) {
             if (value.expiry <= now) userCache.delete(key);
         }
 
-        // Return fresh data from DB (plan/role may have changed)
-        const { data: user, error } = await supabase
-            .from('usuarios')
-            .select('id, email, name, plan, role, created_at')
-            .eq('id', payload.sub)
-            .single();
+        // Return fresh data — check all user sources
+        let userData: any = null;
+        let source = 'landingcod';
 
-        if (error || !user) {
+        // Check if it's an Almidrop user (id starts with almidrop_)
+        if (payload.sub.startsWith('almidrop_')) {
+            source = 'almidrop';
+            userData = {
+                id: payload.sub,
+                email: payload.email,
+                name: payload.name,
+                plan: payload.plan || 'almidrop',
+                role: payload.role || 'user',
+                source: 'almidrop',
+            };
+        } else {
+            // Try admin/internal users first
+            const { data: adminUser } = await supabase
+                .from('usuarios')
+                .select('id, email, name, plan, role, created_at')
+                .eq('id', payload.sub)
+                .maybeSingle();
+
+            if (adminUser) {
+                userData = { ...adminUser, source: 'landingcod' };
+            } else {
+                // Try external users
+                const { data: externalUser } = await supabase
+                    .from('usuarios_externos')
+                    .select('id, email, full_name, is_active, created_at')
+                    .eq('id', payload.sub)
+                    .maybeSingle();
+
+                if (externalUser) {
+                    userData = {
+                        id: externalUser.id,
+                        email: externalUser.email,
+                        name: externalUser.full_name,
+                        plan: 'free',
+                        role: 'user',
+                        source: 'external',
+                    };
+                }
+            }
+        }
+
+        if (!userData) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        // Guardar en caché
-        userCache.set(payload.sub, { user, expiry: now + USER_CACHE_TTL });
+        userCache.set(payload.sub, { user: userData, expiry: now + USER_CACHE_TTL });
 
-        // Cache response for 30s to avoid hammering DB on rapid navigations
-        const response = NextResponse.json({ user });
+        const response = NextResponse.json({ user: userData });
         response.headers.set('Cache-Control', 'private, max-age=30');
         return response;
     } catch (err) {

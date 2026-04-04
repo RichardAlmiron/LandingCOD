@@ -30,8 +30,8 @@ MODELO DE NEGOCIO: Cobro Contra Entrega. El cliente pide online y paga en efecti
 - Accede con sus credenciales de Almidrop (email + contraseña)
 - NO tiene registro previo en LandingCOD
 - El sistema verifica via API contra la base de datos de Almidrop
-- Solo se sincronizan usuarios con is_dropshipper = true o is_bodega = true
-- is_admin e is_master de Almidrop NO acceden a LandingCOD
+- Solo se sincronizan usuarios con is_dropshipper = true
+- is_admin, is_master e is_bodega de Almidrop NO acceden a LandingCOD
 - Ve el catálogo completo de productos de Almidrop (Almiplace)
 - Puede poner su precio de venta personalizado
 
@@ -71,7 +71,7 @@ ALMIDROP:
 
 FLUJO DE LOGIN:
 1. Usuario ingresa email + contraseña en LandingCOD
-2. LandingCOD consulta la DB de Almidrop: ¿existe este email con is_dropshipper=true o is_bodega=true?
+2. LandingCOD consulta la DB de Almidrop: ¿existe este email con is_dropshipper=true?
 3. Si SÍ → verifica contraseña contra password_hash de Almidrop → acceso como usuario Almidrop
 4. Si NO → busca en tabla "usuarios" de LandingCOD → acceso como usuario externo
 5. Se genera JWT de LandingCOD y se setean cookies
@@ -239,8 +239,8 @@ REGLAS DE GARANTÍA EN CONTENIDO:
 1. VERIFICACIÓN DE USUARIO:
    Endpoint: Consulta directa a Supabase de Almidrop
    Tabla: users
-   Campos: email, password_hash, is_dropshipper, is_bodega, full_name, id
-   Uso: Login — verificar si el usuario existe como dropshipper/bodega en Almidrop
+   Campos: email, password_hash, is_dropshipper, full_name, id
+   Uso: Login — verificar si el usuario existe como dropshipper en Almidrop
 
 2. CATÁLOGO DE PRODUCTOS:
    Endpoint: /api/almidrop/catalog
