@@ -3,7 +3,7 @@ import React, { useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { LayoutDashboard, Users, Settings, LogOut, Shield, ChevronRight, LayoutTemplate, Store, FileText, BookOpen, Tag, Bug, Brain, Code2, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Shield, ChevronRight, LayoutTemplate, Store, FileText, BookOpen, Tag, Bug, Brain, Code2, Activity, Link2 } from 'lucide-react';
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -26,6 +26,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             '/admin/documentacion/mapa-arquitectura',
             '/admin/documentacion/codigo-detallado',
             '/admin/documentacion/bugs-resueltos',
+            '/admin/documentacion/landingcode-almidrop',
         ];
         routes.forEach(route => router.prefetch(route));
     }, []); // Solo una vez
@@ -44,6 +45,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             { name: 'Cerebro de Landing Code', icon: Brain, path: '/admin/documentacion/cerebro' },
             { name: 'Código Detallado', icon: Code2, path: '/admin/documentacion/codigo-detallado' },
             { name: 'Bugs Resueltos', icon: Bug, path: '/admin/documentacion/bugs-resueltos' },
+            { name: 'LandingCOD × AlmiDrop', icon: Link2, path: '/admin/documentacion/landingcode-almidrop' },
         ]},
         { name: 'Configuración', icon: Settings, path: '/admin/settings' },
     ];
